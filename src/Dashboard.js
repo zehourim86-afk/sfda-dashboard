@@ -209,18 +209,21 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
+      <div style={{background: 'linear-gradient(135deg, #2D2B7A 0%, #1a1854 100%)'}} className="px-6 py-4">
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-bold text-gray-900">SFDA Drug Import Traceability Platform</h1>
-            <p className="text-sm text-gray-500 mt-0.5">SFDA Reviewer Dashboard · Live</p>
+          <div className="flex items-center gap-4">
+            <img src="/demara-logo.png" alt="DEMARA" style={{height: '80px', width: '200px', objectFit: 'contain'}} />
+            <div>
+              <h1 className="text-lg font-bold text-white">Drug Import Traceability Platform</h1>
+              <p className="text-xs mt-0.5" style={{color: '#00B4D8'}}>SFDA Reviewer Dashboard · Live</p>
+            </div>
           </div>
           <div className="flex items-center gap-3">
-            <span className="flex items-center gap-1.5 text-xs text-green-600 font-medium">
-              <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+            <span className="flex items-center gap-1.5 text-xs text-green-400 font-medium">
+              <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
               Connected
             </span>
-            <button onClick={fetchTraces} className="px-3 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700">
+            <button onClick={fetchTraces} style={{background: '#00B4D8'}} className="px-3 py-1.5 text-white text-sm rounded-lg hover:opacity-90">
               Refresh
             </button>
           </div>
@@ -233,16 +236,18 @@ export default function Dashboard() {
           <button
             onClick={() => setActiveTab('dashboard')}
             className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
-              activeTab === 'dashboard' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500'
+              activeTab === 'dashboard' ? 'border-b-2 text-white' : 'border-transparent text-gray-500'
             }`}
+            style={activeTab === 'dashboard' ? {borderColor: '#2D2B7A', color: '#2D2B7A'} : {}}
           >
             Dashboard
           </button>
           <button
             onClick={() => setActiveTab('shipments')}
             className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
-              activeTab === 'shipments' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500'
+              activeTab === 'shipments' ? 'border-b-2' : 'border-transparent text-gray-500'
             }`}
+            style={activeTab === 'shipments' ? {borderColor: '#2D2B7A', color: '#2D2B7A'} : {}}
           >
             Shipments
           </button>
