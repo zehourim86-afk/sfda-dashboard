@@ -127,7 +127,7 @@ function TraceModal({ trace, onClose }) {
   );
 }
 
-export default function Dashboard() {
+export default function Dashboard({ user, token, onLogout }) {
   const [traces, setTraces] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -223,9 +223,22 @@ export default function Dashboard() {
               <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
               Connected
             </span>
+            {user && (
+              <div className="flex items-center gap-2 bg-white bg-opacity-10 rounded-lg px-3 py-1.5">
+                <div className="text-right">
+                  <p className="text-white text-xs font-semibold">{user.full_name}</p>
+                  <p className="text-xs" style={{color: '#00B4D8'}}>{user.role.replace(/_/g, ' ')}</p>
+                </div>
+              </div>
+            )}
             <button onClick={fetchTraces} style={{background: '#00B4D8'}} className="px-3 py-1.5 text-white text-sm rounded-lg hover:opacity-90">
               Refresh
             </button>
+            {onLogout && (
+              <button onClick={onLogout} className="px-3 py-1.5 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600">
+                Sign Out
+              </button>
+            )}
           </div>
         </div>
       </div>
