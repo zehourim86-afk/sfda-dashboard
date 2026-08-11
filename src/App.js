@@ -5,6 +5,7 @@ import LabPortal from './LabPortal';
 import InspectorApp from './InspectorApp';
 import BillingModule from './BillingModule';
 import ImporterPortal from './ImporterPortal';
+import AdminPanel from './AdminPanel';
 
 function App() {
   const [user, setUser] = useState(null);
@@ -51,6 +52,7 @@ function App() {
   const renderPortal = () => {
     switch (user.role) {
       case 'DEMARA_ADMIN':
+        return <AdminPanel user={user} token={token} onLogout={handleLogout} />;
       case 'SFDA_REVIEWER':
         return <Dashboard user={user} token={token} onLogout={handleLogout} />;
       case 'LAB_ANALYST':
