@@ -6,6 +6,7 @@ import InspectorApp from './InspectorApp';
 import BillingModule from './BillingModule';
 import ImporterPortal from './ImporterPortal';
 import AdminPanel from './AdminPanel';
+import NotifiedBodyPortal from './NotifiedBodyPortal';
 
 function App() {
   const [user, setUser] = useState(null);
@@ -62,7 +63,7 @@ function App() {
       case 'IMPORTER':
         return <ImporterPortal user={user} token={token} onLogout={handleLogout} />;
       case 'NOTIFIED_BODY':
-        return <Dashboard user={user} token={token} onLogout={handleLogout} />;
+        return <NotifiedBodyPortal user={user} token={token} onLogout={handleLogout} />;
       case 'GMP_AUDITOR':
         return <Dashboard user={user} token={token} onLogout={handleLogout} />;
       default:
