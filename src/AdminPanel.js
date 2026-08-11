@@ -3,6 +3,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell
 } from 'recharts';
+import Reports from './Reports';
 
 const API_URL = 'http://localhost:3000/api/v1';
 const CHART_COLORS = ['#2D2B7A', '#00B4D8', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
@@ -24,6 +25,7 @@ const NAV_ITEMS = [
   { id: 'certificates', label: 'Certificates', icon: '📜' },
   { id: 'qms', label: 'Digital QMS', icon: '🏭' },
   { id: 'settings', label: 'Platform Settings', icon: '⚙️' },
+  { id: 'reports', label: 'Reports', icon: '📑' },
 ];
 
 // Overview section
@@ -980,6 +982,9 @@ const renderSection = () => {
         return <ShipmentsSection traces={traces} token={token} onRefresh={fetchData} />;
       case 'settings':
         return <PlatformSettings token={token} />;
+        case 'reports':
+        return <Reports token={token} />;
+        
       case 'certificates':
         return (
           <div className="bg-white rounded-xl border border-gray-200 p-8 text-center">
