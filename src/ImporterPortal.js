@@ -266,12 +266,62 @@ Saudi Food and Drug Authority`;
                 </button>
               </div>
 
+              {/* PDF Upload */}
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                <input type="file" accept=".pdf,.txt" id="pdf-upload" className="hidden"
+                  onChange={async (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    setParsing(true);
+                    setError(null);
+                    try {
+                      // Read file as text directly in browser
+                      const text = await new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onload = (e) => resolve(e.target.result);
+                        reader.onerror = reject;
+                        reader.readAsText(file);
+                      });
+                      setDocumentText(text);
+                      // Auto-parse
+                      const res = await fetch(`${API_URL}/parser/email`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                        body: JSON.stringify({ email_text: text })
+                      });
+                      const data = await res.json();
+                      if (data.success) {
+                        setExtractedData(data.extracted);
+                        setStep(2);
+                      } else {
+                        setError(data.message || 'Failed to parse file');
+                      }
+                    } catch (err) {
+                      setError('Failed to read file. Please paste the text instead.');
+                    } finally {
+                      setParsing(false);
+                    }
+                  }}
+                />
+                <label htmlFor="pdf-upload" className="cursor-pointer">
+                  <div className="text-3xl mb-2">📄</div>
+                  <p className="text-sm font-medium text-gray-700">Click to upload PDF or TXT file</p>
+                  <p className="text-xs text-gray-500 mt-1">Or paste document text below</p>
+                </label>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="flex-1 h-px bg-gray-200"></div>
+                <span className="text-xs text-gray-400">or paste text below</span>
+                <div className="flex-1 h-px bg-gray-200"></div>
+              </div>
+
               <div>
                 <label className="text-xs font-semibold text-gray-600 uppercase">Paste Document Content</label>
                 <textarea
                   value={documentText}
                   onChange={e => setDocumentText(e.target.value)}
-                  rows={12}
+                  rows={8}
                   placeholder="Paste the content of your Faseh confirmation PDF or SFDA email here..."
                   className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-xs font-mono focus:outline-none focus:ring-2"
                   style={{'--tw-ring-color': '#2D2B7A'}}
