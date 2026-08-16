@@ -7,13 +7,14 @@ import BillingModule from './BillingModule';
 import ImporterPortal from './ImporterPortal';
 import AdminPanel from './AdminPanel';
 import NotifiedBodyPortal from './NotifiedBodyPortal';
+import GMPPortal from './GMPPortal';
+import ClearancePortal from './ClearancePortal';
 
 function App() {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Check for existing session on startup
   useEffect(() => {
     const savedToken = localStorage.getItem('demara_token');
     const savedUser = localStorage.getItem('demara_user');
@@ -49,7 +50,6 @@ function App() {
     return <Login onLogin={handleLogin} />;
   }
 
-  // Role-based portal routing
   const renderPortal = () => {
     switch (user.role) {
       case 'DEMARA_ADMIN':
@@ -65,7 +65,9 @@ function App() {
       case 'NOTIFIED_BODY':
         return <NotifiedBodyPortal user={user} token={token} onLogout={handleLogout} />;
       case 'GMP_AUDITOR':
-        return <Dashboard user={user} token={token} onLogout={handleLogout} />;
+        return <GMPPortal user={user} token={token} onLogout={handleLogout} />;
+      case 'CLEARANCE_COMPANY':
+        return <ClearancePortal user={user} token={token} onLogout={handleLogout} />;
       default:
         return (
           <div className="min-h-screen flex items-center justify-center bg-gray-50">
