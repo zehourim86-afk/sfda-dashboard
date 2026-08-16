@@ -28,20 +28,39 @@ const STATE_COLORS = {
 function ShipmentActionModal({ shipment, token, onClose, onRefresh }) {
   const [acting, setActing] = useState(false);
   const [notes, setNotes] = useState('');
+  const [reference, setReference] = useState('');
   const [error, setError] = useState(null);
+  const [task, setTask] = useState(null);
 
-  const transition = async (newState, actionNotes) => {
+  useEffect(() => {
+    const fetchTask = async () => {
+      try {
+        const res = await fetch(`${API_URL}/shipments/${shipment.id}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (data.shipment && data.shipment.clearance_tasks && data.shipment.clearance_tasks.length > 0) {
+          setTask(data.shipment.clearance_tasks[0]);
+        }
+      } catch (err) {
+        console.error('Failed to fetch task');
+      }
+    };
+    fetchTask();
+  }, [shipment.id]);
+
+  const performAction = async (action, requiresRef = false) => {
+    if (requiresRef && !reference.trim()) {
+      setError('Please enter a reference number or document number');
+      return;
+    }
     setActing(true);
     setError(null);
     try {
-      const res = await fetch(`${API_URL}/shipments/${shipment.id}/transition`, {
-        method: 'POST',
+      const res = await fetch(`${API_URL}/shipments/${shipment.id}/clearance`, {
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({
-          new_state: newState,
-          notes: actionNotes || notes,
-          trigger_source: 'MANUAL'
-        })
+        body: JSON.stringify({ action, reference, notes })
       });
       const data = await res.json();
       if (data.success) {
@@ -57,26 +76,57 @@ function ShipmentActionModal({ shipment, token, onClose, onRefresh }) {
     }
   };
 
-  const getNextActions = () => {
+  const checklist = [
+    {
+      label: 'Received SFDA approval notification',
+      done: true,
+      timestamp: task?.notified_at,
+      reference: null
+    },
+    {
+      label: 'Clearance procedures initiated',
+      done: ['CLEARANCE_IN_PROGRESS', 'BOND_RELEASED', 'DUTIES_PAID', 'FINAL_CLEARANCE'].includes(shipment.current_state),
+      timestamp: task?.acknowledged_at,
+      reference: null
+    },
+    {
+      label: 'Customs bond released',
+      done: ['BOND_RELEASED', 'DUTIES_PAID', 'FINAL_CLEARANCE'].includes(shipment.current_state),
+      timestamp: task?.bond_released_at,
+      reference: task?.bond_release_reference
+    },
+    {
+      label: 'Customs duties paid',
+      done: ['DUTIES_PAID', 'FINAL_CLEARANCE'].includes(shipment.current_state),
+      timestamp: task?.duties_paid_at,
+      reference: task?.duties_payment_reference
+    },
+    {
+      label: 'Final clearance confirmed',
+      done: shipment.current_state === 'FINAL_CLEARANCE',
+      timestamp: task?.release_permit_at,
+      reference: task?.release_permit_number
+    },
+  ];
+
+  const getNextAction = () => {
     switch (shipment.current_state) {
       case 'CONFORMING':
-        return [{ label: 'Start Clearance Procedures', state: 'CLEARANCE_IN_PROGRESS', color: '#2D2B7A' }];
+        return { label: 'Start Clearance Procedures', action: 'ACKNOWLEDGE', requiresRef: false, color: '#2D2B7A' };
       case 'CLEARANCE_IN_PROGRESS':
-        return [{ label: 'Confirm Bond Released', state: 'BOND_RELEASED', color: '#00B4D8' }];
+        return { label: 'Confirm Bond Released', action: 'BOND_RELEASED', requiresRef: true, placeholder: 'Bond release reference number', color: '#00B4D8' };
       case 'BOND_RELEASED':
-        return [{ label: 'Confirm Duties Paid', state: 'DUTIES_PAID', color: '#00B4D8' }];
+        return { label: 'Confirm Duties Paid', action: 'DUTIES_PAID', requiresRef: true, placeholder: 'SADAD payment reference or receipt number', color: '#00B4D8' };
       case 'DUTIES_PAID':
-        return [{ label: 'Confirm Final Clearance', state: 'FINAL_CLEARANCE', color: '#10B981' }];
+        return { label: 'Confirm Final Clearance', action: 'FINAL_CLEARANCE', requiresRef: true, placeholder: 'Release permit number', color: '#10B981' };
       case 'NON_CONFORMING':
-        return [
-          { label: 'Initiate Re-Export', state: 'RE_EXPORT_INITIATED', color: '#EF4444' },
-        ];
+        return { label: 'Initiate Re-Export', action: 'RE_EXPORT', requiresRef: false, color: '#EF4444' };
       default:
-        return [];
+        return null;
     }
   };
 
-  const actions = getNextActions();
+  const nextAction = getNextAction();
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -106,83 +156,85 @@ function ShipmentActionModal({ shipment, token, onClose, onRefresh }) {
 
           {/* Shipment details */}
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <p className="text-xs text-gray-500 uppercase font-semibold">Faseh Reference</p>
-              <p className="text-sm font-medium">{shipment.faseh_request_number}</p>
-            </div>
-            <div>
-              <p className="text-xs text-gray-500 uppercase font-semibold">GHAD CR Number</p>
-              <p className="text-sm font-medium">{shipment.ghad_cr_number}</p>
-            </div>
-            <div>
-              <p className="text-xs text-gray-500 uppercase font-semibold">Port of Entry</p>
-              <p className="text-sm font-medium">{shipment.port_of_entry}</p>
-            </div>
-            <div>
-              <p className="text-xs text-gray-500 uppercase font-semibold">Country</p>
-              <p className="text-sm font-medium">{shipment.shipment_country}</p>
-            </div>
-            <div>
-              <p className="text-xs text-gray-500 uppercase font-semibold">Importer</p>
-              <p className="text-sm font-medium">{shipment.importer_name}</p>
-            </div>
-            <div>
-              <p className="text-xs text-gray-500 uppercase font-semibold">Last Updated</p>
-              <p className="text-sm font-medium">{formatDate(shipment.updated_at)}</p>
-            </div>
+            <div><p className="text-xs text-gray-500 uppercase font-semibold">Faseh Reference</p>
+              <p className="text-sm font-medium">{shipment.faseh_request_number}</p></div>
+            <div><p className="text-xs text-gray-500 uppercase font-semibold">GHAD CR Number</p>
+              <p className="text-sm font-medium">{shipment.ghad_cr_number}</p></div>
+            <div><p className="text-xs text-gray-500 uppercase font-semibold">Port of Entry</p>
+              <p className="text-sm font-medium">{shipment.port_of_entry}</p></div>
+            <div><p className="text-xs text-gray-500 uppercase font-semibold">Country</p>
+              <p className="text-sm font-medium">{shipment.shipment_country}</p></div>
           </div>
 
-          {/* Clearance checklist */}
+          {/* Clearance checklist with timestamps and references */}
           <div className="bg-gray-50 rounded-xl p-4">
             <h3 className="text-sm font-semibold text-gray-700 mb-3">Clearance Checklist</h3>
-            <div className="space-y-2">
-              {[
-                { label: 'Received SFDA approval notification', done: ['CONFORMING', 'CLEARANCE_IN_PROGRESS', 'BOND_RELEASED', 'DUTIES_PAID', 'FINAL_CLEARANCE'].includes(shipment.current_state) },
-                { label: 'Clearance procedures initiated', done: ['CLEARANCE_IN_PROGRESS', 'BOND_RELEASED', 'DUTIES_PAID', 'FINAL_CLEARANCE'].includes(shipment.current_state) },
-                { label: 'Customs bond released', done: ['BOND_RELEASED', 'DUTIES_PAID', 'FINAL_CLEARANCE'].includes(shipment.current_state) },
-                { label: 'Customs duties paid', done: ['DUTIES_PAID', 'FINAL_CLEARANCE'].includes(shipment.current_state) },
-                { label: 'Final clearance confirmed', done: shipment.current_state === 'FINAL_CLEARANCE' },
-              ].map((item, i) => (
-                <div key={i} className="flex items-center gap-3">
-                  <span className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${item.done ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-400'}`}>
+            <div className="space-y-3">
+              {checklist.map((item, i) => (
+                <div key={i} className={`flex items-start gap-3 p-3 rounded-lg ${item.done ? 'bg-green-50' : 'bg-white border border-gray-200'}`}>
+                  <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5 ${item.done ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-400'}`}>
                     {item.done ? '✓' : i + 1}
                   </span>
-                  <span className={`text-sm ${item.done ? 'text-green-700 font-medium' : 'text-gray-500'}`}>
-                    {item.label}
-                  </span>
+                  <div className="flex-1">
+                    <p className={`text-sm font-medium ${item.done ? 'text-green-700' : 'text-gray-500'}`}>
+                      {item.label}
+                    </p>
+                    {item.done && item.timestamp && (
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        Completed: {formatDate(item.timestamp)}
+                      </p>
+                    )}
+                    {item.done && item.reference && (
+                      <p className="text-xs text-blue-600 mt-0.5 font-medium">
+                        Ref: {item.reference}
+                      </p>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Action area */}
-          {actions.length > 0 && (
+          {/* Next action */}
+          {nextAction && (
             <div className="space-y-3">
               <h3 className="text-sm font-semibold text-gray-700">Next Action Required</h3>
               {error && <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-red-700 text-sm">{error}</div>}
+
+              {nextAction.requiresRef && (
+                <div>
+                  <label className="text-xs font-semibold text-gray-600 uppercase">Reference Number / Document Number *</label>
+                  <input type="text" value={reference}
+                    onChange={e => setReference(e.target.value)}
+                    placeholder={nextAction.placeholder}
+                    className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2" />
+                </div>
+              )}
+
               <div>
                 <label className="text-xs font-semibold text-gray-600 uppercase">Notes (optional)</label>
                 <textarea value={notes} onChange={e => setNotes(e.target.value)}
                   rows={2} placeholder="Any notes about this action..."
                   className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none" />
               </div>
-              <div className="flex gap-3">
-                {actions.map((action, i) => (
-                  <button key={i} onClick={() => transition(action.state)}
-                    disabled={acting}
-                    className="flex-1 py-2.5 text-white font-semibold text-sm rounded-lg hover:opacity-90 disabled:opacity-50"
-                    style={{background: action.color}}>
-                    {acting ? 'Processing...' : action.label}
-                  </button>
-                ))}
-              </div>
+
+              <button
+                onClick={() => performAction(nextAction.action, nextAction.requiresRef)}
+                disabled={acting}
+                className="w-full py-2.5 text-white font-semibold text-sm rounded-lg hover:opacity-90 disabled:opacity-50"
+                style={{background: nextAction.color}}>
+                {acting ? 'Processing...' : nextAction.label}
+              </button>
             </div>
           )}
 
           {shipment.current_state === 'FINAL_CLEARANCE' && (
             <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-center">
               <p className="text-green-700 font-semibold text-lg">✓ Clearance Complete</p>
-              <p className="text-green-600 text-sm mt-1">All clearance steps have been completed successfully.</p>
+              <p className="text-green-600 text-sm mt-1">All clearance steps completed successfully.</p>
+              {task?.completed_at && (
+                <p className="text-green-500 text-xs mt-1">Completed: {formatDate(task.completed_at)}</p>
+              )}
             </div>
           )}
         </div>
