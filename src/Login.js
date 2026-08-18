@@ -16,7 +16,11 @@ export default function Login({ onLogin }) {
     organisation_name: '',
     organisation_type: 'IMPORTER',
     requested_role: 'IMPORTER',
-    cr_number: ''
+    cr_number: '',
+    ghad_cr_number: '',
+    sfda_facility_number: '',
+    cr_document: null,
+    sfda_certificate: null
   });
 
   const handleLogin = async (e) => {
@@ -56,10 +60,22 @@ export default function Login({ onLogin }) {
     setSuccess(null);
 
     try {
+      const formData = new FormData();
+      formData.append('full_name', registerForm.full_name);
+      formData.append('email', registerForm.email);
+      formData.append('password', registerForm.password);
+      formData.append('organisation_name', registerForm.organisation_name);
+      formData.append('organisation_type', registerForm.organisation_type);
+      formData.append('requested_role', registerForm.requested_role);
+      formData.append('cr_number', registerForm.cr_number || '');
+      formData.append('ghad_cr_number', registerForm.ghad_cr_number || '');
+      formData.append('sfda_facility_number', registerForm.sfda_facility_number || '');
+      if (registerForm.cr_document) formData.append('cr_document', registerForm.cr_document);
+      if (registerForm.sfda_certificate) formData.append('sfda_certificate', registerForm.sfda_certificate);
+
       const response = await fetch(`${API_URL}/auth/register`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(registerForm)
+        body: formData
       });
 
       const data = await response.json();
@@ -255,9 +271,37 @@ export default function Login({ onLogin }) {
                     className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2"
                   />
                 </div>
+                <div>
+                  <label className="text-xs font-semibold text-gray-600 uppercase">CR Document (PDF) *</label>
+                  <div className="mt-1 border-2 border-dashed border-gray-300 rounded-lg p-3 text-center">
+                    <input type="file" accept=".pdf" id="cr-doc" className="hidden"
+                      onChange={e => setRegisterForm({...registerForm, cr_document: e.target.files[0]})} />
+                    <label htmlFor="cr-doc" className="cursor-pointer">
+                      {registerForm.cr_document ? (
+                        <p className="text-xs text-green-600 font-medium">✓ {registerForm.cr_document.name}</p>
+                      ) : (
+                        <p className="text-xs text-gray-500">📄 Click to upload CR document</p>
+                      )}
+                    </label>
+                  </div>
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-gray-600 uppercase">SFDA Facility Certificate (PDF)</label>
+                  <div className="mt-1 border-2 border-dashed border-gray-300 rounded-lg p-3 text-center">
+                    <input type="file" accept=".pdf" id="sfda-cert" className="hidden"
+                      onChange={e => setRegisterForm({...registerForm, sfda_certificate: e.target.files[0]})} />
+                    <label htmlFor="sfda-cert" className="cursor-pointer">
+                      {registerForm.sfda_certificate ? (
+                        <p className="text-xs text-green-600 font-medium">✓ {registerForm.sfda_certificate.name}</p>
+                      ) : (
+                        <p className="text-xs text-gray-500">📄 Click to upload SFDA facility certificate</p>
+                      )}
+                    </label>
+                  </div>
+                </div>
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                  <p className="text-xs text-blue-700 font-semibold">📄 Document Verification</p>
-                  <p className="text-xs text-blue-600 mt-1">After submitting your registration, the DEMARA team will contact you to collect copies of your CR document and SFDA facility certificate. Your account will be activated after verification.</p>
+                  <p className="text-xs text-blue-700 font-semibold">📋 Document Verification</p>
+                  <p className="text-xs text-blue-600 mt-1">Uploaded documents will be reviewed by the DEMARA team. Your account will be activated after verification — typically within 1 business day.</p>
                 </div>
                 <div>
                   <label className="text-xs font-semibold text-gray-600 uppercase">Organisation Type</label>
