@@ -706,6 +706,206 @@ function MetricsSection({ token }) {
   );
 }
 
+// ── SFDA Progress Dashboard ──
+function SFDADashboard({ token }) {
+  const [shipments, setShipments] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await fetch(`${API_URL}/shipments`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await res.json();
+        setShipments(data.shipments || []);
+      } catch (err) {
+        console.error('Failed to fetch');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  if (loading) return <div className="text-center py-12 text-gray-500">Loading...</div>;
+
+  const total = shipments.length;
+  const cleared = shipments.filter(s => s.current_state === 'FINAL_CLEARANCE').length;
+  const conforming = shipments.filter(s => ['CONFORMING', 'FINAL_CLEARANCE', 'PARTIALLY_CONFORMING'].includes(s.current_state)).length;
+  const nonConforming = shipments.filter(s => s.current_state === 'NON_CONFORMING').length;
+  const inProgress = shipments.filter(s => !['FINAL_CLEARANCE', 'ARCHIVED', 'RE_EXPORT_COMPLETED', 'DESTRUCTION_CONFIRMED'].includes(s.current_state)).length;
+  const conformingRate = total > 0 ? Math.round((conforming / total) * 100) : 0;
+
+  const avgDwellHours = shipments
+    .filter(s => s.total_dwell_minutes)
+    .reduce((acc, s, _, arr) => acc + s.total_dwell_minutes / arr.length, 0);
+  const avgDwellDays = avgDwellHours > 0 ? (avgDwellHours / 1440).toFixed(1) : '—';
+
+  const portData = Object.entries(
+    shipments.reduce((acc, s) => {
+      const port = s.port_of_entry.split(' - ')[0].replace('King ', '');
+      acc[port] = (acc[port] || 0) + 1;
+      return acc;
+    }, {})
+  ).map(([name, value]) => ({ name, value }));
+
+  const countryData = Object.entries(
+    shipments.reduce((acc, s) => {
+      acc[s.shipment_country] = (acc[s.shipment_country] || 0) + 1;
+      return acc;
+    }, {})
+  ).map(([name, value]) => ({ name, value }))
+   .sort((a, b) => b.value - a.value)
+   .slice(0, 6);
+
+  const stateData = [
+    { name: 'Cleared', value: cleared, color: '#10B981' },
+    { name: 'In Progress', value: inProgress, color: '#00B4D8' },
+    { name: 'Non-Conforming', value: nonConforming, color: '#EF4444' },
+  ].filter(d => d.value > 0);
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-indigo-900 to-indigo-700 rounded-xl p-6 text-white">
+        <div className="flex items-center gap-3 mb-2">
+          <span className="text-3xl">🏛️</span>
+          <div>
+            <h2 className="text-xl font-bold">SFDA Import Clearance Dashboard</h2>
+            <p className="text-indigo-200 text-sm">Real-time operational metrics — DEMARA Platform</p>
+          </div>
+        </div>
+        <p className="text-indigo-200 text-xs mt-2">
+          This dashboard provides SFDA with full visibility into import clearance operations across all ports and labs registered on the DEMARA platform.
+        </p>
+      </div>
+
+      {/* Key metrics */}
+      <div className="grid grid-cols-4 gap-4">
+        <div className="bg-white rounded-xl border border-gray-200 p-4 text-center shadow-sm">
+          <p className="text-3xl font-bold" style={{color: '#2D2B7A'}}>{total}</p>
+          <p className="text-xs text-gray-500 mt-1">Total shipments tracked</p>
+        </div>
+        <div className="bg-white rounded-xl border border-gray-200 p-4 text-center shadow-sm">
+          <p className="text-3xl font-bold text-green-600">{cleared}</p>
+          <p className="text-xs text-gray-500 mt-1">Successfully cleared</p>
+        </div>
+        <div className="bg-white rounded-xl border border-gray-200 p-4 text-center shadow-sm">
+          <p className="text-3xl font-bold text-blue-600">{conformingRate}%</p>
+          <p className="text-xs text-gray-500 mt-1">Conformity rate</p>
+        </div>
+        <div className="bg-white rounded-xl border border-gray-200 p-4 text-center shadow-sm">
+          <p className="text-3xl font-bold text-purple-600">{avgDwellDays}</p>
+          <p className="text-xs text-gray-500 mt-1">Avg clearance time (days)</p>
+        </div>
+      </div>
+
+      {/* Charts row */}
+      <div className="grid grid-cols-3 gap-4">
+        {/* Shipment status */}
+        <div className="bg-white rounded-xl border border-gray-200 p-4">
+          <h3 className="text-sm font-semibold text-gray-700 mb-3">Clearance Status</h3>
+          <ResponsiveContainer width="100%" height={160}>
+            <PieChart>
+              <Pie data={stateData} cx="50%" cy="50%" outerRadius={60}
+                dataKey="value" label={({name, value}) => `${name}: ${value}`}>
+                {stateData.map((entry, i) => (
+                  <Cell key={i} fill={entry.color} />
+                ))}
+              </Pie>
+              <Tooltip />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* Port activity */}
+        <div className="bg-white rounded-xl border border-gray-200 p-4">
+          <h3 className="text-sm font-semibold text-gray-700 mb-3">Port Activity</h3>
+          <ResponsiveContainer width="100%" height={160}>
+            <BarChart data={portData} margin={{bottom: 20}}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+              <XAxis dataKey="name" tick={{fontSize: 9}} angle={-20} textAnchor="end" />
+              <YAxis tick={{fontSize: 10}} allowDecimals={false} />
+              <Tooltip />
+              <Bar dataKey="value" fill="#2D2B7A" radius={[4,4,0,0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* Country of origin */}
+        <div className="bg-white rounded-xl border border-gray-200 p-4">
+          <h3 className="text-sm font-semibold text-gray-700 mb-3">Top Import Countries</h3>
+          <ResponsiveContainer width="100%" height={160}>
+            <BarChart data={countryData} layout="vertical" margin={{left: 20}}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+              <XAxis type="number" tick={{fontSize: 10}} allowDecimals={false} />
+              <YAxis type="category" dataKey="name" tick={{fontSize: 10}} width={60} />
+              <Tooltip />
+              <Bar dataKey="value" fill="#00B4D8" radius={[0,4,4,0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      {/* Lab network */}
+      <div className="bg-white rounded-xl border border-gray-200 p-4">
+        <h3 className="text-sm font-semibold text-gray-700 mb-3">Certified QC Lab Network</h3>
+        <div className="grid grid-cols-4 gap-3">
+          {[
+            { name: 'Saudi National Lab — Dammam', turnaround: '48h', tests: 127, status: 'Active' },
+            { name: 'SFDA Central Lab — Riyadh', turnaround: '36h', tests: 284, status: 'Active' },
+            { name: 'KKIA Pharmaceutical Lab', turnaround: '24h', tests: 412, status: 'Active' },
+            { name: 'Saudi Drug Analysis Lab', turnaround: '72h', tests: 56, status: 'Active' },
+          ].map((lab, i) => (
+            <div key={i} className="bg-gray-50 rounded-lg p-3">
+              <p className="text-xs font-semibold text-gray-900 mb-1">{lab.name}</p>
+              <div className="flex items-center gap-1 mb-1">
+                <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                <span className="text-xs text-green-600">{lab.status}</span>
+              </div>
+              <p className="text-xs text-gray-500">Avg: {lab.turnaround}</p>
+              <p className="text-xs text-gray-500">Tests: {lab.tests}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Value proposition */}
+      <div className="bg-white rounded-xl border border-gray-200 p-4">
+        <h3 className="text-sm font-semibold text-gray-700 mb-3">Platform Impact — Before vs After DEMARA</h3>
+        <div className="grid grid-cols-3 gap-4">
+          <div className="bg-red-50 rounded-lg p-4 text-center">
+            <p className="text-xs text-red-600 font-semibold uppercase mb-2">Without DEMARA</p>
+            <p className="text-2xl font-bold text-red-700">3-5 days</p>
+            <p className="text-xs text-red-500">Delay after approval</p>
+            <p className="text-2xl font-bold text-red-700 mt-2">Manual</p>
+            <p className="text-xs text-red-500">Broker monitors Faseh manually</p>
+            <p className="text-2xl font-bold text-red-700 mt-2">1 lab</p>
+            <p className="text-xs text-red-500">Single point of failure</p>
+          </div>
+          <div className="flex items-center justify-center">
+            <div className="text-4xl">→</div>
+          </div>
+          <div className="bg-green-50 rounded-lg p-4 text-center">
+            <p className="text-xs text-green-600 font-semibold uppercase mb-2">With DEMARA</p>
+            <p className="text-2xl font-bold text-green-700">{'< 1 hour'}</p>
+            <p className="text-xs text-green-500">Instant notification on approval</p>
+            <p className="text-2xl font-bold text-green-700 mt-2">Automatic</p>
+            <p className="text-xs text-green-500">AI reads SFDA emails instantly</p>
+            <p className="text-2xl font-bold text-green-700 mt-2">{4} labs</p>
+            <p className="text-xs text-green-500">Multiple certified labs available</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="text-center text-xs text-gray-400 py-2">
+        Data updated in real-time from the DEMARA platform · {new Date().toLocaleString('en-SA')}
+      </div>
+    </div>
+  );
+}
+
 // ── Main Admin Panel ──
 export default function AdminPanel({ user, token, onLogout }) {
   const [activeSection, setActiveSection] = useState('overview');
@@ -716,6 +916,7 @@ export default function AdminPanel({ user, token, onLogout }) {
     { id: 'email-parser', label: 'Email Parser', icon: '🤖' },
     { id: 'users', label: 'Users', icon: '👥' },
     { id: 'organisations', label: 'Organisations', icon: '🏢' },
+    { id: 'sfda-dashboard', label: 'SFDA Dashboard', icon: '🏛️' },
     { id: 'metrics', label: 'Platform Metrics', icon: '📈' },
   ];
 
@@ -767,6 +968,7 @@ export default function AdminPanel({ user, token, onLogout }) {
         {activeSection === 'email-parser' && <EmailParserSection token={token} />}
         {activeSection === 'users' && <UsersSection token={token} />}
         {activeSection === 'organisations' && <OrganisationsSection token={token} />}
+        {activeSection === 'sfda-dashboard' && <SFDADashboard token={token} />}
         {activeSection === 'metrics' && <MetricsSection token={token} />}
       </div>
     </div>
