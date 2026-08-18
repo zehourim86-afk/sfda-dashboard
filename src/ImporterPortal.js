@@ -965,6 +965,33 @@ function ShipmentDetailModal({ shipmentId, token, onClose }) {
             <PartialConformingAction shipment={shipment} token={token} onClose={onClose} />
           )}
 
+          {/* Download dwell time report */}
+          {shipment.current_state === 'FINAL_CLEARANCE' && (
+            <div className="flex justify-center">
+              <button
+                onClick={async () => {
+                  try {
+                    const res = await fetch(`${API_URL}/shipments/${shipment.id}/dwell-report`, {
+                      headers: { Authorization: `Bearer ${token}` }
+                    });
+                    const blob = await res.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `dwell-report-${shipment.faseh_request_number}.pdf`;
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                  } catch (err) {
+                    console.error('Download failed');
+                  }
+                }}
+                className="flex items-center gap-2 px-4 py-2 text-white text-sm font-medium rounded-lg hover:opacity-90"
+                style={{background: '#2D2B7A'}}>
+                📄 Download Dwell Time Report
+              </button>
+            </div>
+          )}
+
           {/* Timeline */}
           {shipment.audit_log && shipment.audit_log.length > 0 && (
             <div>
