@@ -85,6 +85,15 @@ function ShipmentActionModal({ shipment, token, onClose, onRefresh }) {
         { label: 'Re-export or destruction completed', done: ['RE_EXPORT_COMPLETED', 'DESTRUCTION_CONFIRMED'].includes(shipment.current_state), timestamp: task?.completed_at, reference: null },
       ];
     }
+        if (shipment.current_state === 'PARTIAL_CLEARANCE_IN_PROGRESS' || shipment.current_state === 'PARTIAL_FINAL_CLEARANCE') {
+      return [
+        { label: 'Received SFDA partially conforming decision', done: true, timestamp: task?.notified_at, reference: null },
+        { label: 'MAH selected actions for non-conforming products', done: true, timestamp: null, reference: null },
+        { label: 'Conforming products — bond released', done: ['PARTIAL_FINAL_CLEARANCE'].includes(shipment.current_state), timestamp: task?.bond_released_at, reference: task?.bond_release_reference },
+        { label: 'Conforming products — duties paid', done: ['PARTIAL_FINAL_CLEARANCE'].includes(shipment.current_state), timestamp: task?.duties_paid_at, reference: task?.duties_payment_reference },
+        { label: 'Conforming products — final clearance', done: shipment.current_state === 'PARTIAL_FINAL_CLEARANCE', timestamp: task?.release_permit_at, reference: task?.release_permit_number },
+      ];
+    }
     if (shipment.current_state === 'CLEARANCE_ACCEPTED') {
       return [
         { label: 'Assignment accepted', done: true, timestamp: shipment.state_entered_at, reference: null },
@@ -115,9 +124,11 @@ function ShipmentActionModal({ shipment, token, onClose, onRefresh }) {
         return { label: 'Confirm Duties Paid', action: 'DUTIES_PAID', requiresRef: true, placeholder: 'SADAD payment reference or receipt number', color: '#00B4D8' };
       case 'DUTIES_PAID':
         return { label: 'Confirm Final Clearance', action: 'FINAL_CLEARANCE', requiresRef: true, placeholder: 'Release permit number', color: '#10B981' };
-      case 'NON_CONFORMING':
+           case 'NON_CONFORMING':
       case 'PARTIALLY_CONFORMING':
-        return null; // MAH selects action — not clearance company
+        return null;
+      case 'PARTIAL_CLEARANCE_IN_PROGRESS':
+        return { label: 'Confirm Bond Released for Conforming Products', action: 'BOND_RELEASED', requiresRef: true, placeholder: 'Bond release reference number', color: '#00B4D8' };
       case 'RE_EXPORT_INITIATED':
         return { label: 'Confirm Re-Export Completed', action: 'RE_EXPORT_COMPLETED', requiresRef: true, placeholder: 'Re-export bill of lading or reference number', color: '#EF4444' };
       case 'DESTRUCTION_REQUESTED':
@@ -253,6 +264,13 @@ function ShipmentActionModal({ shipment, token, onClose, onRefresh }) {
             </div>
           )}
 
+          {shipment.current_state === 'PARTIAL_FINAL_CLEARANCE' && (
+            <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-center">
+              <p className="text-green-700 font-semibold text-lg">✅ Partial Clearance Complete</p>
+              <p className="text-green-600 text-sm mt-1">Conforming products have been cleared. Non-conforming products are being handled separately.</p>
+            </div>
+          )}
+
           {shipment.current_state === 'NON_CONFORMING' && (
             <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-center">
               <p className="text-red-700 font-semibold">⚠️ Awaiting MAH Decision</p>
@@ -319,9 +337,9 @@ export default function ClearancePortal({ user, token, onLogout }) {
   };
 
   const newAssignmentStates = ['RECORD_OPENED', 'LAB_ACCEPTED', 'CLEARANCE_DECLINED'];
-  const pendingStates = ['CLEARANCE_ACCEPTED', 'CONFORMING', 'PARTIALLY_CONFORMING', 'CLEARANCE_IN_PROGRESS', 'BOND_RELEASED', 'DUTIES_PAID'];
+  const pendingStates = ['CLEARANCE_ACCEPTED', 'CONFORMING', 'PARTIALLY_CONFORMING', 'PARTIAL_CLEARANCE_IN_PROGRESS', 'CLEARANCE_IN_PROGRESS', 'BOND_RELEASED', 'DUTIES_PAID'];
   const alertStates = ['NON_CONFORMING', 'RE_EXPORT_INITIATED', 'DESTRUCTION_REQUESTED'];
-  const completedStates = ['FINAL_CLEARANCE', 'RE_EXPORT_COMPLETED', 'DESTRUCTION_CONFIRMED'];
+  const completedStates = ['FINAL_CLEARANCE', 'PARTIAL_FINAL_CLEARANCE', 'RE_EXPORT_COMPLETED', 'DESTRUCTION_CONFIRMED'];
 
   const newAssignmentShipments = shipments.filter(s => newAssignmentStates.includes(s.current_state));
   const pendingShipments = shipments.filter(s => pendingStates.includes(s.current_state));

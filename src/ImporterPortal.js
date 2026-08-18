@@ -490,6 +490,126 @@ Saudi Food and Drug Authority`;
   );
 }
 
+// Partial Conforming Action Component
+function PartialConformingAction({ shipment, token, onClose }) {
+  const [acting, setActing] = useState(false);
+  const [error, setError] = useState(null);
+  const [productActions, setProductActions] = useState({});
+
+  useEffect(() => {
+    if (shipment.products) {
+      const actions = {};
+      shipment.products.forEach(p => {
+        if (p.current_decision === 'REJECTED') {
+          actions[p.id] = 'reexport';
+        }
+      });
+      setProductActions(actions);
+    }
+  }, [shipment]);
+
+  const handleSubmit = async () => {
+    setActing(true);
+    setError(null);
+    try {
+      // Update per-product actions
+      for (const [productId, action] of Object.entries(productActions)) {
+        await fetch(`${API_URL}/shipments/${shipment.id}/products/${productId}/decision`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({
+            decision: 'REJECTED',
+            decision_notes: action === 'reexport' ? 'MAH selected re-export' : 'MAH selected destruction'
+          })
+        });
+      }
+
+      // Transition to partial clearance
+      const res = await fetch(`${API_URL}/shipments/${shipment.id}/transition`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          new_state: 'PARTIAL_CLEARANCE_IN_PROGRESS',
+          notes: 'MAH selected actions for non-conforming products',
+          trigger_source: 'MANUAL'
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        onClose();
+      } else {
+        setError(data.message || 'Action failed');
+      }
+    } catch (err) {
+      setError('Failed to connect to platform');
+    } finally {
+      setActing(false);
+    }
+  };
+
+  const rejectedProducts = shipment.products?.filter(p => p.current_decision === 'REJECTED') || [];
+  const approvedProducts = shipment.products?.filter(p => p.current_decision === 'APPROVED') || [];
+
+  return (
+    <div className="space-y-3">
+      {/* Approved products */}
+      {approvedProducts.length > 0 && (
+        <div className="bg-green-50 border border-green-200 rounded-xl p-4">
+          <h3 className="text-sm font-semibold text-green-700 mb-2">✅ Conforming Products — Will Proceed to Clearance</h3>
+          <div className="space-y-1">
+            {approvedProducts.map(p => (
+              <div key={p.id} className="flex items-center gap-2">
+                <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                <p className="text-xs text-green-700">{p.product_name_en}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Rejected products — per product action */}
+      {rejectedProducts.length > 0 && (
+        <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+          <h3 className="text-sm font-semibold text-red-700 mb-2">❌ Non-Conforming Products — Select Action Per Product</h3>
+          {error && <div className="bg-red-100 rounded-lg p-2 text-red-700 text-xs mb-3">{error}</div>}
+          <div className="space-y-3">
+            {rejectedProducts.map(p => (
+              <div key={p.id} className="bg-white rounded-lg p-3 border border-red-100">
+                <p className="text-xs font-medium text-gray-900 mb-2">{p.product_name_en}</p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setProductActions({...productActions, [p.id]: 'reexport'})}
+                    className={`flex-1 py-1.5 text-xs font-medium rounded-lg border-2 transition-colors ${
+                      productActions[p.id] === 'reexport'
+                        ? 'bg-orange-500 text-white border-orange-500'
+                        : 'bg-white text-orange-600 border-orange-300'
+                    }`}>
+                    🚢 Re-Export
+                  </button>
+                  <button
+                    onClick={() => setProductActions({...productActions, [p.id]: 'destruction'})}
+                    className={`flex-1 py-1.5 text-xs font-medium rounded-lg border-2 transition-colors ${
+                      productActions[p.id] === 'destruction'
+                        ? 'bg-gray-600 text-white border-gray-600'
+                        : 'bg-white text-gray-600 border-gray-300'
+                    }`}>
+                    🗑️ Destruction
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+          <button onClick={handleSubmit} disabled={acting}
+            className="mt-3 w-full py-2.5 text-white font-semibold text-sm rounded-lg hover:opacity-90 disabled:opacity-50"
+            style={{background: '#2D2B7A'}}>
+            {acting ? 'Processing...' : 'Confirm Actions & Proceed'}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // Non-Conforming Action Component
 function NonConformingAction({ shipment, token, onClose }) {
   const [acting, setActing] = useState(false);
@@ -672,8 +792,13 @@ function ShipmentDetailModal({ shipmentId, token, onClose }) {
           )}
 
           {/* Non-conforming action selection */}
-          {(shipment.current_state === 'NON_CONFORMING' || shipment.current_state === 'PARTIALLY_CONFORMING') && (
+          {shipment.current_state === 'NON_CONFORMING' && (
             <NonConformingAction shipment={shipment} token={token} onClose={onClose} />
+          )}
+
+          {/* Partially conforming — per product actions */}
+          {shipment.current_state === 'PARTIALLY_CONFORMING' && (
+            <PartialConformingAction shipment={shipment} token={token} onClose={onClose} />
           )}
 
           {/* Timeline */}
