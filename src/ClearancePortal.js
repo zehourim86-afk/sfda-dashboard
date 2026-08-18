@@ -84,6 +84,15 @@ function ShipmentActionModal({ shipment, token, onClose, onRefresh }) {
         { label: 'Re-export or destruction completed', done: ['RE_EXPORT_COMPLETED', 'DESTRUCTION_CONFIRMED'].includes(shipment.current_state), timestamp: task?.completed_at, reference: null },
       ];
     }
+    if (shipment.current_state === 'CLEARANCE_ACCEPTED') {
+      return [
+        { label: 'Assignment accepted', done: true, timestamp: shipment.state_entered_at, reference: null },
+        { label: 'Awaiting SFDA conforming decision', done: false, timestamp: null, reference: null },
+        { label: 'Bond release', done: false, timestamp: null, reference: null },
+        { label: 'Duties payment', done: false, timestamp: null, reference: null },
+        { label: 'Final clearance', done: false, timestamp: null, reference: null },
+      ];
+    }
     return [
       { label: 'Received SFDA approval notification', done: true, timestamp: task?.notified_at, reference: null },
       { label: 'Clearance procedures initiated', done: ['CLEARANCE_IN_PROGRESS', 'BOND_RELEASED', 'DUTIES_PAID', 'FINAL_CLEARANCE'].includes(shipment.current_state), timestamp: task?.acknowledged_at, reference: null },
@@ -300,6 +309,7 @@ export default function ClearancePortal({ user, token, onLogout }) {
         fetchShipments();
         setDecliningShipment(null);
         setDeclineReason('');
+        if (response === 'ACCEPTED') setActiveTab('pending');
         alert(data.message);
       }
     } catch (err) {
