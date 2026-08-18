@@ -610,6 +610,160 @@ function PartialConformingAction({ shipment, token, onClose }) {
   );
 }
 
+// Reassign Lab Component
+function ReassignLabModal({ shipment, token, onClose }) {
+  const [labs, setLabs] = useState([]);
+  const [selectedLabId, setSelectedLabId] = useState('');
+  const [selectedLabInfo, setSelectedLabInfo] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchLabs = async () => {
+      try {
+        const res = await fetch(`${API_URL}/admin/labs`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await res.json();
+        setLabs(data.labs || []);
+      } catch (err) {
+        console.error('Failed to fetch labs');
+      }
+    };
+    fetchLabs();
+  }, []);
+
+  const handleReassign = async () => {
+    if (!selectedLabId) { setError('Please select a lab'); return; }
+    setSubmitting(true);
+    setError(null);
+    try {
+      const res = await fetch(`${API_URL}/shipments/${shipment.id}/reassign`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ lab_id: selectedLabId })
+      });
+      const data = await res.json();
+      if (data.success) {
+        onClose();
+      } else {
+        setError(data.message || 'Failed to reassign');
+      }
+    } catch (err) {
+      setError('Failed to connect to platform');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="bg-orange-50 border border-orange-200 rounded-xl p-4">
+      <h3 className="text-sm font-semibold text-orange-700 mb-2">⚠️ Lab Declined — Select New QC Lab</h3>
+      <p className="text-xs text-orange-600 mb-3">The selected lab declined your assignment. Please select a different certified QC lab.</p>
+      {error && <div className="bg-red-100 rounded-lg p-2 text-red-700 text-xs mb-3">{error}</div>}
+      <select value={selectedLabId}
+        onChange={e => {
+          setSelectedLabId(e.target.value);
+          const selected = labs.find(l => l.id === e.target.value);
+          setSelectedLabInfo(selected || null);
+        }}
+        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none mb-3">
+        <option value="">Select a new QC lab</option>
+        {labs.map(l => (
+          <option key={l.id} value={l.id}>
+            {l.name_en} {l.average_turnaround_hours ? `— ~${l.average_turnaround_hours}h` : ''}
+          </option>
+        ))}
+      </select>
+      {selectedLabInfo && (
+        <div className="bg-white rounded-lg p-3 border border-orange-100 mb-3">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-semibold text-gray-900">{selectedLabInfo.name_en}</p>
+            {selectedLabInfo.sfda_appointment_number && (
+              <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">✓ SFDA Appointed</span>
+            )}
+          </div>
+          {selectedLabInfo.average_turnaround_hours && (
+            <p className="text-xs text-gray-500 mt-1">Avg turnaround: {selectedLabInfo.average_turnaround_hours}h · Tests: {selectedLabInfo.total_tests_completed}</p>
+          )}
+        </div>
+      )}
+      <button onClick={handleReassign} disabled={submitting || !selectedLabId}
+        className="w-full py-2.5 text-white font-semibold text-sm rounded-lg hover:opacity-90 disabled:opacity-50"
+        style={{background: '#2D2B7A'}}>
+        {submitting ? 'Reassigning...' : 'Confirm New Lab Selection'}
+      </button>
+    </div>
+  );
+}
+
+// Reassign Clearance Company Component
+function ReassignClearanceModal({ shipment, token, onClose }) {
+  const [companies, setCompanies] = useState([]);
+  const [selectedId, setSelectedId] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchCompanies = async () => {
+      try {
+        const res = await fetch(`${API_URL}/admin/organisations`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await res.json();
+        setCompanies((data.organisations || []).filter(o => o.org_type === 'CLEARANCE_COMPANY'));
+      } catch (err) {
+        console.error('Failed to fetch companies');
+      }
+    };
+    fetchCompanies();
+  }, []);
+
+  const handleReassign = async () => {
+    if (!selectedId) { setError('Please select a clearance company'); return; }
+    setSubmitting(true);
+    setError(null);
+    try {
+      const res = await fetch(`${API_URL}/shipments/${shipment.id}/reassign`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ clearance_company_id: selectedId })
+      });
+      const data = await res.json();
+      if (data.success) {
+        onClose();
+      } else {
+        setError(data.message || 'Failed to reassign');
+      }
+    } catch (err) {
+      setError('Failed to connect to platform');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="bg-orange-50 border border-orange-200 rounded-xl p-4">
+      <h3 className="text-sm font-semibold text-orange-700 mb-2">⚠️ Clearance Company Declined — Select New Company</h3>
+      <p className="text-xs text-orange-600 mb-3">The selected clearance company declined your assignment. Please select a different company.</p>
+      {error && <div className="bg-red-100 rounded-lg p-2 text-red-700 text-xs mb-3">{error}</div>}
+      <select value={selectedId}
+        onChange={e => setSelectedId(e.target.value)}
+        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none mb-3">
+        <option value="">Select a new clearance company</option>
+        {companies.map(c => (
+          <option key={c.id} value={c.id}>{c.name_en}</option>
+        ))}
+      </select>
+      <button onClick={handleReassign} disabled={submitting || !selectedId}
+        className="w-full py-2.5 text-white font-semibold text-sm rounded-lg hover:opacity-90 disabled:opacity-50"
+        style={{background: '#2D2B7A'}}>
+        {submitting ? 'Reassigning...' : 'Confirm New Clearance Company'}
+      </button>
+    </div>
+  );
+}
+
 // Non-Conforming Action Component
 function NonConformingAction({ shipment, token, onClose }) {
   const [acting, setActing] = useState(false);
@@ -789,6 +943,16 @@ function ShipmentDetailModal({ shipmentId, token, onClose }) {
                 ))}
               </div>
             </div>
+          )}
+
+          {/* Lab declined — MAH must select new lab */}
+          {shipment.current_state === 'LAB_DECLINED' && (
+            <ReassignLabModal shipment={shipment} token={token} onClose={onClose} />
+          )}
+
+          {/* Clearance declined — MAH must select new clearance company */}
+          {shipment.current_state === 'CLEARANCE_DECLINED' && (
+            <ReassignClearanceModal shipment={shipment} token={token} onClose={onClose} />
           )}
 
           {/* Non-conforming action selection */}
