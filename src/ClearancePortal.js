@@ -261,7 +261,9 @@ export default function ClearancePortal({ user, token, onLogout }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedShipment, setSelectedShipment] = useState(null);
-  const [activeTab, setActiveTab] = useState('pending');
+  const [decliningShipment, setDecliningShipment] = useState(null);
+  const [declineReason, setDeclineReason] = useState('');
+  const [activeTab, setActiveTab] = useState('new');
   const [search, setSearch] = useState('');
 
   const fetchShipments = async () => {
@@ -286,15 +288,37 @@ export default function ClearancePortal({ user, token, onLogout }) {
     return () => clearInterval(interval);
   }, []);
 
-  const pendingStates = ['CONFORMING', 'PARTIALLY_CONFORMING', 'CLEARANCE_IN_PROGRESS', 'BOND_RELEASED', 'DUTIES_PAID'];
+    const handleClearanceResponse = async (shipmentId, response, reason) => {
+    try {
+      const res = await fetch(`${API_URL}/shipments/${shipmentId}/clearance-response`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ response, decline_reason: reason })
+      });
+      const data = await res.json();
+      if (data.success) {
+        fetchShipments();
+        setDecliningShipment(null);
+        setDeclineReason('');
+        alert(data.message);
+      }
+    } catch (err) {
+      console.error('Clearance response failed');
+    }
+  };
+
+  const newAssignmentStates = ['RECORD_OPENED', 'LAB_ACCEPTED', 'CLEARANCE_DECLINED'];
+  const pendingStates = ['CLEARANCE_ACCEPTED', 'CONFORMING', 'PARTIALLY_CONFORMING', 'CLEARANCE_IN_PROGRESS', 'BOND_RELEASED', 'DUTIES_PAID'];
   const alertStates = ['NON_CONFORMING', 'RE_EXPORT_INITIATED', 'DESTRUCTION_REQUESTED'];
   const completedStates = ['FINAL_CLEARANCE', 'RE_EXPORT_COMPLETED', 'DESTRUCTION_CONFIRMED'];
 
+  const newAssignmentShipments = shipments.filter(s => newAssignmentStates.includes(s.current_state));
   const pendingShipments = shipments.filter(s => pendingStates.includes(s.current_state));
   const alertShipments = shipments.filter(s => alertStates.includes(s.current_state));
   const completedShipments = shipments.filter(s => completedStates.includes(s.current_state));
 
   const filtered = (
+    activeTab === 'new' ? newAssignmentShipments :
     activeTab === 'pending' ? pendingShipments :
     activeTab === 'alerts' ? alertShipments :
     completedShipments
@@ -362,6 +386,11 @@ export default function ClearancePortal({ user, token, onLogout }) {
       <div className="px-6 pt-4">
         <div className="flex items-center justify-between mb-3">
           <div className="flex gap-2 border-b border-gray-200">
+            <button onClick={() => setActiveTab('new')}
+              className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === 'new' ? 'border-b-2' : 'border-transparent text-gray-500'}`}
+              style={activeTab === 'new' ? {borderColor: '#F59E0B', color: '#F59E0B'} : {}}>
+              New Assignments ({newAssignmentShipments.length})
+            </button>
             <button onClick={() => setActiveTab('pending')}
               className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === 'pending' ? 'border-b-2' : 'border-transparent text-gray-500'}`}
               style={activeTab === 'pending' ? {borderColor: '#2D2B7A', color: '#2D2B7A'} : {}}>
@@ -436,12 +465,29 @@ export default function ClearancePortal({ user, token, onLogout }) {
                     </td>
                     <td className="px-4 py-3 text-xs text-gray-500">{formatDate(s.updated_at)}</td>
                     <td className="px-4 py-3">
-                      <button onClick={() => setSelectedShipment(s)}
-                        className={`px-3 py-1 text-xs font-medium rounded-lg text-white hover:opacity-90 ${s.current_state === 'CONFORMING' ? 'animate-pulse' : ''}`}
-                        style={{background: s.current_state === 'NON_CONFORMING' ? '#EF4444' : '#2D2B7A'}}>
-                        {s.current_state === 'CONFORMING' ? '⚡ Act Now' :
-                         s.current_state === 'NON_CONFORMING' ? '⚠ Handle' : 'Manage'}
-                      </button>
+                      {newAssignmentStates.includes(s.current_state) && s.current_state !== 'CLEARANCE_DECLINED' ? (
+                        <div className="flex gap-1">
+                          <button onClick={() => handleClearanceResponse(s.id, 'ACCEPTED')}
+                            className="px-2 py-1 text-xs font-medium rounded-lg text-white hover:opacity-90"
+                            style={{background: '#10B981'}}>
+                            ✓ Accept
+                          </button>
+                          <button onClick={() => setDecliningShipment(s)}
+                            className="px-2 py-1 text-xs font-medium rounded-lg text-white hover:opacity-90"
+                            style={{background: '#EF4444'}}>
+                            ✕ Decline
+                          </button>
+                        </div>
+                      ) : s.current_state === 'CLEARANCE_DECLINED' ? (
+                        <span className="text-xs text-red-600 font-medium">✕ Declined</span>
+                      ) : (
+                        <button onClick={() => setSelectedShipment(s)}
+                          className={`px-3 py-1 text-xs font-medium rounded-lg text-white hover:opacity-90 ${s.current_state === 'CONFORMING' ? 'animate-pulse' : ''}`}
+                          style={{background: s.current_state === 'NON_CONFORMING' ? '#EF4444' : '#2D2B7A'}}>
+                          {s.current_state === 'CONFORMING' ? '⚡ Act Now' :
+                           s.current_state === 'NON_CONFORMING' ? '⚠ Handle' : 'Manage'}
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -450,6 +496,31 @@ export default function ClearancePortal({ user, token, onLogout }) {
           </div>
         )}
       </div>
+
+      {decliningShipment && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
+            <h2 className="text-lg font-bold text-gray-900 mb-2">Decline Assignment</h2>
+            <p className="text-sm text-gray-500 mb-4">{decliningShipment.faseh_request_number}</p>
+            <label className="text-xs font-semibold text-gray-600 uppercase">Reason for declining *</label>
+            <textarea value={declineReason} onChange={e => setDeclineReason(e.target.value)}
+              rows={3} placeholder="Please provide a reason..."
+              className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none" />
+            <div className="flex gap-3 mt-4">
+              <button onClick={() => handleClearanceResponse(decliningShipment.id, 'DECLINED', declineReason)}
+                disabled={!declineReason.trim()}
+                className="flex-1 py-2 text-white font-semibold text-sm rounded-lg hover:opacity-90 disabled:opacity-50"
+                style={{background: '#EF4444'}}>
+                Confirm Decline
+              </button>
+              <button onClick={() => { setDecliningShipment(null); setDeclineReason(''); }}
+                className="px-4 py-2 border border-gray-300 text-gray-600 text-sm rounded-lg hover:bg-gray-50">
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {selectedShipment && (
         <ShipmentActionModal
