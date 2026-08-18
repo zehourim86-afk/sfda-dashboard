@@ -236,6 +236,30 @@ export default function Login({ onLogin }) {
                   />
                 </div>
                 <div>
+                  <label className="text-xs font-semibold text-gray-600 uppercase">GHAD CR Number</label>
+                  <input
+                    type="text"
+                    value={registerForm.ghad_cr_number}
+                    onChange={e => setRegisterForm({...registerForm, ghad_cr_number: e.target.value})}
+                    placeholder="e.g. CR-1234567890"
+                    className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-gray-600 uppercase">SFDA Facility Registration Number</label>
+                  <input
+                    type="text"
+                    value={registerForm.sfda_facility_number}
+                    onChange={e => setRegisterForm({...registerForm, sfda_facility_number: e.target.value})}
+                    placeholder="e.g. SFDA-FAC-2024-00441"
+                    className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2"
+                  />
+                </div>
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <p className="text-xs text-blue-700 font-semibold">📄 Document Verification</p>
+                  <p className="text-xs text-blue-600 mt-1">After submitting your registration, the DEMARA team will contact you to collect copies of your CR document and SFDA facility certificate. Your account will be activated after verification.</p>
+                </div>
+                <div>
                   <label className="text-xs font-semibold text-gray-600 uppercase">Organisation Type</label>
                   <select
                     value={registerForm.organisation_type}
