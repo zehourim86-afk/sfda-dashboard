@@ -76,38 +76,24 @@ function ShipmentActionModal({ shipment, token, onClose, onRefresh }) {
     }
   };
 
-  const checklist = [
-    {
-      label: 'Received SFDA approval notification',
-      done: true,
-      timestamp: task?.notified_at,
-      reference: null
-    },
-    {
-      label: 'Clearance procedures initiated',
-      done: ['CLEARANCE_IN_PROGRESS', 'BOND_RELEASED', 'DUTIES_PAID', 'FINAL_CLEARANCE'].includes(shipment.current_state),
-      timestamp: task?.acknowledged_at,
-      reference: null
-    },
-    {
-      label: 'Customs bond released',
-      done: ['BOND_RELEASED', 'DUTIES_PAID', 'FINAL_CLEARANCE'].includes(shipment.current_state),
-      timestamp: task?.bond_released_at,
-      reference: task?.bond_release_reference
-    },
-    {
-      label: 'Customs duties paid',
-      done: ['DUTIES_PAID', 'FINAL_CLEARANCE'].includes(shipment.current_state),
-      timestamp: task?.duties_paid_at,
-      reference: task?.duties_payment_reference
-    },
-    {
-      label: 'Final clearance confirmed',
-      done: shipment.current_state === 'FINAL_CLEARANCE',
-      timestamp: task?.release_permit_at,
-      reference: task?.release_permit_number
-    },
-  ];
+  const getChecklist = () => {
+    if (['NON_CONFORMING', 'PARTIALLY_CONFORMING', 'RE_EXPORT_INITIATED', 'RE_EXPORT_COMPLETED', 'DESTRUCTION_REQUESTED', 'DESTRUCTION_CONFIRMED'].includes(shipment.current_state)) {
+      return [
+        { label: 'Received SFDA non-conforming decision', done: true, timestamp: task?.notified_at, reference: null },
+        { label: 'MAH selected action (re-export or destruction)', done: ['RE_EXPORT_INITIATED', 'RE_EXPORT_COMPLETED', 'DESTRUCTION_REQUESTED', 'DESTRUCTION_CONFIRMED'].includes(shipment.current_state), timestamp: null, reference: null },
+        { label: 'Re-export or destruction completed', done: ['RE_EXPORT_COMPLETED', 'DESTRUCTION_CONFIRMED'].includes(shipment.current_state), timestamp: task?.completed_at, reference: null },
+      ];
+    }
+    return [
+      { label: 'Received SFDA approval notification', done: true, timestamp: task?.notified_at, reference: null },
+      { label: 'Clearance procedures initiated', done: ['CLEARANCE_IN_PROGRESS', 'BOND_RELEASED', 'DUTIES_PAID', 'FINAL_CLEARANCE'].includes(shipment.current_state), timestamp: task?.acknowledged_at, reference: null },
+      { label: 'Customs bond released', done: ['BOND_RELEASED', 'DUTIES_PAID', 'FINAL_CLEARANCE'].includes(shipment.current_state), timestamp: task?.bond_released_at, reference: task?.bond_release_reference },
+      { label: 'Customs duties paid', done: ['DUTIES_PAID', 'FINAL_CLEARANCE'].includes(shipment.current_state), timestamp: task?.duties_paid_at, reference: task?.duties_payment_reference },
+      { label: 'Final clearance confirmed', done: shipment.current_state === 'FINAL_CLEARANCE', timestamp: task?.release_permit_at, reference: task?.release_permit_number },
+    ];
+  };
+
+  const checklist = getChecklist();
 
   const getNextAction = () => {
     switch (shipment.current_state) {
@@ -120,7 +106,12 @@ function ShipmentActionModal({ shipment, token, onClose, onRefresh }) {
       case 'DUTIES_PAID':
         return { label: 'Confirm Final Clearance', action: 'FINAL_CLEARANCE', requiresRef: true, placeholder: 'Release permit number', color: '#10B981' };
       case 'NON_CONFORMING':
-        return { label: 'Initiate Re-Export', action: 'RE_EXPORT', requiresRef: false, color: '#EF4444' };
+      case 'PARTIALLY_CONFORMING':
+        return null; // MAH selects action — not clearance company
+      case 'RE_EXPORT_INITIATED':
+        return { label: 'Confirm Re-Export Completed', action: 'RE_EXPORT_COMPLETED', requiresRef: true, placeholder: 'Re-export bill of lading or reference number', color: '#EF4444' };
+      case 'DESTRUCTION_REQUESTED':
+        return { label: 'Confirm Destruction Completed', action: 'DESTRUCTION_CONFIRMED', requiresRef: true, placeholder: 'Destruction certificate reference number', color: '#EF4444' };
       default:
         return null;
     }
@@ -237,6 +228,27 @@ function ShipmentActionModal({ shipment, token, onClose, onRefresh }) {
               )}
             </div>
           )}
+
+          {shipment.current_state === 'RE_EXPORT_COMPLETED' && (
+            <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 text-center">
+              <p className="text-orange-700 font-semibold text-lg">🚢 Re-Export Completed</p>
+              <p className="text-orange-600 text-sm mt-1">Goods have been successfully re-exported out of Saudi Arabia.</p>
+            </div>
+          )}
+
+          {shipment.current_state === 'DESTRUCTION_CONFIRMED' && (
+            <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 text-center">
+              <p className="text-gray-700 font-semibold text-lg">🗑️ Destruction Confirmed</p>
+              <p className="text-gray-600 text-sm mt-1">Goods have been destroyed in accordance with SFDA requirements.</p>
+            </div>
+          )}
+
+          {shipment.current_state === 'NON_CONFORMING' && (
+            <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-center">
+              <p className="text-red-700 font-semibold">⚠️ Awaiting MAH Decision</p>
+              <p className="text-red-600 text-sm mt-1">The MAH has been notified and must select re-export or destruction.</p>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -275,7 +287,7 @@ export default function ClearancePortal({ user, token, onLogout }) {
   }, []);
 
   const pendingStates = ['CONFORMING', 'PARTIALLY_CONFORMING', 'CLEARANCE_IN_PROGRESS', 'BOND_RELEASED', 'DUTIES_PAID'];
-  const alertStates = ['NON_CONFORMING'];
+  const alertStates = ['NON_CONFORMING', 'RE_EXPORT_INITIATED', 'DESTRUCTION_REQUESTED'];
   const completedStates = ['FINAL_CLEARANCE', 'RE_EXPORT_COMPLETED', 'DESTRUCTION_CONFIRMED'];
 
   const pendingShipments = shipments.filter(s => pendingStates.includes(s.current_state));

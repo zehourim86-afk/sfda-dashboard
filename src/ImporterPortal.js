@@ -449,6 +449,60 @@ Saudi Food and Drug Authority`;
   );
 }
 
+// Non-Conforming Action Component
+function NonConformingAction({ shipment, token, onClose }) {
+  const [acting, setActing] = useState(false);
+  const [error, setError] = useState(null);
+
+  const handleAction = async (action) => {
+    setActing(true);
+    setError(null);
+    try {
+      const res = await fetch(`${API_URL}/shipments/${shipment.id}/transition`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          new_state: action === 'reexport' ? 'RE_EXPORT_INITIATED' : 'DESTRUCTION_REQUESTED',
+          notes: action === 'reexport' ? 'MAH selected re-export' : 'MAH selected destruction',
+          trigger_source: 'MANUAL'
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        onClose();
+      } else {
+        setError(data.message || 'Action failed');
+      }
+    } catch (err) {
+      setError('Failed to connect to platform');
+    } finally {
+      setActing(false);
+    }
+  };
+
+  return (
+    <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+      <h3 className="text-sm font-semibold text-red-700 mb-2">⚠️ Action Required — Non-Conforming Decision</h3>
+      <p className="text-xs text-red-600 mb-3">One or more products did not pass SFDA quality control. Please select how you wish to proceed:</p>
+      {error && <div className="bg-red-100 rounded-lg p-2 text-red-700 text-xs mb-3">{error}</div>}
+      <div className="grid grid-cols-2 gap-3">
+        <button onClick={() => handleAction('reexport')} disabled={acting}
+          className="py-3 border-2 border-red-400 rounded-xl text-center hover:bg-red-100 transition-colors disabled:opacity-50">
+          <p className="text-lg">🚢</p>
+          <p className="text-sm font-semibold text-red-700">Re-Export</p>
+          <p className="text-xs text-red-500 mt-1">Return goods to origin country</p>
+        </button>
+        <button onClick={() => handleAction('destruction')} disabled={acting}
+          className="py-3 border-2 border-gray-400 rounded-xl text-center hover:bg-gray-100 transition-colors disabled:opacity-50">
+          <p className="text-lg">🗑️</p>
+          <p className="text-sm font-semibold text-gray-700">Destruction</p>
+          <p className="text-xs text-gray-500 mt-1">Destroy goods in Saudi Arabia</p>
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // Shipment Detail Modal
 function ShipmentDetailModal({ shipmentId, token, onClose }) {
   const [shipment, setShipment] = useState(null);
@@ -567,6 +621,11 @@ function ShipmentDetailModal({ shipmentId, token, onClose }) {
             </div>
           )}
 
+          {/* Non-conforming action selection */}
+          {(shipment.current_state === 'NON_CONFORMING' || shipment.current_state === 'PARTIALLY_CONFORMING') && (
+            <NonConformingAction shipment={shipment} token={token} onClose={onClose} />
+          )}
+          
           {/* Timeline */}
           {shipment.audit_log && shipment.audit_log.length > 0 && (
             <div>
