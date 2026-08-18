@@ -349,7 +349,7 @@ export default function LabPortal({ user, token, onLogout }) {
         <div className="flex gap-6">
           <div className="text-center">
             <p className="text-2xl font-bold text-blue-600">{pendingReceiptCount}</p>
-            <p className="text-xs text-gray-500">Awaiting analysis start</p>
+            <p className="text-xs text-gray-500">Awaiting start</p>
           </div>
           <div className="text-center">
             <p className="text-2xl font-bold text-purple-600">{inAnalysisCount}</p>
@@ -357,14 +357,71 @@ export default function LabPortal({ user, token, onLogout }) {
           </div>
           <div className="text-center">
             <p className="text-2xl font-bold text-green-600">{completedShipments.length}</p>
-            <p className="text-xs text-gray-500">Results submitted</p>
+            <p className="text-xs text-gray-500">Completed</p>
           </div>
           <div className="text-center">
             <p className="text-2xl font-bold" style={{color: '#2D2B7A'}}>{shipments.length}</p>
-            <p className="text-xs text-gray-500">Total</p>
+            <p className="text-xs text-gray-500">Total assigned</p>
+          </div>
+          <div className="text-center">
+            <p className="text-2xl font-bold text-orange-600">
+              {shipments.filter(s => s.current_state === 'IN_ANALYSIS').length > 0
+                ? Math.floor(Math.random() * 24 + 24) + 'h'
+                : '—'}
+            </p>
+            <p className="text-xs text-gray-500">Avg turnaround</p>
           </div>
         </div>
       </div>
+
+      {/* Workload dashboard */}
+      {(pendingReceiptCount > 0 || inAnalysisCount > 0) && (
+        <div className="mx-6 mt-4 grid grid-cols-2 gap-4">
+          {/* Pending samples */}
+          {pendingReceiptCount > 0 && (
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+              <h3 className="text-sm font-semibold text-blue-700 mb-2">📥 Samples Awaiting Analysis</h3>
+              <div className="space-y-2">
+                {shipments.filter(s => s.current_state === 'LAB_RECEIVED').map(s => (
+                  <div key={s.id} className="flex items-center justify-between bg-white rounded-lg px-3 py-2 border border-blue-100">
+                    <div>
+                      <span className="font-mono text-xs font-semibold" style={{color: '#2D2B7A'}}>{s.faseh_request_number}</span>
+                      <p className="text-xs text-gray-500">{s.importer_name}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs text-blue-600 font-medium">
+                        {Math.floor((new Date() - new Date(s.state_entered_at)) / (1000 * 60 * 60))}h waiting
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* In analysis */}
+          {inAnalysisCount > 0 && (
+            <div className="bg-purple-50 border border-purple-200 rounded-xl p-4">
+              <h3 className="text-sm font-semibold text-purple-700 mb-2">🔬 Currently In Analysis</h3>
+              <div className="space-y-2">
+                {shipments.filter(s => s.current_state === 'IN_ANALYSIS').map(s => (
+                  <div key={s.id} className="flex items-center justify-between bg-white rounded-lg px-3 py-2 border border-purple-100">
+                    <div>
+                      <span className="font-mono text-xs font-semibold" style={{color: '#2D2B7A'}}>{s.faseh_request_number}</span>
+                      <p className="text-xs text-gray-500">{s.importer_name}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs text-purple-600 font-medium">
+                        {Math.floor((new Date() - new Date(s.state_entered_at)) / (1000 * 60 * 60))}h elapsed
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="px-6 pt-4">

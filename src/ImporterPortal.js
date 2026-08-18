@@ -82,19 +82,18 @@ function ProgressTracker({ currentStep }) {
 
 // AI Document Upload and Parse Form
 function NewShipmentForm({ token, organisations, onSuccess, onCancel }) {
-  const [step, setStep] = useState(1); // 1=upload, 2=review, 3=confirm
+  const [step, setStep] = useState(1);
   const [documentText, setDocumentText] = useState('');
   const [extractedData, setExtractedData] = useState(null);
   const [parsing, setParsing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
-  const [inputMode, setInputMode] = useState('text'); // 'text' or 'pdf'
+  const [selectedLabInfo, setSelectedLabInfo] = useState(null);
+  const [selectedLabId, setSelectedLabId] = useState('');
+  const [selectedClearanceId, setSelectedClearanceId] = useState('');
 
   const clearanceCompanies = organisations.filter(o => o.org_type === 'CLEARANCE_COMPANY');
   const labs = organisations.filter(o => o.org_type === 'LAB');
-
-  const [selectedLabId, setSelectedLabId] = useState('');
-  const [selectedClearanceId, setSelectedClearanceId] = useState('');
 
   const SAMPLE_FASEH = `KINGDOM OF SAUDI ARABIA
 Saudi Food and Drug Authority (SFDA)
@@ -386,14 +385,55 @@ Saudi Food and Drug Authority`;
                     onChange={e => setExtractedData({...extractedData, shipment_country: e.target.value})}
                     className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-xs focus:outline-none" />
                 </div>
-                <div>
-                  <label className="text-xs font-semibold text-gray-600 uppercase">QC Lab</label>
-                  <select value={selectedLabId} onChange={e => setSelectedLabId(e.target.value)}
-                    className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-xs focus:outline-none">
-                    <option value="">Select QC lab</option>
-                    {labs.map(l => <option key={l.id} value={l.id}>{l.name_en}</option>)}
-                  </select>
-                </div>
+                              <div>
+                <label className="text-xs font-semibold text-gray-600 uppercase">QC Lab</label>
+                <select value={selectedLabId}
+                  onChange={e => {
+                    setSelectedLabId(e.target.value);
+                    const selected = labs.find(l => l.id === e.target.value);
+                    setSelectedLabInfo(selected || null);
+                  }}
+                  className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2">
+                  <option value="">Select QC lab</option>
+                  {labs.map(l => (
+                    <option key={l.id} value={l.id}>
+                      {l.name_en} {l.average_turnaround_hours ? `— ~${l.average_turnaround_hours}h` : ''}
+                    </option>
+                  ))}
+                </select>
+                {selectedLabInfo && (
+                  <div className="mt-2 bg-blue-50 border border-blue-200 rounded-lg p-3">
+                    <div className="flex items-center justify-between mb-1">
+                      <p className="text-xs font-semibold text-blue-700">{selectedLabInfo.name_en}</p>
+                      {selectedLabInfo.sfda_appointment_number && (
+                        <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">✓ SFDA Appointed</span>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-2 gap-1 mt-1">
+                      {selectedLabInfo.sfda_appointment_number && (
+                        <p className="text-xs text-blue-600">SFDA: {selectedLabInfo.sfda_appointment_number}</p>
+                      )}
+                      {selectedLabInfo.iso_accreditation_number && (
+                        <p className="text-xs text-blue-600">ISO: {selectedLabInfo.iso_accreditation_number}</p>
+                      )}
+                      {selectedLabInfo.average_turnaround_hours && (
+                        <p className="text-xs text-blue-600">Avg turnaround: {selectedLabInfo.average_turnaround_hours}h</p>
+                      )}
+                      {selectedLabInfo.total_tests_completed > 0 && (
+                        <p className="text-xs text-blue-600">Tests completed: {selectedLabInfo.total_tests_completed}</p>
+                      )}
+                      {selectedLabInfo.sfda_appointment_expiry && (
+                        <p className="text-xs text-blue-600">
+                          Appointment expires: {new Date(selectedLabInfo.sfda_appointment_expiry).toLocaleDateString('en-SA', {day:'2-digit', month:'short', year:'numeric'})}
+                          {new Date(selectedLabInfo.sfda_appointment_expiry) < new Date(Date.now() + 60*24*60*60*1000) && (
+                            <span className="text-orange-600 font-medium"> ⚠️ Expiring soon</span>
+                          )}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
                 <div>
                   <label className="text-xs font-semibold text-gray-600 uppercase">Clearance Company</label>
                   <select value={selectedClearanceId} onChange={e => setSelectedClearanceId(e.target.value)}
@@ -676,14 +716,25 @@ export default function ImporterPortal({ user, token, onLogout }) {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [shipmentsRes, orgsRes] = await Promise.all([
+      const [shipmentsRes, orgsRes, labsRes] = await Promise.all([
         fetch(`${API_URL}/shipments`, { headers: { Authorization: `Bearer ${token}` } }),
-        fetch(`${API_URL}/admin/organisations`, { headers: { Authorization: `Bearer ${token}` } })
+        fetch(`${API_URL}/admin/organisations`, { headers: { Authorization: `Bearer ${token}` } }),
+        fetch(`${API_URL}/admin/labs`, { headers: { Authorization: `Bearer ${token}` } })
       ]);
       const shipmentsData = await shipmentsRes.json();
       const orgsData = await orgsRes.json();
+      const labsData = await labsRes.json();
+
+      // Merge lab profiles into organisations
+      const labProfiles = labsData.labs || [];
+      const orgs = orgsData.organisations || [];
+      const mergedOrgs = orgs.map(o => {
+        const labProfile = labProfiles.find(l => l.id === o.id);
+        return labProfile ? {...o, ...labProfile} : o;
+      });
+
       setShipments(shipmentsData.shipments || []);
-      setOrganisations(orgsData.organisations || []);
+      setOrganisations(mergedOrgs);
       setError(null);
     } catch (err) {
       setError('Failed to connect to platform.');
