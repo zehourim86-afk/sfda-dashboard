@@ -25,6 +25,55 @@ function StatCard({ label, value, color, sub }) {
   );
 }
 
+// ── Expiring Labs Alert ──
+function ExpiringLabsAlert({ token }) {
+  const [expiringLabs, setExpiringLabs] = useState([]);
+
+  useEffect(() => {
+    const fetchExpiring = async () => {
+      try {
+        const res = await fetch(`${API_URL}/admin/labs/expiring`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await res.json();
+        setExpiringLabs(data.expiring_labs || []);
+      } catch (err) {
+        console.error('Failed to fetch expiring labs');
+      }
+    };
+    fetchExpiring();
+  }, []);
+
+  if (expiringLabs.length === 0) return null;
+
+  return (
+    <div className="bg-orange-50 border border-orange-300 rounded-xl p-4 mb-4">
+      <h3 className="text-sm font-semibold text-orange-700 mb-2">
+        ⚠️ Lab Certification Renewal Required ({expiringLabs.length} lab{expiringLabs.length > 1 ? 's' : ''})
+      </h3>
+      <div className="space-y-2">
+        {expiringLabs.map(lab => (
+          <div key={lab.id} className="flex items-center justify-between bg-white rounded-lg px-3 py-2 border border-orange-100">
+            <div>
+              <p className="text-sm font-medium text-gray-900">{lab.name_en}</p>
+              <p className="text-xs text-gray-500">SFDA: {lab.sfda_appointment_number}</p>
+            </div>
+            <div className="text-right">
+              <p className={`text-xs font-bold ${parseInt(lab.days_remaining) <= 30 ? 'text-red-600' : 'text-orange-600'}`}>
+                {parseInt(lab.days_remaining) <= 0 ? 'EXPIRED' : `${parseInt(lab.days_remaining)} days left`}
+              </p>
+              <p className="text-xs text-gray-500">
+                Expires: {new Date(lab.sfda_appointment_expiry).toLocaleDateString('en-SA', {day:'2-digit', month:'short', year:'numeric'})}
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+      <p className="text-xs text-orange-600 mt-2">Contact these labs to renew their SFDA appointment certificates before expiry.</p>
+    </div>
+  );
+}
+
 // ── Overview Section ──
 function OverviewSection({ token }) {
   const [stats, setStats] = useState(null);
@@ -107,6 +156,9 @@ function OverviewSection({ token }) {
           </ResponsiveContainer>
         </div>
       </div>
+
+      {/* Expiring lab certificates alert */}
+      <ExpiringLabsAlert token={token} />
 
       {/* Recent activity */}
       {stats?.recent_activity?.length > 0 && (
