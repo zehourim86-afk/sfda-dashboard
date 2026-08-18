@@ -30,6 +30,7 @@ const STATE_INFO = {
 function SampleActionModal({ shipment, token, onClose, onRefresh }) {
   const [acting, setActing] = useState(false);
   const [sealId, setSealId] = useState('');
+  const [samplePhoto, setSamplePhoto] = useState(null);
   const [notes, setNotes] = useState('');
   const [error, setError] = useState(null);
 
@@ -43,7 +44,7 @@ function SampleActionModal({ shipment, token, onClose, onRefresh }) {
     setActing(true);
     setError(null);
     try {
-      const actionNotes = sealId ? `Seal ID: ${sealId}${notes ? ' — ' + notes : ''}` : notes;
+      const actionNotes = sealId ? `Seal ID: ${sealId}${notes ? ' — ' + notes : ''}${samplePhoto ? ' — Photo uploaded' : ''}` : notes;
 
       const res = await fetch(`${API_URL}/shipments/${shipment.id}/transition`, {
         method: 'POST',
@@ -117,14 +118,43 @@ function SampleActionModal({ shipment, token, onClose, onRefresh }) {
 
           {error && <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-red-700 text-sm">{error}</div>}
 
-          {/* Seal ID — only when collecting sample */}
+          {/* Seal ID and photo — only when collecting sample */}
           {shipment.current_state === 'INSPECTOR_DISPATCHED' && (
-            <div>
-              <label className="text-xs font-semibold text-gray-600 uppercase">Seal ID *</label>
-              <input type="text" value={sealId} onChange={e => setSealId(e.target.value)}
-                placeholder="e.g. SEAL-SA-2026-00441"
-                className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2" />
-              <p className="text-xs text-gray-400 mt-1">Record the seal ID placed on the sample container</p>
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-semibold text-gray-600 uppercase">Seal ID *</label>
+                <input type="text" value={sealId} onChange={e => setSealId(e.target.value)}
+                  placeholder="e.g. SEAL-SA-2026-00441"
+                  className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2" />
+                <p className="text-xs text-gray-400 mt-1">Record the seal ID placed on the sample container</p>
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-gray-600 uppercase">Sample Photo</label>
+                <div className="mt-1 border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                  <input type="file" accept="image/*" id="sample-photo" className="hidden"
+                    onChange={e => {
+                      const file = e.target.files[0];
+                      if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (ev) => setSamplePhoto(ev.target.result);
+                        reader.readAsDataURL(file);
+                      }
+                    }}
+                  />
+                  {samplePhoto ? (
+                    <div>
+                      <img src={samplePhoto} alt="Sample" className="max-h-32 mx-auto rounded-lg" />
+                      <button type="button" onClick={() => setSamplePhoto(null)}
+                        className="mt-2 text-xs text-red-500 hover:underline">Remove photo</button>
+                    </div>
+                  ) : (
+                    <label htmlFor="sample-photo" className="cursor-pointer">
+                      <p className="text-2xl mb-1">📷</p>
+                      <p className="text-xs text-gray-500">Click to take or upload a photo of the sealed sample</p>
+                    </label>
+                  )}
+                </div>
+              </div>
             </div>
           )}
 
