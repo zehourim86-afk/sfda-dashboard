@@ -19,11 +19,11 @@ const INSPECTOR_STATES = [
 ];
 
 const STATE_INFO = {
-  SAMPLING_REQUESTED: { label: 'Sampling Requested', color: 'bg-orange-100 text-orange-700', action: 'Confirm Dispatch to Port', next: 'INSPECTOR_DISPATCHED' },
-  INSPECTOR_DISPATCHED: { label: 'Dispatched to Port', color: 'bg-blue-100 text-blue-700', action: 'Confirm Sample Collected', next: 'SAMPLE_COLLECTED' },
+  SAMPLING_REQUESTED: { label: 'Collection Scheduled', color: 'bg-orange-100 text-orange-700', action: 'Confirm Sample Collection Scheduled', next: 'INSPECTOR_DISPATCHED' },
+  INSPECTOR_DISPATCHED: { label: 'Heading to Port', color: 'bg-blue-100 text-blue-700', action: 'Confirm Sample Collected at Port', next: 'SAMPLE_COLLECTED' },
   SAMPLE_COLLECTED: { label: 'Sample Collected', color: 'bg-yellow-100 text-yellow-700', action: 'Confirm In Transit to Lab', next: 'IN_TRANSIT_TO_LAB' },
   IN_TRANSIT_TO_LAB: { label: 'In Transit to Lab', color: 'bg-purple-100 text-purple-700', action: 'Confirm Lab Receipt', next: 'LAB_RECEIVED' },
-  LAB_RECEIVED: { label: 'Lab Received', color: 'bg-green-100 text-green-700', action: null, next: null },
+  LAB_RECEIVED: { label: 'Delivered to Lab', color: 'bg-green-100 text-green-700', action: null, next: null },
 };
 
 // Sample Collection Modal
@@ -231,7 +231,7 @@ export default function InspectorApp({ user, token, onLogout }) {
         <div className="flex gap-6">
           <div className="text-center">
             <p className="text-2xl font-bold text-orange-600">{samplingRequested}</p>
-            <p className="text-xs text-gray-500">Awaiting dispatch</p>
+            <p className="text-xs text-gray-500">Awaiting collection</p>
           </div>
           <div className="text-center">
             <p className="text-2xl font-bold" style={{color: '#2D2B7A'}}>{inProgress}</p>
@@ -243,10 +243,31 @@ export default function InspectorApp({ user, token, onLogout }) {
           </div>
           <div className="text-center">
             <p className="text-2xl font-bold text-gray-600">{shipments.length}</p>
-            <p className="text-xs text-gray-500">Total</p>
+            <p className="text-xs text-gray-500">Total assigned</p>
           </div>
         </div>
       </div>
+
+      {/* Workload summary */}
+      {samplingRequested > 0 && (
+        <div className="mx-6 mt-4 bg-orange-50 border border-orange-200 rounded-xl p-4">
+          <h3 className="text-sm font-semibold text-orange-700 mb-2">⚠️ Pending Sample Collections</h3>
+          <div className="space-y-2">
+            {shipments.filter(s => s.current_state === 'SAMPLING_REQUESTED').map(s => (
+              <div key={s.id} className="flex items-center justify-between bg-white rounded-lg px-3 py-2 border border-orange-100">
+                <div>
+                  <span className="font-mono text-xs font-semibold" style={{color: '#2D2B7A'}}>{s.faseh_request_number}</span>
+                  <span className="text-xs text-gray-500 ml-2">{s.importer_name}</span>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs text-gray-500">{s.port_of_entry}</p>
+                  <p className="text-xs text-orange-600 font-medium">Waiting {Math.floor((new Date() - new Date(s.state_entered_at)) / (1000 * 60 * 60))}h</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="px-6 pt-4">
