@@ -11,6 +11,9 @@ function formatDate(dateStr) {
 }
 
 const STATE_INFO = {
+  RECORD_OPENED: { label: 'Awaiting Acceptance', color: 'bg-orange-100 text-orange-700' },
+  LAB_ACCEPTED: { label: 'Accepted', color: 'bg-green-100 text-green-700' },
+  LAB_DECLINED: { label: 'Declined', color: 'bg-red-100 text-red-700' },
   LAB_RECEIVED: { label: 'Sample Received', color: 'bg-blue-100 text-blue-700' },
   IN_ANALYSIS: { label: 'In Analysis', color: 'bg-purple-100 text-purple-700' },
   ANALYSIS_COMPLETE: { label: 'Analysis Complete', color: 'bg-yellow-100 text-yellow-700' },
@@ -236,6 +239,8 @@ function SubmitResultModal({ shipment, token, onClose, onRefresh }) {
 export default function LabPortal({ user, token, onLogout }) {
   const [shipments, setShipments] = useState([]);
   const [selectedShipment, setSelectedShipment] = useState(null);
+  const [decliningShipment, setDecliningShipment] = useState(null);
+  const [declineReason, setDeclineReason] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('active');
@@ -253,6 +258,25 @@ export default function LabPortal({ user, token, onLogout }) {
       setError('Failed to connect to platform.');
     } finally {
       setLoading(false);
+    }
+  };
+
+    const handleLabResponse = async (shipmentId, response, reason) => {
+    try {
+      const res = await fetch(`${API_URL}/shipments/${shipmentId}/lab-response`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ response, decline_reason: reason })
+      });
+      const data = await res.json();
+      if (data.success) {
+        fetchData();
+        setDecliningShipment(null);
+        setDeclineReason('');
+        alert(data.message);
+      }
+    } catch (err) {
+      console.error('Lab response failed');
     }
   };
 
@@ -276,13 +300,17 @@ export default function LabPortal({ user, token, onLogout }) {
 
   const LAB_STATES = ['LAB_RECEIVED', 'IN_ANALYSIS', 'ANALYSIS_COMPLETE', 'RESULT_SUBMITTED'];
 
-  const activeShipments = shipments.filter(s => ['LAB_RECEIVED', 'IN_ANALYSIS'].includes(s.current_state));
+  const activeShipments = shipments.filter(s => ['RECORD_OPENED', 'LAB_ACCEPTED', 'LAB_DECLINED', 'LAB_RECEIVED', 'IN_ANALYSIS'].includes(s.current_state));
   const completedShipments = shipments.filter(s => ['RESULT_SUBMITTED', 'CONFORMING', 'NON_CONFORMING', 'FINAL_CLEARANCE'].includes(s.current_state));
 
   const inAnalysisCount = shipments.filter(s => s.current_state === 'IN_ANALYSIS').length;
   const pendingReceiptCount = shipments.filter(s => s.current_state === 'LAB_RECEIVED').length;
 
-  const filtered = activeTab === 'active' ? activeShipments : completedShipments;
+  const filtered = activeTab === 'active' 
+    ? activeShipments.filter(s => s.current_state !== 'LAB_DECLINED')
+    : activeTab === 'declined'
+    ? activeShipments.filter(s => s.current_state === 'LAB_DECLINED')
+    : completedShipments;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -345,7 +373,12 @@ export default function LabPortal({ user, token, onLogout }) {
             <button onClick={() => setActiveTab('active')}
               className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === 'active' ? 'border-b-2' : 'border-transparent text-gray-500'}`}
               style={activeTab === 'active' ? {borderColor: '#2D2B7A', color: '#2D2B7A'} : {}}>
-              Active ({activeShipments.length})
+              Active ({activeShipments.filter(s => s.current_state !== 'LAB_DECLINED').length})
+            </button>
+            <button onClick={() => setActiveTab('declined')}
+              className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === 'declined' ? 'border-b-2' : 'border-transparent text-gray-500'}`}
+              style={activeTab === 'declined' ? {borderColor: '#EF4444', color: '#EF4444'} : {}}>
+              Declined ({activeShipments.filter(s => s.current_state === 'LAB_DECLINED').length})
             </button>
             <button onClick={() => setActiveTab('completed')}
               className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === 'completed' ? 'border-b-2' : 'border-transparent text-gray-500'}`}
@@ -370,7 +403,9 @@ export default function LabPortal({ user, token, onLogout }) {
           <div className="text-center py-12 text-gray-400">
             <p className="text-lg">No samples in this queue</p>
             <p className="text-sm mt-1">
-              {activeTab === 'active' ? 'Samples will appear here when the inspector delivers them to the lab' : 'Completed analyses will appear here'}
+              {activeTab === 'active' ? 'Samples will appear here when the inspector delivers them to the lab' : 
+               activeTab === 'declined' ? 'Declined assignments will appear here' :
+               'Completed analyses will appear here'}
             </p>
           </div>
         ) : (
@@ -405,6 +440,23 @@ export default function LabPortal({ user, token, onLogout }) {
                       </td>
                       <td className="px-4 py-3 text-xs text-gray-500">{formatDate(s.state_entered_at)}</td>
                       <td className="px-4 py-3">
+                        {s.current_state === 'RECORD_OPENED' && (
+                          <div className="flex gap-1">
+                            <button onClick={() => handleLabResponse(s.id, 'ACCEPTED')}
+                              className="px-2 py-1 text-xs font-medium rounded-lg text-white hover:opacity-90"
+                              style={{background: '#10B981'}}>
+                              ✓ Accept
+                            </button>
+                            <button onClick={() => setDecliningShipment(s)}
+                              className="px-2 py-1 text-xs font-medium rounded-lg text-white hover:opacity-90"
+                              style={{background: '#EF4444'}}>
+                              ✕ Decline
+                            </button>
+                          </div>
+                        )}
+                        {s.current_state === 'LAB_ACCEPTED' && (
+                          <span className="text-xs text-green-600 font-medium">✓ Accepted</span>
+                        )}
                         {['LAB_RECEIVED', 'IN_ANALYSIS'].includes(s.current_state) && (
                           <button onClick={() => fetchShipmentDetail(s)}
                             className="px-3 py-1 text-xs font-medium rounded-lg text-white hover:opacity-90"
@@ -424,6 +476,31 @@ export default function LabPortal({ user, token, onLogout }) {
           </div>
         )}
       </div>
+
+      {decliningShipment && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
+            <h2 className="text-lg font-bold text-gray-900 mb-2">Decline Assignment</h2>
+            <p className="text-sm text-gray-500 mb-4">{decliningShipment.faseh_request_number}</p>
+            <label className="text-xs font-semibold text-gray-600 uppercase">Reason for declining *</label>
+            <textarea value={declineReason} onChange={e => setDeclineReason(e.target.value)}
+              rows={3} placeholder="Please provide a reason..."
+              className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none" />
+            <div className="flex gap-3 mt-4">
+              <button onClick={() => handleLabResponse(decliningShipment.id, 'DECLINED', declineReason)}
+                disabled={!declineReason.trim()}
+                className="flex-1 py-2 text-white font-semibold text-sm rounded-lg hover:opacity-90 disabled:opacity-50"
+                style={{background: '#EF4444'}}>
+                Confirm Decline
+              </button>
+              <button onClick={() => { setDecliningShipment(null); setDeclineReason(''); }}
+                className="px-4 py-2 border border-gray-300 text-gray-600 text-sm rounded-lg hover:bg-gray-50">
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {selectedShipment && (
         <SubmitResultModal
