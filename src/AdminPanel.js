@@ -194,6 +194,7 @@ function ShipmentsSection({ token }) {
                 <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Lab</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Clearance Co.</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">State</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Dwell Time</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Updated</th>
               </tr>
             </thead>
@@ -219,6 +220,9 @@ function ShipmentsSection({ token }) {
                     }`}>
                       {s.current_state.replace(/_/g, ' ')}
                     </span>
+                  </td>
+                  <td className="px-4 py-3 text-xs text-gray-500">
+                    {s.total_dwell_minutes ? `${Math.floor(s.total_dwell_minutes / 1440)}d ${Math.floor((s.total_dwell_minutes % 1440) / 60)}h` : '—'}
                   </td>
                   <td className="px-4 py-3 text-xs text-gray-500">{formatDate(s.updated_at)}</td>
                 </tr>

@@ -575,6 +575,15 @@ function ShipmentDetailModal({ shipmentId, token, onClose }) {
               <p className="text-sm font-medium">{shipment.lab_name || '—'}</p></div>
             <div><p className="text-xs text-gray-500 uppercase font-semibold">Clearance Company</p>
               <p className="text-sm font-medium">{shipment.clearance_company_name || '—'}</p></div>
+            {shipment.total_dwell_minutes && (
+              <div className="col-span-2 bg-green-50 border border-green-200 rounded-lg p-3">
+                <p className="text-xs text-gray-500 uppercase font-semibold">Total Dwell Time</p>
+                <p className="text-lg font-bold text-green-700">
+                  {Math.floor(shipment.total_dwell_minutes / 1440)} days {Math.floor((shipment.total_dwell_minutes % 1440) / 60)} hours
+                </p>
+                <p className="text-xs text-green-600 mt-0.5">From record opened to final clearance</p>
+              </div>
+            )}
           </div>
 
           {/* Products */}
@@ -625,7 +634,7 @@ function ShipmentDetailModal({ shipmentId, token, onClose }) {
           {(shipment.current_state === 'NON_CONFORMING' || shipment.current_state === 'PARTIALLY_CONFORMING') && (
             <NonConformingAction shipment={shipment} token={token} onClose={onClose} />
           )}
-          
+
           {/* Timeline */}
           {shipment.audit_log && shipment.audit_log.length > 0 && (
             <div>
