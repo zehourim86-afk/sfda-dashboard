@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import NotificationBell from './NotificationBell';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell
@@ -792,6 +793,7 @@ export default function ImporterPortal({ user, token, onLogout }) {
               <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
               Connected
             </span>
+            <NotificationBell token={token} />
             {user && (
               <div className="flex items-center gap-2 bg-white bg-opacity-10 rounded-lg px-3 py-1.5">
                 <div className="text-right">
