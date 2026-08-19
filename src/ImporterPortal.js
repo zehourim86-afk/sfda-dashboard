@@ -955,6 +955,24 @@ function ShipmentDetailModal({ shipmentId, token, onClose }) {
             <ReassignClearanceModal shipment={shipment} token={token} onClose={onClose} />
           )}
 
+          {/* Success moment on FINAL_CLEARANCE */}
+          {shipment.current_state === 'FINAL_CLEARANCE' && (
+            <div className="bg-green-50 border-2 border-green-400 rounded-xl p-5 text-center">
+              <div className="text-5xl mb-3">🎉</div>
+              <h3 className="text-lg font-bold text-green-700">Shipment Successfully Cleared!</h3>
+              <p className="text-sm text-green-600 mt-1">All products have passed SFDA quality control and customs clearance is complete.</p>
+              {shipment.total_dwell_minutes && (
+                <div className="mt-3 inline-block bg-white rounded-lg px-4 py-2 border border-green-200">
+                  <p className="text-xs text-gray-500">Total clearance time</p>
+                  <p className="text-lg font-bold text-green-700">
+                    {Math.floor(shipment.total_dwell_minutes / 1440)} days {Math.floor((shipment.total_dwell_minutes % 1440) / 60)} hours
+                  </p>
+                </div>
+              )}
+              <p className="text-xs text-green-500 mt-3">Your release certificate has been emailed to you. Your goods are ready for collection.</p>
+            </div>
+          )}
+          
           {/* Non-conforming action selection */}
           {shipment.current_state === 'NON_CONFORMING' && (
             <NonConformingAction shipment={shipment} token={token} onClose={onClose} />
