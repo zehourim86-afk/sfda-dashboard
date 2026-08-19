@@ -1019,6 +1019,113 @@ function ShipmentDetailModal({ shipmentId, token, onClose }) {
   );
 }
 
+// Compliance Profile Component
+function ComplianceProfile({ shipments, user }) {
+  const [expanded, setExpanded] = useState(false);
+
+  const total = shipments.length;
+  const cleared = shipments.filter(s => s.current_state === 'FINAL_CLEARANCE').length;
+  const nonConforming = shipments.filter(s => ['NON_CONFORMING', 'RE_EXPORT_COMPLETED', 'DESTRUCTION_CONFIRMED'].includes(s.current_state)).length;
+  const conformityRate = total > 0 ? Math.round((cleared / total) * 100) : 0;
+
+  const avgDwellMinutes = shipments
+    .filter(s => s.total_dwell_minutes)
+    .reduce((acc, s, _, arr) => acc + s.total_dwell_minutes / arr.length, 0);
+  const avgDwellDays = avgDwellMinutes > 0 ? (avgDwellMinutes / 1440).toFixed(1) : '—';
+
+  const cleanStreak = (() => {
+    const sorted = [...shipments]
+      .filter(s => ['FINAL_CLEARANCE', 'NON_CONFORMING', 'RE_EXPORT_COMPLETED', 'DESTRUCTION_CONFIRMED'].includes(s.current_state))
+      .sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
+    let streak = 0;
+    for (const s of sorted) {
+      if (s.current_state === 'FINAL_CLEARANCE') streak++;
+      else break;
+    }
+    return streak;
+  })();
+
+  const riskLevel = conformityRate >= 90 ? { label: 'Low Risk', color: 'text-green-600', bg: 'bg-green-50', border: 'border-green-200' } :
+                    conformityRate >= 70 ? { label: 'Medium Risk', color: 'text-orange-600', bg: 'bg-orange-50', border: 'border-orange-200' } :
+                    { label: 'High Risk', color: 'text-red-600', bg: 'bg-red-50', border: 'border-red-200' };
+
+  if (total === 0) return null;
+
+  return (
+    <div className={`mx-6 mt-4 rounded-xl border ${riskLevel.border} ${riskLevel.bg} overflow-hidden`}>
+      <div className="flex items-center justify-between px-4 py-3 cursor-pointer" onClick={() => setExpanded(!expanded)}>
+        <div className="flex items-center gap-3">
+          <span className="text-lg">📋</span>
+          <div>
+            <p className="text-sm font-semibold text-gray-900">Your Compliance Profile</p>
+            <p className="text-xs text-gray-500">{user?.full_name} · {user?.organisation_name || 'DEMARA Platform'}</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-4">
+          <span className={`px-3 py-1 rounded-full text-xs font-bold ${riskLevel.color} border ${riskLevel.border} bg-white`}>
+            {riskLevel.label}
+          </span>
+          <span className="text-gray-400 text-sm">{expanded ? '▲' : '▼'}</span>
+        </div>
+      </div>
+
+      {expanded && (
+        <div className="px-4 pb-4 border-t border-gray-100 bg-white">
+          <div className="grid grid-cols-4 gap-4 mt-4">
+            <div className="text-center p-3 bg-gray-50 rounded-lg">
+              <p className="text-2xl font-bold" style={{color: '#2D2B7A'}}>{total}</p>
+              <p className="text-xs text-gray-500 mt-1">Total shipments</p>
+            </div>
+            <div className="text-center p-3 bg-green-50 rounded-lg">
+              <p className="text-2xl font-bold text-green-600">{conformityRate}%</p>
+              <p className="text-xs text-gray-500 mt-1">Conformity rate</p>
+            </div>
+            <div className="text-center p-3 bg-blue-50 rounded-lg">
+              <p className="text-2xl font-bold text-blue-600">{avgDwellDays}</p>
+              <p className="text-xs text-gray-500 mt-1">Avg dwell (days)</p>
+            </div>
+            <div className="text-center p-3 bg-purple-50 rounded-lg">
+              <p className="text-2xl font-bold text-purple-600">{cleanStreak}</p>
+              <p className="text-xs text-gray-500 mt-1">Clean streak</p>
+            </div>
+          </div>
+
+          <div className="mt-4">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-xs text-gray-500">Conformity rate</span>
+              <span className="text-xs font-semibold text-gray-700">{conformityRate}%</span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div className="h-2 rounded-full transition-all" style={{
+                width: `${conformityRate}%`,
+                background: conformityRate >= 90 ? '#10B981' : conformityRate >= 70 ? '#F59E0B' : '#EF4444'
+              }}></div>
+            </div>
+          </div>
+
+          {nonConforming > 0 && (
+            <div className="mt-3 bg-red-50 border border-red-100 rounded-lg p-3">
+              <p className="text-xs text-red-700 font-medium">⚠️ {nonConforming} non-conforming shipment{nonConforming > 1 ? 's' : ''} on record</p>
+              <p className="text-xs text-red-500 mt-0.5">Review your supplier quality certificates to improve your conformity rate.</p>
+            </div>
+          )}
+
+          {cleanStreak >= 3 && (
+            <div className="mt-3 bg-green-50 border border-green-100 rounded-lg p-3">
+              <p className="text-xs text-green-700 font-medium">🏆 {cleanStreak} consecutive conforming shipments</p>
+              <p className="text-xs text-green-500 mt-0.5">Excellent compliance record. You may qualify for expedited clearance.</p>
+            </div>
+          )}
+
+          <p className="text-xs text-gray-400 mt-3 text-center">
+            This compliance profile is calculated from your DEMARA shipment history and updated in real time.
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // Main MAH Portal
 export default function ImporterPortal({ user, token, onLogout }) {
   const [shipments, setShipments] = useState([]);
@@ -1148,8 +1255,17 @@ export default function ImporterPortal({ user, token, onLogout }) {
             <p className="text-2xl font-bold text-red-600">{nonConformingCount}</p>
             <p className="text-xs text-gray-500">Non-conforming</p>
           </div>
+          <div className="text-center">
+            <p className="text-2xl font-bold text-green-600">
+              {shipments.length > 0 ? Math.round((completedShipments.filter(s => s.current_state === 'FINAL_CLEARANCE').length / shipments.length) * 100) : 0}%
+            </p>
+            <p className="text-xs text-gray-500">Conformity rate</p>
+          </div>
         </div>
       </div>
+
+      {/* Compliance Profile Banner */}
+      <ComplianceProfile shipments={shipments} user={user} />
 
       {/* Charts */}
       {shipments.length > 0 && (
