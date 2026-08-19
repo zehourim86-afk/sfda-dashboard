@@ -1349,6 +1349,37 @@ export default function ImporterPortal({ user, token, onLogout }) {
         </div>
       </div>
 
+      {/* Welcome banner for new MAH */}
+      {shipments.length === 0 && (
+        <div className="mx-6 mt-4 bg-gradient-to-r from-blue-600 to-blue-800 rounded-xl p-6 text-white">
+          <h2 className="text-lg font-bold mb-1">Welcome to DEMARA Platform 👋</h2>
+          <p className="text-blue-200 text-sm mb-4">Get started in three simple steps:</p>
+          <div className="grid grid-cols-3 gap-4">
+            <div className="bg-white bg-opacity-10 rounded-lg p-4">
+              <div className="text-2xl mb-2">1️⃣</div>
+              <p className="text-sm font-semibold">Upload your Faseh document</p>
+              <p className="text-xs text-blue-200 mt-1">Click + Open New Record and upload or paste your Faseh confirmation. DEMARA AI extracts all details automatically.</p>
+            </div>
+            <div className="bg-white bg-opacity-10 rounded-lg p-4">
+              <div className="text-2xl mb-2">2️⃣</div>
+              <p className="text-sm font-semibold">Select your QC lab and clearance company</p>
+              <p className="text-xs text-blue-200 mt-1">Choose from SFDA-certified labs and licensed clearance companies. View performance metrics to make the best choice.</p>
+            </div>
+            <div className="bg-white bg-opacity-10 rounded-lg p-4">
+              <div className="text-2xl mb-2">3️⃣</div>
+              <p className="text-sm font-semibold">Track and get notified automatically</p>
+              <p className="text-xs text-blue-200 mt-1">DEMARA monitors every step. You receive instant email notifications when SFDA issues a decision — no manual checking needed.</p>
+            </div>
+          </div>
+          <div className="mt-4 flex justify-center">
+            <button onClick={() => setShowNewForm(true)}
+              className="px-6 py-2.5 bg-white text-blue-700 font-semibold text-sm rounded-lg hover:bg-blue-50 transition-colors">
+              + Open Your First Shipment Record
+            </button>
+          </div>
+        </div>
+      )}
+      
       {/* Compliance Profile Banner */}
       <ComplianceProfile shipments={shipments} user={user} />
 
