@@ -405,19 +405,29 @@ Saudi Food and Drug Authority`;
                   }}
                   className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2">
                   <option value="">Select QC lab</option>
-                  {labs.map(l => (
-                    <option key={l.id} value={l.id}>
-                      {l.name_en} {l.average_turnaround_hours ? `— ~${l.average_turnaround_hours}h` : ''}
-                    </option>
-                  ))}
+                  {labs
+                    .sort((a, b) => (a.average_turnaround_hours || 99) - (b.average_turnaround_hours || 99))
+                    .map(l => {
+                      const isTopPerformer = l.average_turnaround_hours <= 36 && l.total_tests_completed >= 200;
+                      return (
+                        <option key={l.id} value={l.id}>
+                          {isTopPerformer ? '⭐ ' : ''}{l.name_en} {l.average_turnaround_hours ? `— ~${l.average_turnaround_hours}h` : ''}
+                        </option>
+                      );
+                    })}
                 </select>
                 {selectedLabInfo && (
                   <div className="mt-2 bg-blue-50 border border-blue-200 rounded-lg p-3">
                     <div className="flex items-center justify-between mb-1">
                       <p className="text-xs font-semibold text-blue-700">{selectedLabInfo.name_en}</p>
-                      {selectedLabInfo.sfda_appointment_number && (
-                        <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">✓ SFDA Appointed</span>
-                      )}
+                      <div className="flex gap-1">
+                        {selectedLabInfo.average_turnaround_hours <= 36 && selectedLabInfo.total_tests_completed >= 200 && (
+                          <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full font-medium">⭐ Top Performer</span>
+                        )}
+                        {selectedLabInfo.sfda_appointment_number && (
+                          <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">✓ SFDA Appointed</span>
+                        )}
+                      </div>
                     </div>
                     <div className="grid grid-cols-2 gap-1 mt-1">
                       {selectedLabInfo.sfda_appointment_number && (
@@ -1379,7 +1389,7 @@ export default function ImporterPortal({ user, token, onLogout }) {
           </div>
         </div>
       )}
-      
+
       {/* Compliance Profile Banner */}
       <ComplianceProfile shipments={shipments} user={user} />
 
