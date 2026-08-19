@@ -972,7 +972,7 @@ function ShipmentDetailModal({ shipmentId, token, onClose }) {
               <p className="text-xs text-green-500 mt-3">Your release certificate has been emailed to you. Your goods are ready for collection.</p>
             </div>
           )}
-          
+
           {/* Non-conforming action selection */}
           {shipment.current_state === 'NON_CONFORMING' && (
             <NonConformingAction shipment={shipment} token={token} onClose={onClose} />
@@ -1034,6 +1034,64 @@ function ShipmentDetailModal({ shipmentId, token, onClose }) {
         </div>
       </div>
     </div>
+  );
+}
+
+// Estimated Clearance Component
+function EstimatedClearance({ shipment, organisations }) {
+  const lab = organisations.find(o => o.id === shipment.lab_id);
+  const avgTurnaroundHours = lab?.average_turnaround_hours || 48;
+
+  const stateOrder = [
+    'RECORD_OPENED', 'LAB_ACCEPTED', 'SAMPLING_REQUESTED', 'INSPECTOR_DISPATCHED',
+    'SAMPLE_COLLECTED', 'IN_TRANSIT_TO_LAB', 'LAB_RECEIVED', 'IN_ANALYSIS',
+    'RESULT_SUBMITTED', 'CONFORMING', 'CLEARANCE_IN_PROGRESS', 'BOND_RELEASED',
+    'DUTIES_PAID', 'FINAL_CLEARANCE'
+  ];
+
+  const currentIndex = stateOrder.indexOf(shipment.current_state);
+  if (currentIndex < 0 || currentIndex >= stateOrder.length - 1) return null;
+
+  // Estimate hours remaining based on current state
+  const hoursRemaining = (() => {
+    switch (shipment.current_state) {
+      case 'RECORD_OPENED':
+      case 'LAB_ACCEPTED':
+      case 'CLEARANCE_ACCEPTED':
+        return avgTurnaroundHours + 24 + 8; // lab + clearance
+      case 'SAMPLING_REQUESTED':
+      case 'INSPECTOR_DISPATCHED':
+        return avgTurnaroundHours + 16;
+      case 'SAMPLE_COLLECTED':
+      case 'IN_TRANSIT_TO_LAB':
+        return avgTurnaroundHours + 8;
+      case 'LAB_RECEIVED':
+        return avgTurnaroundHours + 8;
+      case 'IN_ANALYSIS':
+        return avgTurnaroundHours / 2 + 8;
+      case 'RESULT_SUBMITTED':
+      case 'CONFORMING':
+        return 8;
+      case 'CLEARANCE_IN_PROGRESS':
+      case 'BOND_RELEASED':
+      case 'DUTIES_PAID':
+        return 4;
+      default:
+        return null;
+    }
+  })();
+
+  if (!hoursRemaining) return null;
+
+  const estimatedDate = new Date(Date.now() + hoursRemaining * 60 * 60 * 1000);
+  const formattedDate = estimatedDate.toLocaleDateString('en-SA', {
+    day: '2-digit', month: 'short', year: 'numeric'
+  });
+
+  return (
+    <p className="text-xs text-blue-600 mt-0.5 font-medium">
+      Est. clearance: {formattedDate}
+    </p>
   );
 }
 
@@ -1398,7 +1456,12 @@ export default function ImporterPortal({ user, token, onLogout }) {
                           {info.label}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-xs text-gray-500">{formatDate(s.updated_at)}</td>
+                      <td className="px-4 py-3">
+                        <p className="text-xs text-gray-500">{formatDate(s.updated_at)}</p>
+                        {!['FINAL_CLEARANCE', 'RE_EXPORT_COMPLETED', 'DESTRUCTION_CONFIRMED', 'ARCHIVED'].includes(s.current_state) && (
+                          <EstimatedClearance shipment={s} organisations={organisations} />
+                        )}
+                      </td>
                       <td className="px-4 py-3">
                         <button onClick={() => setSelectedShipmentId(s.id)}
                           className="px-3 py-1 text-xs font-medium rounded-lg text-white hover:opacity-90"
