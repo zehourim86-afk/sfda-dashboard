@@ -9,6 +9,7 @@ import AdminPanel from './AdminPanel';
 import NotifiedBodyPortal from './NotifiedBodyPortal';
 import GMPPortal from './GMPPortal';
 import ClearancePortal from './ClearancePortal';
+import SFDAObserverPortal from './SFDAObserverPortal';
 
 function App() {
   const [user, setUser] = useState(null);
@@ -55,7 +56,7 @@ function App() {
       case 'DEMARA_ADMIN':
         return <AdminPanel user={user} token={token} onLogout={handleLogout} />;
       case 'SFDA_REVIEWER':
-        return <Dashboard user={user} token={token} onLogout={handleLogout} />;
+        return <SFDAObserverPortal user={user} token={token} onLogout={handleLogout} />;
       case 'LAB_ANALYST':
         return <LabPortal user={user} token={token} onLogout={handleLogout} />;
       case 'SFDA_INSPECTOR':
