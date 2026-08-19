@@ -926,7 +926,11 @@ function ShipmentDetailModal({ shipmentId, token, onClose }) {
               <h3 className="text-sm font-semibold text-gray-700 mb-2">Products ({shipment.products.length})</h3>
               <div className="space-y-2">
                 {shipment.products.map(p => (
-                  <div key={p.id} className="bg-gray-50 rounded-lg p-3">
+                  <div key={p.id} className={`rounded-lg p-3 ${
+                    p.current_decision === 'REJECTED' ? 'bg-red-50 border border-red-200' :
+                    p.current_decision === 'APPROVED' ? 'bg-green-50 border border-green-200' :
+                    'bg-gray-50'
+                  }`}>
                     <div className="flex items-center justify-between">
                       <p className="font-medium text-gray-900 text-sm">{p.product_name_en}</p>
                       <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
@@ -940,6 +944,12 @@ function ShipmentDetailModal({ shipmentId, token, onClose }) {
                       {p.batch_number && <span className="text-xs text-gray-500">Batch: {p.batch_number}</span>}
                       {p.country_of_origin && <span className="text-xs text-gray-500">Origin: {p.country_of_origin}</span>}
                     </div>
+                    {p.current_decision === 'REJECTED' && p.decision_notes && (
+                      <div className="mt-2 bg-red-100 rounded-lg px-3 py-2">
+                        <p className="text-xs text-red-700 font-semibold">Rejection Reason:</p>
+                        <p className="text-xs text-red-600 mt-0.5">{p.decision_notes}</p>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

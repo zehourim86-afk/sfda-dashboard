@@ -377,6 +377,8 @@ function EmailParserSection({ token }) {
 
   const SAMPLE_CONFORMING = `FROM: decisions@sfda.gov.sa\nTO: clearance@saudiclearance.com.sa\nCC: qc@demara.sa\nSUBJECT: Clearance Decision — FASEH-2026-CS-E2E-002 — CONFORMING\n\nFaseh Reference: FASEH-2026-CS-E2E-002\nOverall Decision: CONFORMING\n\n1. Product Name: Moisturizing Face Cream 50ml\n   E-Cosma Number: COSMA-SA-2024-0099\n   Decision: APPROVED\n\n2. Product Name: Vitamin C Serum 30ml\n   E-Cosma Number: COSMA-SA-2024-0100\n   Decision: APPROVED\n\nSaudi Food and Drug Authority`;
 
+  const SAMPLE_NON_CONFORMING = `FROM: decisions@sfda.gov.sa\nTO: clearance@saudiclearance.com.sa\nCC: qc@demara.sa\nSUBJECT: Clearance Decision — FASEH-2026-CS-DEMO1 — NON-CONFORMING\n\nFaseh Reference: FASEH-2026-CS-DEMO1\nOverall Decision: NON-CONFORMING\n\n1. Product Name: Anti-Aging Night Cream 50ml\n   E-Cosma Number: COSMA-SA-2024-0211\n   Decision: REJECTED\n   Reason: Mercury content exceeds permitted limit. Measured: 2.3 mg/kg. Maximum permitted: 1.0 mg/kg.\n\n2. Product Name: Eye Contour Serum 15ml\n   E-Cosma Number: COSMA-SA-2024-0212\n   Decision: APPROVED\n\nSaudi Food and Drug Authority`;
+
   useEffect(() => {
     const fetchLogs = async () => {
       try {
@@ -430,6 +432,10 @@ function EmailParserSection({ token }) {
           <button onClick={() => setTestEmail(SAMPLE_CONFORMING)}
             className="px-3 py-1.5 text-xs border border-gray-300 rounded-lg hover:bg-gray-50">
             Load Conforming Decision Email
+          </button>
+          <button onClick={() => setTestEmail(SAMPLE_NON_CONFORMING)}
+            className="px-3 py-1.5 text-xs border border-gray-300 rounded-lg hover:bg-gray-50 text-red-600 border-red-200">
+            Load Non-Conforming Email
           </button>
         </div>
         <textarea value={testEmail} onChange={e => setTestEmail(e.target.value)}
