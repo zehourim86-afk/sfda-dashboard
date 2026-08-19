@@ -175,7 +175,16 @@ Saudi Food and Drug Authority`;
       });
       const data = await res.json();
       if (data.success) {
-        setExtractedData(data.extracted);
+        // Add confidence flags to extracted data
+        const extracted = data.extracted;
+        const confidenceFlags = {
+          faseh_request_number: extracted.faseh_request_number ? 'high' : 'low',
+          ghad_cr_number: extracted.ghad_cr_number ? 'high' : 'low',
+          importer_name: extracted.importer_name ? 'high' : 'low',
+          port_of_entry: extracted.port_of_entry ? 'high' : 'low',
+          shipment_country: extracted.shipment_country ? 'high' : 'low',
+        };
+        setExtractedData({...extracted, _confidence: confidenceFlags});
         setStep(2);
       } else {
         setError(data.message || 'Failed to parse document');
@@ -356,36 +365,36 @@ Saudi Food and Drug Authority`;
                     {extractedData.document_type?.replace(/_/g, ' ')}
                   </div>
                 </div>
-                <div>
-                  <label className="text-xs font-semibold text-gray-600 uppercase">Faseh Request Number</label>
-                  <input type="text" value={extractedData.faseh_request_number || ''}
-                    onChange={e => setExtractedData({...extractedData, faseh_request_number: e.target.value})}
-                    className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-xs focus:outline-none" />
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-gray-600 uppercase">GHAD CR Number</label>
-                  <input type="text" value={extractedData.ghad_cr_number || ''}
-                    onChange={e => setExtractedData({...extractedData, ghad_cr_number: e.target.value})}
-                    className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-xs focus:outline-none" />
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-gray-600 uppercase">Importer Name</label>
-                  <input type="text" value={extractedData.importer_name || ''}
-                    onChange={e => setExtractedData({...extractedData, importer_name: e.target.value})}
-                    className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-xs focus:outline-none" />
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-gray-600 uppercase">Port of Entry</label>
-                  <input type="text" value={extractedData.port_of_entry || ''}
-                    onChange={e => setExtractedData({...extractedData, port_of_entry: e.target.value})}
-                    className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-xs focus:outline-none" />
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-gray-600 uppercase">Shipment Country</label>
-                  <input type="text" value={extractedData.shipment_country || ''}
-                    onChange={e => setExtractedData({...extractedData, shipment_country: e.target.value})}
-                    className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-xs focus:outline-none" />
-                </div>
+                {[
+                  { key: 'faseh_request_number', label: 'Faseh Request Number' },
+                  { key: 'ghad_cr_number', label: 'GHAD CR Number' },
+                  { key: 'importer_name', label: 'Importer Name' },
+                  { key: 'port_of_entry', label: 'Port of Entry' },
+                  { key: 'shipment_country', label: 'Shipment Country' },
+                ].map(field => {
+                  const confidence = extractedData._confidence?.[field.key];
+                  const isLow = confidence === 'low';
+                  return (
+                    <div key={field.key}>
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-semibold text-gray-600 uppercase">{field.label}</label>
+                        {isLow && (
+                          <span className="text-xs text-orange-600 font-medium">⚠️ Please confirm</span>
+                        )}
+                        {!isLow && extractedData[field.key] && (
+                          <span className="text-xs text-green-600 font-medium">✓ AI extracted</span>
+                        )}
+                      </div>
+                      <input type="text" value={extractedData[field.key] || ''}
+                        onChange={e => setExtractedData({...extractedData, [field.key]: e.target.value})}
+                        className={`mt-1 w-full border rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 ${
+                          isLow ? 'border-orange-300 bg-orange-50 focus:ring-orange-200' :
+                          extractedData[field.key] ? 'border-green-300 bg-green-50' :
+                          'border-gray-300'
+                        }`} />
+                    </div>
+                  );
+                })}
                               <div>
                 <label className="text-xs font-semibold text-gray-600 uppercase">QC Lab</label>
                 <select value={selectedLabId}
