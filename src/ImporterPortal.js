@@ -509,6 +509,77 @@ Saudi Food and Drug Authority`;
   );
 }
 
+// Raise a Concern Component
+function RaiseAConcern({ shipment, token }) {
+  const [open, setOpen] = useState(false);
+  const [concern, setConcern] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState(null);
+
+  const handleSubmit = async () => {
+    if (!concern.trim()) return;
+    setSubmitting(true);
+    setError(null);
+    try {
+      const res = await fetch(`${API_URL}/shipments/${shipment.id}/concern`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ concern })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSubmitted(true);
+        setOpen(false);
+        setConcern('');
+      } else {
+        setError('Failed to submit concern');
+      }
+    } catch (err) {
+      setError('Failed to connect to platform');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (submitted) return (
+    <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-center">
+      <p className="text-xs text-green-700 font-medium">✓ Your concern has been submitted to DEMARA. We will follow up within 24 hours.</p>
+    </div>
+  );
+
+  return (
+    <div>
+      {!open ? (
+        <button onClick={() => setOpen(true)}
+          className="w-full py-2 border border-gray-300 text-gray-500 text-xs font-medium rounded-lg hover:bg-gray-50 transition-colors">
+          ⚠️ Raise a Concern About This Shipment
+        </button>
+      ) : (
+        <div className="bg-orange-50 border border-orange-200 rounded-xl p-4">
+          <h3 className="text-sm font-semibold text-orange-700 mb-2">⚠️ Raise a Concern</h3>
+          <p className="text-xs text-orange-600 mb-3">Describe your concern about this shipment. DEMARA will review and respond within 24 hours.</p>
+          {error && <p className="text-xs text-red-600 mb-2">{error}</p>}
+          <textarea value={concern} onChange={e => setConcern(e.target.value)}
+            rows={3} placeholder="Describe your concern..."
+            className="w-full border border-orange-300 rounded-lg px-3 py-2 text-sm focus:outline-none bg-white" />
+          <div className="flex gap-2 mt-3">
+            <button onClick={handleSubmit} disabled={submitting || !concern.trim()}
+              className="flex-1 py-2 text-white text-sm font-medium rounded-lg hover:opacity-90 disabled:opacity-50"
+              style={{background: '#F59E0B'}}>
+              {submitting ? 'Submitting...' : 'Submit Concern'}
+            </button>
+            <button onClick={() => { setOpen(false); setConcern(''); }}
+              className="px-4 py-2 border border-gray-300 text-gray-600 text-sm rounded-lg hover:bg-gray-50">
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // Partial Conforming Action Component
 function PartialConformingAction({ shipment, token, onClose }) {
   const [acting, setActing] = useState(false);
@@ -1001,6 +1072,9 @@ function ShipmentDetailModal({ shipmentId, token, onClose }) {
               <p className="text-xs text-green-500 mt-3">Your release certificate has been emailed to you. Your goods are ready for collection.</p>
             </div>
           )}
+
+          {/* Raise a Concern */}
+          <RaiseAConcern shipment={shipment} token={token} />
 
           {/* Non-conforming action selection */}
           {shipment.current_state === 'NON_CONFORMING' && (

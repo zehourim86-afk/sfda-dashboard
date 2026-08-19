@@ -348,6 +348,13 @@ export default function Login({ onLogin }) {
             <p className="text-center text-xs text-gray-400 mt-4">
               Access is granted by DEMARA after verification · All sessions expire after 8 hours
             </p>
+            <div className="flex items-center justify-center gap-1 mt-2">
+              <span className="text-xs text-gray-400">🇸🇦 Data hosted in Saudi Arabia · STC Cloud KSA</span>
+            </div>
+            <div className="flex items-center justify-center gap-2 mt-2">
+              <span className="text-xs text-gray-400">🇸🇦</span>
+              <span className="text-xs text-gray-400 font-medium">Data hosted in Saudi Arabia · STC Cloud KSA</span>
+            </div>
           </div>
         </div>
       </div>

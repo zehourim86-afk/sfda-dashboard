@@ -1035,6 +1035,10 @@ export default function AdminPanel({ user, token, onLogout }) {
             className="w-full px-3 py-2 bg-red-500 text-white text-xs rounded-lg hover:bg-red-600">
             Sign Out
           </button>
+          <div className="mt-2 text-center">
+            <p className="text-xs text-gray-400">🇸🇦 Data hosted in KSA</p>
+            <p className="text-xs text-gray-400">STC Cloud · demara.sa</p>
+          </div>
         </div>
       </div>
 
