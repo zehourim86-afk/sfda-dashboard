@@ -37,8 +37,9 @@ function SubmitResultModal({ shipment, token, onClose, onRefresh }) {
         product_name_en: p.product_name_en,
         ecos_ma_number: p.ecos_ma_number,
         result: 'APPROVED',
-        test_name: 'Full Compliance Testing',
-        result_value: 'Compliant',
+        test_name: '',
+        result_value: '',
+        reference_range: '',
         notes: ''
       })));
     }
@@ -66,7 +67,7 @@ function SubmitResultModal({ shipment, token, onClose, onRefresh }) {
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
           body: JSON.stringify({
             decision: product.result,
-            decision_notes: product.notes
+            decision_notes: `${product.test_name ? 'Test: ' + product.test_name + ' | ' : ''}${product.result_value ? 'Value: ' + product.result_value + ' | ' : ''}${product.reference_range ? 'Range: ' + product.reference_range + ' | ' : ''}${product.notes || ''}`
           })
         });
       }
@@ -196,12 +197,36 @@ function SubmitResultModal({ shipment, token, onClose, onRefresh }) {
                           <option value="REJECTED">REJECTED — Non-Compliant</option>
                         </select>
                       </div>
-                      <div>
+                      {/* Structured test results */}
+                      <div className="grid grid-cols-3 gap-2 mt-2">
+                        <div>
+                          <label className="text-xs text-gray-500">Test Name</label>
+                          <input type="text" value={product.test_name || ''}
+                            onChange={e => updateProductResult(index, 'test_name', e.target.value)}
+                            placeholder="e.g. Heavy Metals"
+                            className="mt-0.5 w-full border border-gray-300 rounded px-2 py-1.5 text-xs focus:outline-none" />
+                        </div>
+                        <div>
+                          <label className="text-xs text-gray-500">Measured Value</label>
+                          <input type="text" value={product.result_value || ''}
+                            onChange={e => updateProductResult(index, 'result_value', e.target.value)}
+                            placeholder="e.g. 0.5 mg/kg"
+                            className="mt-0.5 w-full border border-gray-300 rounded px-2 py-1.5 text-xs focus:outline-none" />
+                        </div>
+                        <div>
+                          <label className="text-xs text-gray-500">Reference Range</label>
+                          <input type="text" value={product.reference_range || ''}
+                            onChange={e => updateProductResult(index, 'reference_range', e.target.value)}
+                            placeholder="e.g. Max 1.0 mg/kg"
+                            className="mt-0.5 w-full border border-gray-300 rounded px-2 py-1.5 text-xs focus:outline-none" />
+                        </div>
+                      </div>
+                      <div className="mt-2">
                         <label className="text-xs text-gray-500">Lab Notes {product.result === 'REJECTED' ? '(required)' : '(optional)'}</label>
                         <textarea value={product.notes}
                           onChange={e => updateProductResult(index, 'notes', e.target.value)}
                           rows={2}
-                          placeholder={product.result === 'REJECTED' ? 'Describe the non-conformity...' : 'Any observations...'}
+                          placeholder={product.result === 'REJECTED' ? 'Describe the non-conformity reason...' : 'Any observations...'}
                           className="mt-0.5 w-full border border-gray-300 rounded px-2 py-1.5 text-xs focus:outline-none" />
                       </div>
                     </div>
