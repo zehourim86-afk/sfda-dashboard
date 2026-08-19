@@ -25,6 +25,81 @@ function StatCard({ label, value, color, sub }) {
   );
 }
 
+// ── Escalation Alerts ──
+function EscalationAlerts({ token }) {
+  const [escalations, setEscalations] = useState(null);
+
+  useEffect(() => {
+    const fetchEscalations = async () => {
+      try {
+        const res = await fetch(`${API_URL}/admin/escalations`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await res.json();
+        setEscalations(data);
+      } catch (err) {
+        console.error('Failed to fetch escalations');
+      }
+    };
+    fetchEscalations();
+    const interval = setInterval(fetchEscalations, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  if (!escalations) return null;
+  if (escalations.total === 0) return null;
+
+  return (
+    <div className="space-y-3 mb-4">
+      {escalations.lab_escalations?.length > 0 && (
+        <div className="bg-orange-50 border border-orange-300 rounded-xl p-4">
+          <h3 className="text-sm font-semibold text-orange-700 mb-2">
+            ⚠️ Lab Not Responded — Over 24 Hours — MAH Notified ({escalations.lab_escalations.length})
+          </h3>
+          <div className="space-y-2">
+            {escalations.lab_escalations.map(s => (
+              <div key={s.id} className="flex items-center justify-between bg-white rounded-lg px-3 py-2 border border-orange-100">
+                <div>
+                  <span className="font-mono text-xs font-semibold" style={{color: '#2D2B7A'}}>{s.faseh_request_number}</span>
+                  <span className="text-xs text-gray-500 ml-2">{s.importer_name}</span>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs text-gray-500">{s.lab_name}</p>
+                  <p className="text-xs text-orange-600 font-bold">{Math.floor(s.hours_in_state)}h without response</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          <p className="text-xs text-orange-600 mt-2">MAH and DEMARA admin have been notified. Contact the lab directly or reassign the shipment.</p>
+        </div>
+      )}
+
+      {escalations.clearance_escalations?.length > 0 && (
+        <div className="bg-red-50 border border-red-300 rounded-xl p-4">
+          <h3 className="text-sm font-semibold text-red-700 mb-2">
+            🚨 Clearance Not Started — Over 48 Hours — MAH Notified ({escalations.clearance_escalations.length})
+          </h3>
+          <div className="space-y-2">
+            {escalations.clearance_escalations.map(s => (
+              <div key={s.id} className="flex items-center justify-between bg-white rounded-lg px-3 py-2 border border-red-100">
+                <div>
+                  <span className="font-mono text-xs font-semibold" style={{color: '#2D2B7A'}}>{s.faseh_request_number}</span>
+                  <span className="text-xs text-gray-500 ml-2">{s.importer_name}</span>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs text-gray-500">{s.clearance_company_name || '—'}</p>
+                  <p className="text-xs text-red-600 font-bold">{Math.floor(s.hours_in_state)}h since approval</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          <p className="text-xs text-red-600 mt-2">MAH and DEMARA admin have been notified. Demurrage risk — contact clearance company immediately.</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Expiring Labs Alert ──
 function ExpiringLabsAlert({ token }) {
   const [expiringLabs, setExpiringLabs] = useState([]);
@@ -156,6 +231,9 @@ function OverviewSection({ token }) {
           </ResponsiveContainer>
         </div>
       </div>
+
+      {/* Escalation alerts */}
+      <EscalationAlerts token={token} />
 
       {/* Expiring lab certificates alert */}
       <ExpiringLabsAlert token={token} />
