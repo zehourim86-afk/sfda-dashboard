@@ -37,6 +37,39 @@ function SampleActionModal({ shipment, token, onClose, onRefresh }) {
 
   const stateInfo = STATE_INFO[shipment.current_state];
 
+    const handleBulkJourney = async () => {
+    if (!sealId.trim()) {
+      setError('Please enter a seal ID before completing the full journey');
+      return;
+    }
+    setActing(true);
+    setError(null);
+    try {
+      const steps = [
+        { state: 'INSPECTOR_DISPATCHED', notes: 'Inspector confirmed dispatch to port' },
+        { state: 'SAMPLE_COLLECTED', notes: `Seal ID: ${sealId}${notes ? ' — ' + notes : ''}` },
+        { state: 'IN_TRANSIT_TO_LAB', notes: 'Sample in transit to assigned lab' },
+        { state: 'LAB_RECEIVED', notes: 'Lab confirmed sample receipt' }
+      ];
+
+      for (const step of steps) {
+        await fetch(`${API_URL}/shipments/${shipment.id}/transition`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ new_state: step.state, notes: step.notes, trigger_source: 'MANUAL' })
+        });
+        await new Promise(r => setTimeout(r, 2000));
+      }
+
+      onRefresh();
+      onClose();
+    } catch (err) {
+      setError('Failed to complete journey — check connection');
+    } finally {
+      setActing(false);
+    }
+  };
+
   const performTransition = async () => {
     if (shipment.current_state === 'INSPECTOR_DISPATCHED' && !sealId.trim()) {
       setError('Seal ID is required when collecting samples');
@@ -119,8 +152,8 @@ function SampleActionModal({ shipment, token, onClose, onRefresh }) {
 
           {error && <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-red-700 text-sm">{error}</div>}
 
-          {/* Seal ID and photo — only when collecting sample */}
-          {shipment.current_state === 'INSPECTOR_DISPATCHED' && (
+          {/* Seal ID and photo — when collecting sample or doing bulk journey */}
+          {(shipment.current_state === 'INSPECTOR_DISPATCHED' || shipment.current_state === 'SAMPLING_REQUESTED') && (
             <div className="space-y-3">
               <div>
                 <label className="text-xs font-semibold text-gray-600 uppercase">Seal ID *</label>
@@ -172,6 +205,24 @@ function SampleActionModal({ shipment, token, onClose, onRefresh }) {
               style={{background: '#2D2B7A'}}>
               {acting ? 'Processing...' : stateInfo.action}
             </button>
+          )}
+
+          {shipment.current_state === 'SAMPLING_REQUESTED' && (
+            <div className="mt-2">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="flex-1 h-px bg-gray-200"></div>
+                <span className="text-xs text-gray-400">or</span>
+                <div className="flex-1 h-px bg-gray-200"></div>
+              </div>
+              <button onClick={handleBulkJourney} disabled={acting}
+                className="w-full py-2.5 font-semibold text-sm rounded-lg hover:opacity-90 disabled:opacity-50 border-2"
+                style={{color: '#2D2B7A', borderColor: '#2D2B7A', background: 'white'}}>
+                {acting ? '⏳ Completing journey...' : '⚡ Complete Full Sample Journey'}
+              </button>
+              <p className="text-xs text-gray-400 text-center mt-1">
+                Records all steps from collection to lab receipt in one action
+              </p>
+            </div>
           )}
 
           {shipment.current_state === 'LAB_RECEIVED' && (
