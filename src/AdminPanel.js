@@ -295,9 +295,9 @@ function EmailParserSection({ token }) {
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState(null);
 
-  const SAMPLE_QC = `FROM: qc-sampling@sfda.gov.sa\nTO: omar@alnoor-pharma.com.sa\nCC: qc@demara.sa\nSUBJECT: QC Sampling Required — FASEH-2026-CS-DEMO1\n\nFaseh Reference: FASEH-2026-CS-DEMO1\nGHAD CR Number: CR-5555555555\nPort of Entry: King Abdulaziz Port - Dammam\nShipment Country: Italy\n\nSaudi Food and Drug Authority`;
+  const SAMPLE_QC = `FROM: qc-sampling@sfda.gov.sa\nTO: omar@alnoor-pharma.com.sa\nCC: qc@demara.sa\nSUBJECT: QC Sampling Required — FASEH-2026-CS-E2E-002\n\nFaseh Reference: FASEH-2026-CS-E2E-002\nGHAD CR Number: CR-1234567890\nPort of Entry: King Abdulaziz Port - Dammam\nShipment Country: France\n\nSaudi Food and Drug Authority`;
 
-  const SAMPLE_CONFORMING = `FROM: decisions@sfda.gov.sa\nTO: clearance@saudiclearance.com.sa\nCC: qc@demara.sa\nSUBJECT: Clearance Decision — FASEH-2026-CS-DEMO1 — CONFORMING\n\nFaseh Reference: FASEH-2026-CS-DEMO1\nOverall Decision: CONFORMING\n\n1. Product Name: Anti-Aging Night Cream 50ml\n   E-Cosma Number: COSMA-SA-2024-0211\n   Decision: APPROVED\n\nSaudi Food and Drug Authority`;
+  const SAMPLE_CONFORMING = `FROM: decisions@sfda.gov.sa\nTO: clearance@saudiclearance.com.sa\nCC: qc@demara.sa\nSUBJECT: Clearance Decision — FASEH-2026-CS-E2E-002 — CONFORMING\n\nFaseh Reference: FASEH-2026-CS-E2E-002\nOverall Decision: CONFORMING\n\n1. Product Name: Moisturizing Face Cream 50ml\n   E-Cosma Number: COSMA-SA-2024-0099\n   Decision: APPROVED\n\n2. Product Name: Vitamin C Serum 30ml\n   E-Cosma Number: COSMA-SA-2024-0100\n   Decision: APPROVED\n\nSaudi Food and Drug Authority`;
 
   useEffect(() => {
     const fetchLogs = async () => {
