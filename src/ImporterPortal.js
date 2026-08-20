@@ -1315,6 +1315,8 @@ export default function ImporterPortal({ user, token, onLogout }) {
   const [selectedShipmentId, setSelectedShipmentId] = useState(null);
   const [activeTab, setActiveTab] = useState('active');
   const [search, setSearch] = useState('');
+  const [filterStatus, setFilterStatus] = useState('');
+  const [filterPort, setFilterPort] = useState('');
 
   const fetchData = async () => {
     try {
@@ -1359,11 +1361,14 @@ export default function ImporterPortal({ user, token, onLogout }) {
     ['FINAL_CLEARANCE', 'ARCHIVED', 'RE_EXPORT_COMPLETED', 'DESTRUCTION_CONFIRMED'].includes(s.current_state)
   );
 
-  const filtered = (activeTab === 'active' ? activeShipments : completedShipments).filter(s =>
-    !search ||
-    s.faseh_request_number.toLowerCase().includes(search.toLowerCase()) ||
-    s.importer_name.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = (activeTab === 'active' ? activeShipments : completedShipments).filter(s => {
+    const matchSearch = !search ||
+      s.faseh_request_number.toLowerCase().includes(search.toLowerCase()) ||
+      s.importer_name.toLowerCase().includes(search.toLowerCase());
+    const matchStatus = !filterStatus || s.current_state === filterStatus;
+    const matchPort = !filterPort || s.port_of_entry === filterPort;
+    return matchSearch && matchStatus && matchPort;
+  });
 
   const conformingCount = shipments.filter(s => s.current_state === 'CONFORMING').length;
   const nonConformingCount = shipments.filter(s => s.current_state === 'NON_CONFORMING').length;
@@ -1522,6 +1527,25 @@ export default function ImporterPortal({ user, token, onLogout }) {
           <input type="text" placeholder="Search by Faseh number or importer name..."
             value={search} onChange={e => setSearch(e.target.value)}
             className="flex-1 border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none" />
+          <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}
+            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none">
+            <option value="">All States</option>
+            <option value="RECORD_OPENED">Record Opened</option>
+            <option value="SAMPLING_REQUESTED">Sampling Requested</option>
+            <option value="IN_ANALYSIS">In Analysis</option>
+            <option value="RESULT_SUBMITTED">Result Submitted</option>
+            <option value="CONFORMING">Conforming</option>
+            <option value="NON_CONFORMING">Non-Conforming</option>
+            <option value="FINAL_CLEARANCE">Final Clearance</option>
+            <option value="RE_EXPORT_COMPLETED">Re-Export Completed</option>
+          </select>
+          <select value={filterPort} onChange={e => setFilterPort(e.target.value)}
+            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none">
+            <option value="">All Ports</option>
+            {[...new Set(shipments.map(s => s.port_of_entry))].sort().map(p => (
+              <option key={p} value={p}>{p}</option>
+            ))}
+          </select>
           <button onClick={() => setShowNewForm(true)}
             className="px-4 py-2 text-white text-sm font-medium rounded-lg hover:opacity-90"
             style={{background: '#2D2B7A'}}>
