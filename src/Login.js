@@ -119,8 +119,8 @@ export default function Login({ onLogin }) {
         {/* Logo */}
         <div className="text-center mb-8">
           <img src="/demara-logo.png" alt="DEMARA" className="mx-auto mb-4" style={{height: '100px', width: '250px', objectFit: 'contain'}} />
-          <h1 className="text-white text-xl font-bold">Drug Import Traceability Platform</h1>
-          <p className="text-sm mt-1" style={{color: '#00B4D8'}}>Powered by DEMARA · Regulatory Consulting</p>
+          <h1 className="text-white text-xl font-bold">DEMARA Masaar</h1>
+          <p className="text-sm mt-1" style={{color: '#00B4D8'}}>Drug Import Traceability Platform · Powered by DEMARA</p>
         </div>
 
         {/* Card */}

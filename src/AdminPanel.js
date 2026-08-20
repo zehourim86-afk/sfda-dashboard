@@ -1010,7 +1010,7 @@ export default function AdminPanel({ user, token, onLogout }) {
       <div className="w-56 bg-white border-r border-gray-200 flex flex-col" style={{minHeight: '100vh'}}>
         <div className="p-4 border-b border-gray-200" style={{background: 'linear-gradient(135deg, #2D2B7A, #1a1854)'}}>
           <img src="/demara-logo.png" alt="DEMARA" style={{height: '60px', width: '160px', objectFit: 'contain'}} />
-          <p className="text-xs mt-1" style={{color: '#00B4D8'}}>Admin Panel</p>
+          <p className="text-xs mt-1" style={{color: '#00B4D8'}}>DEMARA Masaar · Admin</p>
         </div>
         <nav className="flex-1 p-3 space-y-1">
           {NAV_ITEMS.map(item => (

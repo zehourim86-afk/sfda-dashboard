@@ -366,7 +366,7 @@ export default function ClearancePortal({ user, token, onLogout }) {
             <img src="/demara-logo.png" alt="DEMARA" style={{height: '80px', width: '200px', objectFit: 'contain'}} />
             <div>
               <h1 className="text-lg font-bold text-white">DEMARA Platform</h1>
-              <p className="text-xs mt-0.5" style={{color: '#00B4D8'}}>Clearance Company Portal</p>
+              <p className="text-xs mt-0.5" style={{color: '#00B4D8'}}>DEMARA Masaar · Clearance Portal</p>
             </div>
           </div>
           <div className="flex items-center gap-3">

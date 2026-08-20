@@ -285,7 +285,7 @@ export default function InspectorApp({ user, token, onLogout }) {
             <img src="/demara-logo.png" alt="DEMARA" style={{height: '80px', width: '200px', objectFit: 'contain'}} />
             <div>
               <h1 className="text-lg font-bold text-white">DEMARA Platform</h1>
-              <p className="text-xs mt-0.5" style={{color: '#00B4D8'}}>SFDA Inspector App · Sample Collection</p>
+              <p className="text-xs mt-0.5" style={{color: '#00B4D8'}}>DEMARA Masaar · Inspector App</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
