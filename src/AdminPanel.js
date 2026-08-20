@@ -790,6 +790,126 @@ function MetricsSection({ token }) {
   );
 }
 
+// ── Clearance Performance Section ──
+function ClearancePerformanceSection({ token }) {
+  const [performance, setPerformance] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await fetch(`${API_URL}/admin/clearance-performance`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await res.json();
+        setPerformance(data.performance || []);
+      } catch (err) {
+        console.error('Failed to fetch clearance performance');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  if (loading) return <div className="text-center py-12 text-gray-500">Loading...</div>;
+
+  const getRating = (hours) => {
+    if (!hours) return { label: 'No data', color: 'bg-gray-100 text-gray-500' };
+    if (hours <= 6) return { label: 'Excellent', color: 'bg-green-100 text-green-700' };
+    if (hours <= 24) return { label: 'Good', color: 'bg-blue-100 text-blue-700' };
+    if (hours <= 48) return { label: 'Average', color: 'bg-yellow-100 text-yellow-700' };
+    return { label: 'Slow', color: 'bg-red-100 text-red-700' };
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="bg-white rounded-xl border border-gray-200 p-4">
+        <h3 className="text-sm font-semibold text-gray-700 mb-1">Clearance Company Performance</h3>
+        <p className="text-xs text-gray-400 mb-4">Time from SFDA approval notification to final clearance completion</p>
+
+        {performance.length === 0 ? (
+          <div className="text-center py-8 text-gray-400 text-sm">No performance data yet</div>
+        ) : (
+          <div className="space-y-4">
+            {performance.map((company, index) => {
+              const rating = getRating(company.avg_completion_hours);
+              const completionRate = company.total_tasks > 0
+                ? Math.round((company.completed_tasks / company.total_tasks) * 100)
+                : 0;
+
+              return (
+                <div key={company.company_id} className="border border-gray-200 rounded-xl p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                      <span className="text-lg font-bold text-gray-400">#{index + 1}</span>
+                      <div>
+                        <p className="text-sm font-semibold text-gray-900">{company.company_name}</p>
+                        <p className="text-xs text-gray-500">{company.total_tasks} total assignments</p>
+                      </div>
+                    </div>
+                    <span className={`px-3 py-1 rounded-full text-xs font-bold ${rating.color}`}>
+                      {rating.label}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-4 gap-4 mb-3">
+                    <div className="text-center bg-gray-50 rounded-lg p-2">
+                      <p className="text-lg font-bold text-gray-700">
+                        {company.avg_completion_hours ? `${Math.round(company.avg_completion_hours)}h` : '—'}
+                      </p>
+                      <p className="text-xs text-gray-400">Avg time</p>
+                    </div>
+                    <div className="text-center bg-green-50 rounded-lg p-2">
+                      <p className="text-lg font-bold text-green-600">
+                        {company.fastest_hours ? `${Math.round(company.fastest_hours)}h` : '—'}
+                      </p>
+                      <p className="text-xs text-gray-400">Fastest</p>
+                    </div>
+                    <div className="text-center bg-red-50 rounded-lg p-2">
+                      <p className="text-lg font-bold text-red-600">
+                        {company.slowest_hours ? `${Math.round(company.slowest_hours)}h` : '—'}
+                      </p>
+                      <p className="text-xs text-gray-400">Slowest</p>
+                    </div>
+                    <div className="text-center bg-blue-50 rounded-lg p-2">
+                      <p className="text-lg font-bold text-blue-600">{completionRate}%</p>
+                      <p className="text-xs text-gray-400">Completion</p>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between mb-1">
+                      <span className="text-xs text-gray-400">Completion rate</span>
+                      <span className="text-xs font-semibold text-gray-600">{completionRate}%</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div className="h-2 rounded-full transition-all" style={{
+                        width: `${completionRate}%`,
+                        background: completionRate >= 80 ? '#10B981' : completionRate >= 50 ? '#F59E0B' : '#EF4444'
+                      }}></div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+        <p className="text-xs text-blue-700 font-semibold">📋 Performance Rating Guide</p>
+        <div className="grid grid-cols-4 gap-3 mt-2">
+          <div className="text-center"><span className="px-2 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-700">Excellent</span><p className="text-xs text-gray-500 mt-1">Under 6 hours</p></div>
+          <div className="text-center"><span className="px-2 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-700">Good</span><p className="text-xs text-gray-500 mt-1">6-24 hours</p></div>
+          <div className="text-center"><span className="px-2 py-0.5 rounded-full text-xs font-bold bg-yellow-100 text-yellow-700">Average</span><p className="text-xs text-gray-500 mt-1">24-48 hours</p></div>
+          <div className="text-center"><span className="px-2 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-700">Slow</span><p className="text-xs text-gray-500 mt-1">Over 48 hours</p></div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── SFDA Progress Dashboard ──
 function SFDADashboard({ token }) {
   const [shipments, setShipments] = useState([]);
@@ -1000,6 +1120,7 @@ export default function AdminPanel({ user, token, onLogout }) {
     { id: 'email-parser', label: 'Email Parser', icon: '🤖' },
     { id: 'users', label: 'Users', icon: '👥' },
     { id: 'organisations', label: 'Organisations', icon: '🏢' },
+    { id: 'clearance-performance', label: 'Performance', icon: '⚡' },
     { id: 'sfda-dashboard', label: 'SFDA Dashboard', icon: '🏛️' },
     { id: 'metrics', label: 'Platform Metrics', icon: '📈' },
   ];
@@ -1056,6 +1177,7 @@ export default function AdminPanel({ user, token, onLogout }) {
         {activeSection === 'email-parser' && <EmailParserSection token={token} />}
         {activeSection === 'users' && <UsersSection token={token} />}
         {activeSection === 'organisations' && <OrganisationsSection token={token} />}
+        {activeSection === 'clearance-performance' && <ClearancePerformanceSection token={token} />}
         {activeSection === 'sfda-dashboard' && <SFDADashboard token={token} />}
         {activeSection === 'metrics' && <MetricsSection token={token} />}
       </div>
