@@ -58,9 +58,34 @@ const STEPS = [
   { number: 6, label: 'Clearance' },
 ];
 
-function ProgressTracker({ currentStep }) {
+function ProgressTracker({ currentStep, currentState }) {
+  const subStateLabels = {
+    RECORD_OPENED: 'Record opened',
+    LAB_ACCEPTED: 'Lab confirmed',
+    LAB_DECLINED: 'Lab declined',
+    CLEARANCE_ACCEPTED: 'Clearance confirmed',
+    SAMPLING_REQUESTED: 'Sampling requested',
+    INSPECTOR_DISPATCHED: 'Inspector en route',
+    SAMPLE_COLLECTED: 'Sample collected',
+    IN_TRANSIT_TO_LAB: 'In transit',
+    LAB_RECEIVED: 'Lab received',
+    IN_ANALYSIS: 'Analysis ongoing',
+    RESULT_SUBMITTED: 'Results submitted',
+    CONFORMING: 'SFDA approved',
+    NON_CONFORMING: 'SFDA rejected',
+    PARTIALLY_CONFORMING: 'Partial approval',
+    CLEARANCE_IN_PROGRESS: 'Clearance started',
+    BOND_RELEASED: 'Bond released',
+    DUTIES_PAID: 'Duties paid',
+    FINAL_CLEARANCE: 'Cleared ✓',
+    RE_EXPORT_INITIATED: 'Re-export started',
+    RE_EXPORT_COMPLETED: 'Re-exported',
+    DESTRUCTION_REQUESTED: 'Destruction pending',
+    DESTRUCTION_CONFIRMED: 'Destroyed',
+  };
+
   return (
-    <div className="flex items-center justify-between mb-4">
+    <div className="flex items-center justify-between mb-2">
       {STEPS.map((step, index) => (
         <div key={step.number} className="flex items-center">
           <div className="flex flex-col items-center">
@@ -71,6 +96,11 @@ function ProgressTracker({ currentStep }) {
               {currentStep > step.number ? '✓' : step.number}
             </div>
             <p className="text-xs text-gray-500 mt-1 text-center w-16">{step.label}</p>
+            {currentStep === step.number && currentState && subStateLabels[currentState] && (
+              <p className="text-xs font-medium text-center w-20 mt-0.5" style={{color: '#2D2B7A'}}>
+                {subStateLabels[currentState]}
+              </p>
+            )}
           </div>
           {index < STEPS.length - 1 && (
             <div className={`h-0.5 w-10 mx-1 mb-5 ${currentStep > step.number ? 'bg-green-500' : 'bg-gray-200'}`} />
@@ -952,7 +982,7 @@ function ShipmentDetailModal({ shipmentId, token, onClose }) {
         </div>
         <div className="p-6 space-y-5">
           {/* Progress */}
-          <ProgressTracker currentStep={stateInfo.step} />
+          <ProgressTracker currentStep={stateInfo.step} currentState={shipment.current_state} />
 
           {/* Status */}
           <div className={`rounded-lg p-4 ${
