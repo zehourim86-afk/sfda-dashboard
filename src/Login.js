@@ -303,6 +303,10 @@ export default function Login({ onLogin }) {
                   <p className="text-xs text-blue-700 font-semibold">📋 Document Verification</p>
                   <p className="text-xs text-blue-600 mt-1">Uploaded documents will be reviewed by the DEMARA team. Your account will be activated after verification — typically within 1 business day.</p>
                 </div>
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                  <p className="text-xs text-gray-700 font-semibold">📧 Email Notification Consent</p>
+                  <p className="text-xs text-gray-600 mt-1">By registering, you consent to DEMARA receiving a copy of SFDA communications related to your shipments when CC'd to qc@demara.sa. DEMARA uses these emails solely to automate shipment tracking and notifications. SFDA systems are never accessed or modified by DEMARA.</p>
+                </div>
                 <div>
                   <label className="text-xs font-semibold text-gray-600 uppercase">Organisation Type</label>
                   <select
