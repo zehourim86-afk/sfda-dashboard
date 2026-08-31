@@ -625,6 +625,94 @@ function RaiseAConcern({ shipment, token }) {
   );
 }
 
+// Destruction Grace Period Component
+function DestructionGracePeriod({ shipment, token, onClose }) {
+  const [cancelling, setCancelling] = useState(false);
+  const [error, setError] = useState(null);
+  const [timeLeft, setTimeLeft] = useState(null);
+
+  useEffect(() => {
+    const calculateTimeLeft = () => {
+      const enteredAt = new Date(shipment.state_entered_at);
+      const deadline = new Date(enteredAt.getTime() + 24 * 60 * 60 * 1000);
+      const now = new Date();
+      const diff = deadline - now;
+      if (diff <= 0) return 0;
+      return diff;
+    };
+    setTimeLeft(calculateTimeLeft());
+    const interval = setInterval(() => {
+      const left = calculateTimeLeft();
+      setTimeLeft(left);
+      if (left <= 0) clearInterval(interval);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [shipment.state_entered_at]);
+
+  const formatTimeLeft = (ms) => {
+    if (!ms || ms <= 0) return 'Expired';
+    const hours = Math.floor(ms / 3600000);
+    const minutes = Math.floor((ms % 3600000) / 60000);
+    const seconds = Math.floor((ms % 60000) / 1000);
+    return `${hours}h ${minutes}m ${seconds}s`;
+  };
+
+  const handleCancel = async () => {
+    setCancelling(true);
+    setError(null);
+    try {
+      const res = await fetch(`${API_URL}/shipments/${shipment.id}/transition`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          new_state: 'NON_CONFORMING',
+          notes: 'MAH cancelled destruction within 24-hour grace period',
+          trigger_source: 'MANUAL'
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        onClose();
+      } else {
+        setError(data.message || 'Failed to cancel');
+      }
+    } catch (err) {
+      setError('Failed to connect to platform');
+    } finally {
+      setCancelling(false);
+    }
+  };
+
+  const isExpired = timeLeft !== null && timeLeft <= 0;
+
+  return (
+    <div className={`rounded-xl p-4 border-2 ${isExpired ? 'bg-red-50 border-red-400' : 'bg-orange-50 border-orange-400'}`}>
+      <h3 className="text-sm font-semibold mb-2" style={{color: isExpired ? '#EF4444' : '#F59E0B'}}>
+        🗑️ Destruction {isExpired ? 'Confirmed — Processing' : 'Pending — Grace Period Active'}
+      </h3>
+      {!isExpired ? (
+        <>
+          <p className="text-xs text-orange-600 mb-3">You have selected destruction for this shipment. You have 24 hours to cancel before destruction procedures are initiated.</p>
+          <div className="bg-white rounded-lg p-3 text-center border border-orange-200 mb-3">
+            <p className="text-xs text-gray-500">Time remaining to cancel</p>
+            <p className="text-2xl font-bold text-orange-600 font-mono">{formatTimeLeft(timeLeft)}</p>
+          </div>
+          {error && <p className="text-xs text-red-600 mb-2">{error}</p>}
+          <button onClick={handleCancel} disabled={cancelling}
+            className="w-full py-2 border-2 border-orange-400 text-orange-700 font-semibold text-sm rounded-lg hover:bg-orange-100 transition-colors disabled:opacity-50">
+            {cancelling ? 'Cancelling...' : '↩ Cancel Destruction Request'}
+          </button>
+        </>
+      ) : (
+        <>
+          <p className="text-xs text-red-600 mb-3">The 24-hour grace period has expired. Destruction procedures have been initiated and the clearance company has been notified.</p>
+          <p className="text-xs text-red-600 mb-3">If you wish to reverse this decision, please act immediately using the Raise a Concern button below. DEMARA admin will review your request and contact the clearance company. Reversal is only possible if the clearance company has not yet started destruction procedures.</p>
+        </>
+      )}
+    </div>
+  );
+}
+
 // Partial Conforming Action Component
 function PartialConformingAction({ shipment, token, onClose }) {
   const [acting, setActing] = useState(false);
@@ -911,9 +999,9 @@ function NonConformingAction({ shipment, token, onClose }) {
       const res = await fetch(`${API_URL}/shipments/${shipment.id}/transition`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({
-          new_state: action === 'reexport' ? 'RE_EXPORT_INITIATED' : 'DESTRUCTION_REQUESTED',
-          notes: action === 'reexport' ? 'MAH selected re-export' : 'MAH selected destruction',
+      body: JSON.stringify({
+          new_state: action === 'reexport' ? 'RE_EXPORT_INITIATED' : 'DESTRUCTION_PENDING',
+          notes: action === 'reexport' ? 'MAH selected re-export' : 'MAH selected destruction — 24 hour grace period started',
           trigger_source: 'MANUAL'
         })
       });
@@ -946,7 +1034,7 @@ function NonConformingAction({ shipment, token, onClose }) {
           className="py-3 border-2 border-gray-400 rounded-xl text-center hover:bg-gray-100 transition-colors disabled:opacity-50">
           <p className="text-lg">🗑️</p>
           <p className="text-sm font-semibold text-gray-700">Destruction</p>
-          <p className="text-xs text-gray-500 mt-1">Destroy goods in Saudi Arabia</p>
+          <p className="text-xs text-gray-500 mt-1">Destroy goods — 24 hours to cancel</p>
         </button>
       </div>
     </div>
@@ -1124,6 +1212,11 @@ function ShipmentDetailModal({ shipmentId, token, onClose }) {
           {/* Non-conforming action selection */}
           {shipment.current_state === 'NON_CONFORMING' && (
             <NonConformingAction shipment={shipment} token={token} onClose={onClose} />
+          )}
+
+          {/* Destruction grace period */}
+          {shipment.current_state === 'DESTRUCTION_PENDING' && (
+            <DestructionGracePeriod shipment={shipment} token={token} onClose={onClose} />
           )}
 
           {/* Partially conforming — per product actions */}
