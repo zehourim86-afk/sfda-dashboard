@@ -61,6 +61,10 @@ function App() {
         return <LabPortal user={user} token={token} onLogout={handleLogout} />;
       case 'SFDA_INSPECTOR':
         return <InspectorApp user={user} token={token} onLogout={handleLogout} />;
+      case 'SHIPPING_COMPANY':
+        return <InspectorApp user={user} token={token} onLogout={handleLogout} />;
+      case 'SHIPPING_COMPANY':
+        return <InspectorApp user={user} token={token} onLogout={handleLogout} />;
       case 'IMPORTER':
         return <ImporterPortal user={user} token={token} onLogout={handleLogout} />;
       case 'NOTIFIED_BODY':

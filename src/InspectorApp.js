@@ -13,17 +13,17 @@ function formatDate(dateStr) {
 
 const INSPECTOR_STATES = [
   'SAMPLING_REQUESTED',
-  'INSPECTOR_DISPATCHED',
-  'SAMPLE_COLLECTED',
-  'IN_TRANSIT_TO_LAB',
+  'PICKUP_SCHEDULED',
+  'SAMPLE_PICKED_UP',
+  'IN_TRANSIT',
   'LAB_RECEIVED'
 ];
 
 const STATE_INFO = {
-  SAMPLING_REQUESTED: { label: 'Collection Scheduled', color: 'bg-orange-100 text-orange-700', action: 'Confirm Sample Collection Scheduled', next: 'INSPECTOR_DISPATCHED' },
-  INSPECTOR_DISPATCHED: { label: 'Heading to Port', color: 'bg-blue-100 text-blue-700', action: 'Confirm Sample Collected at Port', next: 'SAMPLE_COLLECTED' },
-  SAMPLE_COLLECTED: { label: 'Sample Collected', color: 'bg-yellow-100 text-yellow-700', action: 'Confirm In Transit to Lab', next: 'IN_TRANSIT_TO_LAB' },
-  IN_TRANSIT_TO_LAB: { label: 'In Transit to Lab', color: 'bg-purple-100 text-purple-700', action: 'Confirm Lab Receipt', next: 'LAB_RECEIVED' },
+  SAMPLING_REQUESTED: { label: 'Pickup Requested', color: 'bg-orange-100 text-orange-700', action: 'Confirm Pickup Scheduled with MAH', next: 'PICKUP_SCHEDULED' },
+  PICKUP_SCHEDULED: { label: 'Pickup Scheduled', color: 'bg-blue-100 text-blue-700', action: 'Confirm Sample Picked Up from MAH', next: 'SAMPLE_PICKED_UP' },
+  SAMPLE_PICKED_UP: { label: 'Sample Picked Up', color: 'bg-yellow-100 text-yellow-700', action: 'Confirm In Transit to Lab', next: 'IN_TRANSIT' },
+  IN_TRANSIT: { label: 'In Transit to Lab', color: 'bg-purple-100 text-purple-700', action: 'Confirm Lab Receipt', next: 'LAB_RECEIVED' },
   LAB_RECEIVED: { label: 'Delivered to Lab', color: 'bg-green-100 text-green-700', action: null, next: null },
 };
 
@@ -46,9 +46,9 @@ function SampleActionModal({ shipment, token, onClose, onRefresh }) {
     setError(null);
     try {
       const steps = [
-        { state: 'INSPECTOR_DISPATCHED', notes: 'Inspector confirmed dispatch to port' },
-        { state: 'SAMPLE_COLLECTED', notes: `Seal ID: ${sealId}${notes ? ' — ' + notes : ''}` },
-        { state: 'IN_TRANSIT_TO_LAB', notes: 'Sample in transit to assigned lab' },
+        { state: 'PICKUP_SCHEDULED', notes: 'Shipping company confirmed pickup scheduling with MAH' },
+        { state: 'SAMPLE_PICKED_UP', notes: `Seal ID: ${sealId}${notes ? ' — ' + notes : ''}` },
+        { state: 'IN_TRANSIT', notes: 'Sample in transit to assigned lab' },
         { state: 'LAB_RECEIVED', notes: 'Lab confirmed sample receipt' }
       ];
 
@@ -71,7 +71,7 @@ function SampleActionModal({ shipment, token, onClose, onRefresh }) {
   };
 
   const performTransition = async () => {
-    if (shipment.current_state === 'INSPECTOR_DISPATCHED' && !sealId.trim()) {
+    if (shipment.current_state === 'PICKUP_SCHEDULED' && !sealId.trim()) {
       setError('Seal ID is required when collecting samples');
       return;
     }
@@ -93,7 +93,7 @@ function SampleActionModal({ shipment, token, onClose, onRefresh }) {
       if (data.success) {
 
         // Create lab sample record when sample collected
-        if (shipment.current_state === 'INSPECTOR_DISPATCHED' && shipment.lab_id) {
+        if (shipment.current_state === 'PICKUP_SCHEDULED' && shipment.lab_id) {
           await fetch(`${API_URL}/inspector/samples`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
@@ -153,7 +153,7 @@ function SampleActionModal({ shipment, token, onClose, onRefresh }) {
           {error && <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-red-700 text-sm">{error}</div>}
 
           {/* Seal ID and photo — when collecting sample or doing bulk journey */}
-          {(shipment.current_state === 'INSPECTOR_DISPATCHED' || shipment.current_state === 'SAMPLING_REQUESTED') && (
+          {(shipment.current_state === 'PICKUP_SCHEDULED' || shipment.current_state === 'SAMPLING_REQUESTED') && (
             <div className="space-y-3">
               <div>
                 <label className="text-xs font-semibold text-gray-600 uppercase">Seal ID *</label>
@@ -274,7 +274,7 @@ export default function InspectorApp({ user, token, onLogout }) {
   const filtered = activeTab === 'active' ? activeShipments : completedShipments;
 
   const samplingRequested = shipments.filter(s => s.current_state === 'SAMPLING_REQUESTED').length;
-  const inProgress = shipments.filter(s => ['INSPECTOR_DISPATCHED', 'SAMPLE_COLLECTED', 'IN_TRANSIT_TO_LAB'].includes(s.current_state)).length;
+  const inProgress = shipments.filter(s => ['PICKUP_SCHEDULED', 'SAMPLE_PICKED_UP', 'IN_TRANSIT'].includes(s.current_state)).length;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -285,7 +285,7 @@ export default function InspectorApp({ user, token, onLogout }) {
             <img src="/demara-logo.png" alt="DEMARA" style={{height: '80px', width: '200px', objectFit: 'contain'}} />
             <div>
               <h1 className="text-lg font-bold text-white">DEMARA Platform</h1>
-              <p className="text-xs mt-0.5" style={{color: '#00B4D8'}}>DEMARA Masaar · Inspector App</p>
+              <p className="text-xs mt-0.5" style={{color: '#00B4D8'}}>DEMARA Masaar · Shipping Portal</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -298,7 +298,7 @@ export default function InspectorApp({ user, token, onLogout }) {
               <div className="flex items-center gap-2 bg-white bg-opacity-10 rounded-lg px-3 py-1.5">
                 <div className="text-right">
                   <p className="text-white text-xs font-semibold">{user.full_name}</p>
-                  <p className="text-xs" style={{color: '#00B4D8'}}>SFDA Inspector</p>
+                  <p className="text-xs" style={{color: '#00B4D8'}}>Shipping Agent</p>
                 </div>
               </div>
             )}
@@ -314,7 +314,7 @@ export default function InspectorApp({ user, token, onLogout }) {
         <div className="flex gap-6">
           <div className="text-center">
             <p className="text-2xl font-bold text-orange-600">{samplingRequested}</p>
-            <p className="text-xs text-gray-500">Awaiting collection</p>
+            <p className="text-xs text-gray-500">Awaiting pickup</p>
           </div>
           <div className="text-center">
             <p className="text-2xl font-bold" style={{color: '#2D2B7A'}}>{inProgress}</p>
@@ -334,7 +334,7 @@ export default function InspectorApp({ user, token, onLogout }) {
       {/* Workload summary */}
       {samplingRequested > 0 && (
         <div className="mx-6 mt-4 bg-orange-50 border border-orange-200 rounded-xl p-4">
-          <h3 className="text-sm font-semibold text-orange-700 mb-2">⚠️ Pending Sample Collections</h3>
+          <h3 className="text-sm font-semibold text-orange-700 mb-2">⚠️ Pending Sample Pickups</h3>
           <div className="space-y-2">
             {shipments.filter(s => s.current_state === 'SAMPLING_REQUESTED').map(s => (
               <div key={s.id} className="flex items-center justify-between bg-white rounded-lg px-3 py-2 border border-orange-100">
@@ -359,7 +359,7 @@ export default function InspectorApp({ user, token, onLogout }) {
             <button onClick={() => setActiveTab('active')}
               className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === 'active' ? 'border-b-2' : 'border-transparent text-gray-500'}`}
               style={activeTab === 'active' ? {borderColor: '#2D2B7A', color: '#2D2B7A'} : {}}>
-              Active Sampling ({activeShipments.length})
+              Active Pickups ({activeShipments.length})
             </button>
             <button onClick={() => setActiveTab('completed')}
               className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === 'completed' ? 'border-b-2' : 'border-transparent text-gray-500'}`}
@@ -384,7 +384,7 @@ export default function InspectorApp({ user, token, onLogout }) {
           <div className="text-center py-12 text-gray-400">
             <p className="text-lg">No shipments in this queue</p>
             <p className="text-sm mt-1">
-              {activeTab === 'active' ? 'Sampling requests will appear here when SFDA issues a QC request' : 'Completed sampling assignments will appear here'}
+              {activeTab === 'active' ? 'Pickup requests will appear here when a shipment is ready for sample collection' : 'Completed pickup assignments will appear here'}
             </p>
           </div>
         ) : (
