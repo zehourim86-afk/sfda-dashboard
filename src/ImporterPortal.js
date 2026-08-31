@@ -230,6 +230,21 @@ Saudi Food and Drug Authority`;
     setSubmitting(true);
     setError(null);
     try {
+      // Check for duplicate Faseh reference before submitting
+      if (extractedData.faseh_request_number) {
+        const checkRes = await fetch(`${API_URL}/shipments?search=${extractedData.faseh_request_number}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const checkData = await checkRes.json();
+        const existing = (checkData.shipments || []).find(s => 
+          s.faseh_request_number === extractedData.faseh_request_number
+        );
+        if (existing) {
+          setError(`A shipment record for ${extractedData.faseh_request_number} already exists. Please track the existing record instead of creating a duplicate.`);
+          setSubmitting(false);
+          return;
+        }
+      }
       const payload = {
         faseh_request_number: extractedData.faseh_request_number,
         ghad_cr_number: extractedData.ghad_cr_number,
