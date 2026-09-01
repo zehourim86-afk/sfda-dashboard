@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import Login from './Login';
 import Dashboard from './Dashboard';
 import LabPortal from './LabPortal';
-import InspectorApp from './InspectorApp';
+import ShippingPortal from './ShippingPortal';
 import BillingModule from './BillingModule';
 import ImporterPortal from './ImporterPortal';
 import AdminPanel from './AdminPanel';
@@ -61,9 +61,9 @@ function App() {
       case 'LAB_ANALYST':
         return <LabPortal user={user} token={token} onLogout={handleLogout} />;
       case 'SFDA_INSPECTOR':
-        return <InspectorApp user={user} token={token} onLogout={handleLogout} />;
+        return <ShippingPortal user={user} token={token} onLogout={handleLogout} />;
       case 'SHIPPING_COMPANY':
-        return <InspectorApp user={user} token={token} onLogout={handleLogout} />;
+        return <ShippingPortal user={user} token={token} onLogout={handleLogout} />;
       case 'IMPORTER':
         return <ImporterPortal user={user} token={token} onLogout={handleLogout} />;
       case 'NOTIFIED_BODY':
