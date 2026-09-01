@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import NotificationBell from './NotificationBell';
+import OrgAdminPanel from './OrgAdminPanel';
 
 const API_URL = 'http://localhost:3000/api/v1';
 
@@ -30,7 +31,6 @@ function SubmitResultModal({ shipment, token, onClose, onRefresh }) {
   const [notes, setNotes] = useState('');
 
   useEffect(() => {
-    // Initialize product results
     if (shipment.products) {
       setProductResults(shipment.products.map(p => ({
         id: p.id,
@@ -58,9 +58,7 @@ function SubmitResultModal({ shipment, token, onClose, onRefresh }) {
     }
     setActing(true);
     setError(null);
-
     try {
-      // Update each product decision
       for (const product of productResults) {
         await fetch(`${API_URL}/shipments/${shipment.id}/products/${product.id}/decision`, {
           method: 'POST',
@@ -71,24 +69,15 @@ function SubmitResultModal({ shipment, token, onClose, onRefresh }) {
           })
         });
       }
-
-      // Determine overall outcome
-      const allApproved = productResults.every(p => p.result === 'APPROVED');
-      const allRejected = productResults.every(p => p.result === 'REJECTED');
-      const overallState = allApproved ? 'RESULT_SUBMITTED' :
-                          allRejected ? 'RESULT_SUBMITTED' : 'RESULT_SUBMITTED';
-
-      // Transition shipment state
       await fetch(`${API_URL}/shipments/${shipment.id}/transition`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({
-          new_state: overallState,
+          new_state: 'RESULT_SUBMITTED',
           notes: `Lab Reference: ${labReference}. ${notes}`,
           trigger_source: 'MANUAL'
         })
       });
-
       onRefresh();
       onClose();
     } catch (err) {
@@ -129,19 +118,14 @@ function SubmitResultModal({ shipment, token, onClose, onRefresh }) {
           </div>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl">×</button>
         </div>
-
         <div className="p-6 space-y-4">
           {error && <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-red-700 text-sm">{error}</div>}
-
-          {/* Status */}
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <span className={`px-3 py-1 rounded-full text-sm font-semibold ${STATE_INFO[shipment.current_state]?.color || 'bg-gray-100 text-gray-700'}`}>
               {STATE_INFO[shipment.current_state]?.label || shipment.current_state}
             </span>
             <p className="text-sm text-gray-600 mt-2">Since {formatDate(shipment.state_entered_at)}</p>
           </div>
-
-          {/* Shipment info */}
           <div className="grid grid-cols-2 gap-3">
             <div><p className="text-xs text-gray-500 uppercase font-semibold">Faseh Reference</p>
               <p className="text-sm font-medium">{shipment.faseh_request_number}</p></div>
@@ -153,7 +137,6 @@ function SubmitResultModal({ shipment, token, onClose, onRefresh }) {
               <p className="text-sm font-medium">{shipment.shipment_country}</p></div>
           </div>
 
-          {/* Start analysis button */}
           {shipment.current_state === 'LAB_RECEIVED' && (
             <button onClick={startAnalysis} disabled={acting}
               className="w-full py-2.5 text-white font-semibold text-sm rounded-lg hover:opacity-90 disabled:opacity-50"
@@ -162,7 +145,6 @@ function SubmitResultModal({ shipment, token, onClose, onRefresh }) {
             </button>
           )}
 
-          {/* Submit results */}
           {shipment.current_state === 'IN_ANALYSIS' && (
             <div className="space-y-4">
               <div>
@@ -172,7 +154,6 @@ function SubmitResultModal({ shipment, token, onClose, onRefresh }) {
                   placeholder="e.g. LAB-SA-2026-00441"
                   className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none" />
               </div>
-
               <div>
                 <h3 className="text-sm font-semibold text-gray-700 mb-2">Per-Product Results</h3>
                 <div className="space-y-3">
@@ -197,7 +178,6 @@ function SubmitResultModal({ shipment, token, onClose, onRefresh }) {
                           <option value="REJECTED">REJECTED — Non-Compliant</option>
                         </select>
                       </div>
-                      {/* Structured test results */}
                       <div className="grid grid-cols-3 gap-2 mt-2">
                         <div>
                           <label className="text-xs text-gray-500">Test Name</label>
@@ -233,14 +213,12 @@ function SubmitResultModal({ shipment, token, onClose, onRefresh }) {
                   ))}
                 </div>
               </div>
-
               <div>
                 <label className="text-xs font-semibold text-gray-600 uppercase">Overall Notes</label>
                 <textarea value={notes} onChange={e => setNotes(e.target.value)}
                   rows={2} placeholder="General notes about the analysis..."
                   className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none" />
               </div>
-
               <button onClick={handleSubmit} disabled={acting}
                 className="w-full py-2.5 text-white font-semibold text-sm rounded-lg hover:opacity-90 disabled:opacity-50"
                 style={{background: '#2D2B7A'}}>
@@ -262,7 +240,8 @@ function SubmitResultModal({ shipment, token, onClose, onRefresh }) {
 }
 
 // Main Lab Portal
-export default function LabPortal({ user, token, onLogout }) {
+export default function LabPortal({ user: initialUser, token, onLogout }) {
+  const [user, setUser] = useState(initialUser);
   const [shipments, setShipments] = useState([]);
   const [selectedShipment, setSelectedShipment] = useState(null);
   const [decliningShipment, setDecliningShipment] = useState(null);
@@ -274,11 +253,14 @@ export default function LabPortal({ user, token, onLogout }) {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`${API_URL}/shipments`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const data = await res.json();
-      setShipments(data.shipments || []);
+      const [shipmentsRes, meRes] = await Promise.all([
+        fetch(`${API_URL}/shipments`, { headers: { Authorization: `Bearer ${token}` } }),
+        fetch(`${API_URL}/auth/me`, { headers: { Authorization: `Bearer ${token}` } })
+      ]);
+      const shipmentsData = await shipmentsRes.json();
+      const meData = await meRes.json();
+      setShipments(shipmentsData.shipments || []);
+      if (meData.user) setUser(meData.user);
       setError(null);
     } catch (err) {
       setError('Failed to connect to platform.');
@@ -287,7 +269,7 @@ export default function LabPortal({ user, token, onLogout }) {
     }
   };
 
-    const handleLabResponse = async (shipmentId, response, reason) => {
+  const handleLabResponse = async (shipmentId, response, reason) => {
     try {
       const res = await fetch(`${API_URL}/shipments/${shipmentId}/lab-response`, {
         method: 'POST',
@@ -324,23 +306,21 @@ export default function LabPortal({ user, token, onLogout }) {
     return () => clearInterval(interval);
   }, []);
 
-  const LAB_STATES = ['LAB_RECEIVED', 'IN_ANALYSIS', 'ANALYSIS_COMPLETE', 'RESULT_SUBMITTED'];
-
   const activeShipments = shipments.filter(s => ['RECORD_OPENED', 'LAB_ACCEPTED', 'LAB_DECLINED', 'LAB_RECEIVED', 'IN_ANALYSIS'].includes(s.current_state));
   const completedShipments = shipments.filter(s => ['RESULT_SUBMITTED', 'CONFORMING', 'NON_CONFORMING', 'FINAL_CLEARANCE'].includes(s.current_state));
-
   const inAnalysisCount = shipments.filter(s => s.current_state === 'IN_ANALYSIS').length;
   const pendingReceiptCount = shipments.filter(s => s.current_state === 'LAB_RECEIVED').length;
 
-  const filtered = activeTab === 'active' 
+  const filtered = activeTab === 'active'
     ? activeShipments.filter(s => s.current_state !== 'LAB_DECLINED')
     : activeTab === 'declined'
     ? activeShipments.filter(s => s.current_state === 'LAB_DECLINED')
+    : activeTab === 'org-admin'
+    ? []
     : completedShipments;
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
       <div style={{background: 'linear-gradient(135deg, #2D2B7A 0%, #1a1854 100%)'}} className="px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -371,7 +351,6 @@ export default function LabPortal({ user, token, onLogout }) {
         </div>
       </div>
 
-      {/* Stats */}
       <div className="bg-white border-b border-gray-200 px-6 py-3">
         <div className="flex gap-6">
           <div className="text-center">
@@ -390,21 +369,11 @@ export default function LabPortal({ user, token, onLogout }) {
             <p className="text-2xl font-bold" style={{color: '#2D2B7A'}}>{shipments.length}</p>
             <p className="text-xs text-gray-500">Total assigned</p>
           </div>
-          <div className="text-center">
-            <p className="text-2xl font-bold text-orange-600">
-              {shipments.filter(s => s.current_state === 'IN_ANALYSIS').length > 0
-                ? Math.floor(Math.random() * 24 + 24) + 'h'
-                : '—'}
-            </p>
-            <p className="text-xs text-gray-500">Avg turnaround</p>
-          </div>
         </div>
       </div>
 
-      {/* Workload dashboard */}
       {(pendingReceiptCount > 0 || inAnalysisCount > 0) && (
         <div className="mx-6 mt-4 grid grid-cols-2 gap-4">
-          {/* Pending samples */}
           {pendingReceiptCount > 0 && (
             <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
               <h3 className="text-sm font-semibold text-blue-700 mb-2">📥 Samples Awaiting Analysis</h3>
@@ -415,18 +384,14 @@ export default function LabPortal({ user, token, onLogout }) {
                       <span className="font-mono text-xs font-semibold" style={{color: '#2D2B7A'}}>{s.faseh_request_number}</span>
                       <p className="text-xs text-gray-500">{s.importer_name}</p>
                     </div>
-                    <div className="text-right">
-                      <p className="text-xs text-blue-600 font-medium">
-                        {Math.floor((new Date() - new Date(s.state_entered_at)) / (1000 * 60 * 60))}h waiting
-                      </p>
-                    </div>
+                    <p className="text-xs text-blue-600 font-medium">
+                      {Math.floor((new Date() - new Date(s.state_entered_at)) / (1000 * 60 * 60))}h waiting
+                    </p>
                   </div>
                 ))}
               </div>
             </div>
           )}
-
-          {/* In analysis */}
           {inAnalysisCount > 0 && (
             <div className="bg-purple-50 border border-purple-200 rounded-xl p-4">
               <h3 className="text-sm font-semibold text-purple-700 mb-2">🔬 Currently In Analysis</h3>
@@ -437,11 +402,9 @@ export default function LabPortal({ user, token, onLogout }) {
                       <span className="font-mono text-xs font-semibold" style={{color: '#2D2B7A'}}>{s.faseh_request_number}</span>
                       <p className="text-xs text-gray-500">{s.importer_name}</p>
                     </div>
-                    <div className="text-right">
-                      <p className="text-xs text-purple-600 font-medium">
-                        {Math.floor((new Date() - new Date(s.state_entered_at)) / (1000 * 60 * 60))}h elapsed
-                      </p>
-                    </div>
+                    <p className="text-xs text-purple-600 font-medium">
+                      {Math.floor((new Date() - new Date(s.state_entered_at)) / (1000 * 60 * 60))}h elapsed
+                    </p>
                   </div>
                 ))}
               </div>
@@ -450,7 +413,6 @@ export default function LabPortal({ user, token, onLogout }) {
         </div>
       )}
 
-      {/* Tabs */}
       <div className="px-6 pt-4">
         <div className="flex items-center justify-between mb-3">
           <div className="flex gap-2 border-b border-gray-200">
@@ -469,6 +431,13 @@ export default function LabPortal({ user, token, onLogout }) {
               style={activeTab === 'completed' ? {borderColor: '#2D2B7A', color: '#2D2B7A'} : {}}>
               Completed ({completedShipments.length})
             </button>
+            {user?.is_org_admin && (
+              <button onClick={() => setActiveTab('org-admin')}
+                className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === 'org-admin' ? 'border-b-2' : 'border-transparent text-gray-500'}`}
+                style={activeTab === 'org-admin' ? {borderColor: '#10B981', color: '#10B981'} : {}}>
+                👥 My Organisation
+              </button>
+            )}
           </div>
           <button onClick={fetchData}
             className="px-4 py-2 text-white text-sm font-medium rounded-lg hover:opacity-90"
@@ -478,88 +447,93 @@ export default function LabPortal({ user, token, onLogout }) {
         </div>
       </div>
 
-      {/* Table */}
-      <div className="px-6 py-4">
-        {error && <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4 text-red-700 text-sm">{error}</div>}
-        {loading ? (
-          <div className="text-center py-12 text-gray-500">Loading...</div>
-        ) : filtered.length === 0 ? (
-          <div className="text-center py-12 text-gray-400">
-            <p className="text-lg">No samples in this queue</p>
-            <p className="text-sm mt-1">
-              {activeTab === 'active' ? 'Samples will appear here when the inspector delivers them to the lab' : 
-               activeTab === 'declined' ? 'Declined assignments will appear here' :
-               'Completed analyses will appear here'}
-            </p>
-          </div>
-        ) : (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            <table className="w-full">
-              <thead>
-                <tr className="bg-gray-50 border-b border-gray-200">
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Faseh Reference</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Importer</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Country</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Products</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Status</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Since</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {filtered.map(s => {
-                  const info = STATE_INFO[s.current_state] || { label: s.current_state, color: 'bg-gray-100 text-gray-700' };
-                  return (
-                    <tr key={s.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-3">
-                        <span className="font-mono text-sm font-semibold" style={{color: '#2D2B7A'}}>{s.faseh_request_number}</span>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-900">{s.importer_name}</td>
-                      <td className="px-4 py-3 text-sm text-gray-600">{s.shipment_country}</td>
-                      <td className="px-4 py-3 text-xs text-gray-500">{s.product_count || '—'} products</td>
-                      <td className="px-4 py-3">
-                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${info.color}`}>
-                          {info.label}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-xs text-gray-500">{formatDate(s.state_entered_at)}</td>
-                      <td className="px-4 py-3">
-                        {s.current_state === 'RECORD_OPENED' && (
-                          <div className="flex gap-1">
-                            <button onClick={() => handleLabResponse(s.id, 'ACCEPTED')}
-                              className="px-2 py-1 text-xs font-medium rounded-lg text-white hover:opacity-90"
-                              style={{background: '#10B981'}}>
-                              ✓ Accept
+      {activeTab !== 'org-admin' && (
+        <div className="px-6 py-4">
+          {error && <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4 text-red-700 text-sm">{error}</div>}
+          {loading ? (
+            <div className="text-center py-12 text-gray-500">Loading...</div>
+          ) : filtered.length === 0 ? (
+            <div className="text-center py-12 text-gray-400">
+              <p className="text-lg">No samples in this queue</p>
+              <p className="text-sm mt-1">
+                {activeTab === 'active' ? 'Samples will appear here when the shipping company delivers them to the lab' :
+                 activeTab === 'declined' ? 'Declined assignments will appear here' :
+                 'Completed analyses will appear here'}
+              </p>
+            </div>
+          ) : (
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-gray-50 border-b border-gray-200">
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Faseh Reference</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Importer</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Country</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Products</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Status</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Since</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {filtered.map(s => {
+                    const info = STATE_INFO[s.current_state] || { label: s.current_state, color: 'bg-gray-100 text-gray-700' };
+                    return (
+                      <tr key={s.id} className="hover:bg-gray-50">
+                        <td className="px-4 py-3">
+                          <span className="font-mono text-sm font-semibold" style={{color: '#2D2B7A'}}>{s.faseh_request_number}</span>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-900">{s.importer_name}</td>
+                        <td className="px-4 py-3 text-sm text-gray-600">{s.shipment_country}</td>
+                        <td className="px-4 py-3 text-xs text-gray-500">{s.product_count || '—'} products</td>
+                        <td className="px-4 py-3">
+                          <span className={`px-2 py-1 rounded-full text-xs font-semibold ${info.color}`}>
+                            {info.label}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-xs text-gray-500">{formatDate(s.state_entered_at)}</td>
+                        <td className="px-4 py-3">
+                          {s.current_state === 'RECORD_OPENED' && (
+                            <div className="flex gap-1">
+                              <button onClick={() => handleLabResponse(s.id, 'ACCEPTED')}
+                                className="px-2 py-1 text-xs font-medium rounded-lg text-white hover:opacity-90"
+                                style={{background: '#10B981'}}>
+                                ✓ Accept
+                              </button>
+                              <button onClick={() => setDecliningShipment(s)}
+                                className="px-2 py-1 text-xs font-medium rounded-lg text-white hover:opacity-90"
+                                style={{background: '#EF4444'}}>
+                                ✕ Decline
+                              </button>
+                            </div>
+                          )}
+                          {s.current_state === 'LAB_ACCEPTED' && (
+                            <span className="text-xs text-green-600 font-medium">✓ Accepted</span>
+                          )}
+                          {['LAB_RECEIVED', 'IN_ANALYSIS'].includes(s.current_state) && (
+                            <button onClick={() => fetchShipmentDetail(s)}
+                              className="px-3 py-1 text-xs font-medium rounded-lg text-white hover:opacity-90"
+                              style={{background: '#2D2B7A'}}>
+                              {s.current_state === 'LAB_RECEIVED' ? '▶ Start' : '📋 Results'}
                             </button>
-                            <button onClick={() => setDecliningShipment(s)}
-                              className="px-2 py-1 text-xs font-medium rounded-lg text-white hover:opacity-90"
-                              style={{background: '#EF4444'}}>
-                              ✕ Decline
-                            </button>
-                          </div>
-                        )}
-                        {s.current_state === 'LAB_ACCEPTED' && (
-                          <span className="text-xs text-green-600 font-medium">✓ Accepted</span>
-                        )}
-                        {['LAB_RECEIVED', 'IN_ANALYSIS'].includes(s.current_state) && (
-                          <button onClick={() => fetchShipmentDetail(s)}
-                            className="px-3 py-1 text-xs font-medium rounded-lg text-white hover:opacity-90"
-                            style={{background: '#2D2B7A'}}>
-                            {s.current_state === 'LAB_RECEIVED' ? '▶ Start' : '📋 Results'}
-                          </button>
-                        )}
-                        {s.current_state === 'RESULT_SUBMITTED' && (
-                          <span className="text-xs text-green-600 font-medium">✓ Submitted</span>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+                          )}
+                          {s.current_state === 'RESULT_SUBMITTED' && (
+                            <span className="text-xs text-green-600 font-medium">✓ Submitted</span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {activeTab === 'org-admin' && (
+        <OrgAdminPanel token={token} />
+      )}
 
       {decliningShipment && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">

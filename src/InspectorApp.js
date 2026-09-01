@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import NotificationBell from './NotificationBell';
+import OrgAdminPanel from './OrgAdminPanel';
 
 const API_URL = 'http://localhost:3000/api/v1';
 
@@ -238,21 +239,25 @@ function SampleActionModal({ shipment, token, onClose, onRefresh }) {
 }
 
 // Main Inspector App
-export default function InspectorApp({ user, token, onLogout }) {
+export default function InspectorApp({ user: initialUser, token, onLogout }) {
+  const [user, setUser] = useState(initialUser);
   const [shipments, setShipments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedShipment, setSelectedShipment] = useState(null);
   const [activeTab, setActiveTab] = useState('active');
 
-  const fetchShipments = async () => {
+    const fetchShipments = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`${API_URL}/shipments`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const data = await res.json();
-      setShipments(data.shipments || []);
+      const [shipmentsRes, meRes] = await Promise.all([
+        fetch(`${API_URL}/shipments`, { headers: { Authorization: `Bearer ${token}` } }),
+        fetch(`${API_URL}/auth/me`, { headers: { Authorization: `Bearer ${token}` } })
+      ]);
+      const shipmentsData = await shipmentsRes.json();
+      const meData = await meRes.json();
+      setShipments(shipmentsData.shipments || []);
+      if (meData.user) setUser(meData.user);
       setError(null);
     } catch (err) {
       setError('Failed to connect to platform.');
@@ -271,7 +276,7 @@ export default function InspectorApp({ user, token, onLogout }) {
   const completedShipments = shipments.filter(s => !INSPECTOR_STATES.includes(s.current_state) &&
     ['IN_ANALYSIS', 'ANALYSIS_COMPLETE', 'RESULT_SUBMITTED', 'CONFORMING', 'NON_CONFORMING', 'FINAL_CLEARANCE'].includes(s.current_state));
 
-  const filtered = activeTab === 'active' ? activeShipments : completedShipments;
+  const filtered = activeTab === 'active' ? activeShipments : activeTab === 'org-admin' ? [] : completedShipments;
 
   const samplingRequested = shipments.filter(s => s.current_state === 'SAMPLING_REQUESTED').length;
   const inProgress = shipments.filter(s => ['PICKUP_SCHEDULED', 'SAMPLE_PICKED_UP', 'IN_TRANSIT'].includes(s.current_state)).length;
@@ -366,6 +371,13 @@ export default function InspectorApp({ user, token, onLogout }) {
               style={activeTab === 'completed' ? {borderColor: '#2D2B7A', color: '#2D2B7A'} : {}}>
               Completed ({completedShipments.length})
             </button>
+            {user?.is_org_admin && (
+              <button onClick={() => setActiveTab('org-admin')}
+                className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === 'org-admin' ? 'border-b-2' : 'border-transparent text-gray-500'}`}
+                style={activeTab === 'org-admin' ? {borderColor: '#10B981', color: '#10B981'} : {}}>
+                👥 My Organisation
+              </button>
+            )}
           </div>
           <button onClick={fetchShipments}
             className="px-4 py-2 text-white text-sm font-medium rounded-lg hover:opacity-90"
@@ -441,6 +453,10 @@ export default function InspectorApp({ user, token, onLogout }) {
           </div>
         )}
       </div>
+
+      {activeTab === 'org-admin' && (
+        <OrgAdminPanel token={token} />
+      )}
 
       {selectedShipment && (
         <SampleActionModal

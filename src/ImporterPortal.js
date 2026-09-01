@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import NotificationBell from './NotificationBell';
+import OrgAdminPanel from './OrgAdminPanel';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell
@@ -1444,7 +1445,8 @@ function ComplianceProfile({ shipments, user }) {
 }
 
 // Main MAH Portal
-export default function ImporterPortal({ user, token, onLogout }) {
+export default function ImporterPortal({ user: initialUser, token, onLogout }) {
+  const [user, setUser] = useState(initialUser);
   const [shipments, setShipments] = useState([]);
   const [organisations, setOrganisations] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -1479,6 +1481,13 @@ export default function ImporterPortal({ user, token, onLogout }) {
       setShipments(shipmentsData.shipments || []);
       setOrganisations(mergedOrgs);
       setError(null);
+
+      // Check if user is org admin
+      const meRes = await fetch(`${API_URL}/auth/me`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const meData = await meRes.json();
+      if (meData.user) setUser(meData.user);
     } catch (err) {
       setError('Failed to connect to platform.');
     } finally {
@@ -1706,8 +1715,19 @@ export default function ImporterPortal({ user, token, onLogout }) {
             style={activeTab === 'completed' ? {borderColor: '#2D2B7A', color: '#2D2B7A'} : {}}>
             Completed ({completedShipments.length})
           </button>
+          {user?.is_org_admin && (
+            <button onClick={() => setActiveTab('org-admin')}
+              className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === 'org-admin' ? 'border-b-2' : 'border-transparent text-gray-500'}`}
+              style={activeTab === 'org-admin' ? {borderColor: '#10B981', color: '#10B981'} : {}}>
+              👥 My Organisation
+            </button>
+          )}
         </div>
       </div>
+      {/* Org Admin Panel */}
+      {activeTab === 'org-admin' && (
+        <OrgAdminPanel token={token} />
+      )}
 
       {/* Table */}
       <div className="px-6 py-4">
