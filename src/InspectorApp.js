@@ -388,7 +388,7 @@ export default function InspectorApp({ user: initialUser, token, onLogout }) {
       </div>
 
       {/* Table */}
-      <div className="px-6 py-4">
+      {activeTab !== 'org-admin' && <div className="px-6 py-4">
         {error && <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4 text-red-700 text-sm">{error}</div>}
         {loading ? (
           <div className="text-center py-12 text-gray-500">Loading...</div>
@@ -452,7 +452,7 @@ export default function InspectorApp({ user: initialUser, token, onLogout }) {
             </table>
           </div>
         )}
-      </div>
+            </div>}
 
       {activeTab === 'org-admin' && (
         <OrgAdminPanel token={token} />
