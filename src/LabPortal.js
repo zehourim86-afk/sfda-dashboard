@@ -147,6 +147,27 @@ function SubmitResultModal({ shipment, token, onClose, onRefresh }) {
 
           {shipment.current_state === 'IN_ANALYSIS' && (
             <div className="space-y-4">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <p className="text-xs text-blue-700 font-semibold mb-1">⚠️ Please confirm you are submitting results for the correct shipment</p>
+                <div className="grid grid-cols-2 gap-2 mt-2">
+                  <div>
+                    <p className="text-xs text-gray-500">Faseh Reference</p>
+                    <p className="text-sm font-bold" style={{color: '#2D2B7A'}}>{shipment.faseh_request_number}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500">Importer</p>
+                    <p className="text-sm font-medium text-gray-900">{shipment.importer_name}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500">Country</p>
+                    <p className="text-sm font-medium text-gray-900">{shipment.shipment_country}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500">Products</p>
+                    <p className="text-sm font-medium text-gray-900">{shipment.products?.length || '—'} products</p>
+                  </div>
+                </div>
+              </div>
               <div>
                 <label className="text-xs font-semibold text-gray-600 uppercase">Lab Reference Number *</label>
                 <input type="text" value={labReference}
