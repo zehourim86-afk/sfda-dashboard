@@ -317,9 +317,13 @@ export default function ClearancePortal({ user: initialUser, token, onLogout }) 
 
   useEffect(() => {
     fetchShipments();
-    const interval = setInterval(fetchShipments, 30000);
+    const interval = setInterval(() => {
+      if (!selectedShipment && !decliningShipment) {
+        fetchShipments();
+      }
+    }, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [selectedShipment, decliningShipment]);
 
     const handleClearanceResponse = async (shipmentId, response, reason) => {
     try {

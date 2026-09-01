@@ -1543,9 +1543,13 @@ export default function ImporterPortal({ user: initialUser, token, onLogout }) {
 
   useEffect(() => {
     fetchData();
-    const interval = setInterval(fetchData, 30000);
+    const interval = setInterval(() => {
+      if (!showNewForm && !selectedShipmentId) {
+        fetchData();
+      }
+    }, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [showNewForm, selectedShipmentId]);
 
   const activeShipments = shipments.filter(s =>
     !['FINAL_CLEARANCE', 'ARCHIVED', 'RE_EXPORT_COMPLETED', 'DESTRUCTION_CONFIRMED'].includes(s.current_state)

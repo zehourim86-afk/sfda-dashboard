@@ -268,9 +268,13 @@ export default function InspectorApp({ user: initialUser, token, onLogout }) {
 
   useEffect(() => {
     fetchShipments();
-    const interval = setInterval(fetchShipments, 30000);
+    const interval = setInterval(() => {
+      if (!selectedShipment) {
+        fetchShipments();
+      }
+    }, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [selectedShipment]);
 
   const activeShipments = shipments.filter(s => INSPECTOR_STATES.includes(s.current_state));
   const completedShipments = shipments.filter(s => !INSPECTOR_STATES.includes(s.current_state) &&

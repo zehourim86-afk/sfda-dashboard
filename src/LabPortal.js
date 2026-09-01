@@ -323,9 +323,13 @@ export default function LabPortal({ user: initialUser, token, onLogout }) {
 
   useEffect(() => {
     fetchData();
-    const interval = setInterval(fetchData, 30000);
+    const interval = setInterval(() => {
+      if (!selectedShipment && !decliningShipment) {
+        fetchData();
+      }
+    }, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [selectedShipment, decliningShipment]);
 
   const activeShipments = shipments.filter(s => ['RECORD_OPENED', 'LAB_ACCEPTED', 'LAB_DECLINED', 'LAB_RECEIVED', 'IN_ANALYSIS'].includes(s.current_state));
   const completedShipments = shipments.filter(s => ['RESULT_SUBMITTED', 'CONFORMING', 'NON_CONFORMING', 'FINAL_CLEARANCE'].includes(s.current_state));
