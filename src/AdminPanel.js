@@ -51,6 +51,28 @@ function EscalationAlerts({ token }) {
 
   return (
     <div className="space-y-3 mb-4">
+            {escalations.lab_analysis_escalations?.length > 0 && (
+        <div className="bg-purple-50 border border-purple-300 rounded-xl p-4">
+          <h3 className="text-sm font-semibold text-purple-700 mb-2">
+            🔬 Lab Not Started Analysis — Over 48 Hours ({escalations.lab_analysis_escalations.length})
+          </h3>
+          <div className="space-y-2">
+            {escalations.lab_analysis_escalations.map(s => (
+              <div key={s.id} className="flex items-center justify-between bg-white rounded-lg px-3 py-2 border border-purple-100">
+                <div>
+                  <span className="font-mono text-xs font-semibold" style={{color: '#2D2B7A'}}>{s.faseh_request_number}</span>
+                  <span className="text-xs text-gray-500 ml-2">{s.importer_name}</span>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs text-gray-500">{s.lab_name}</p>
+                  <p className="text-xs text-purple-600 font-bold">{Math.floor(s.hours_in_state)}h since sample received</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          <p className="text-xs text-purple-600 mt-2">MAH and DEMARA admin have been notified. Contact the lab to start analysis immediately.</p>
+        </div>
+      )}
       {escalations.lab_escalations?.length > 0 && (
         <div className="bg-orange-50 border border-orange-300 rounded-xl p-4">
           <h3 className="text-sm font-semibold text-orange-700 mb-2">
