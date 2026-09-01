@@ -51,6 +51,28 @@ function EscalationAlerts({ token }) {
 
   return (
     <div className="space-y-3 mb-4">
+            {escalations.mah_inactivity_escalations?.length > 0 && (
+        <div className="bg-yellow-50 border border-yellow-300 rounded-xl p-4">
+          <h3 className="text-sm font-semibold text-yellow-700 mb-2">
+            👤 MAH Inactive — Active Shipment Unmonitored ({escalations.mah_inactivity_escalations.length})
+          </h3>
+          <div className="space-y-2">
+            {escalations.mah_inactivity_escalations.map(s => (
+              <div key={s.id} className="flex items-center justify-between bg-white rounded-lg px-3 py-2 border border-yellow-100">
+                <div>
+                  <span className="font-mono text-xs font-semibold" style={{color: '#2D2B7A'}}>{s.faseh_request_number}</span>
+                  <span className="text-xs text-gray-500 ml-2">{s.importer_name}</span>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs text-gray-500">{s.importer_email}</p>
+                  <p className="text-xs text-yellow-600 font-bold">{Math.floor(s.hours_since_login)}h since last login</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          <p className="text-xs text-yellow-600 mt-2">These MAHs have active shipments but have not logged in recently. Consider reaching out to ensure they are aware of their shipment status.</p>
+        </div>
+      )}
             {escalations.lab_analysis_escalations?.length > 0 && (
         <div className="bg-purple-50 border border-purple-300 rounded-xl p-4">
           <h3 className="text-sm font-semibold text-purple-700 mb-2">
