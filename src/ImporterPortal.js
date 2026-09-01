@@ -123,6 +123,42 @@ function NewShipmentForm({ token, organisations, onSuccess, onCancel }) {
   const [selectedLabInfo, setSelectedLabInfo] = useState(null);
   const [selectedLabId, setSelectedLabId] = useState('');
   const [selectedClearanceId, setSelectedClearanceId] = useState('');
+  const [restored, setRestored] = useState(false);
+
+    // Auto-save form data every 30 seconds
+  useEffect(() => {
+    if (step === 2 && extractedData) {
+      const saveData = {
+        step,
+        extractedData,
+        selectedLabId,
+        selectedClearanceId,
+        savedAt: new Date().toISOString()
+      };
+      localStorage.setItem('demara_form_autosave', JSON.stringify(saveData));
+    }
+  }, [step, extractedData, selectedLabId, selectedClearanceId]);
+
+  // Restore auto-saved data on mount
+  useEffect(() => {
+    const saved = localStorage.getItem('demara_form_autosave');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        const savedAt = new Date(parsed.savedAt);
+        const ageMinutes = (new Date() - savedAt) / 60000;
+        if (ageMinutes < 60 && parsed.extractedData) {
+          setExtractedData(parsed.extractedData);
+          setSelectedLabId(parsed.selectedLabId || '');
+          setSelectedClearanceId(parsed.selectedClearanceId || '');
+          setStep(2);
+          setRestored(true);
+        }
+      } catch (err) {
+        console.error('Auto-save restore failed');
+      }
+    }
+  }, []);
 
   const clearanceCompanies = organisations.filter(o => o.org_type === 'CLEARANCE_COMPANY');
   const labs = organisations.filter(o => o.org_type === 'LAB');
@@ -273,6 +309,7 @@ Saudi Food and Drug Authority`;
       });
       const data = await res.json();
       if (data.success) {
+        localStorage.removeItem('demara_form_autosave');
         onSuccess(data.faseh_request_number);
       } else {
         setError(data.message || 'Failed to open shipment record');
@@ -399,6 +436,15 @@ Saudi Food and Drug Authority`;
           {/* Step 2 — Review */}
           {step === 2 && extractedData && (
             <div className="space-y-4">
+              {restored && (
+                <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg flex items-center justify-between">
+                  <p className="text-xs text-yellow-700 font-medium">⚡ Your previous form data has been restored automatically.</p>
+                  <button onClick={() => { localStorage.removeItem('demara_form_autosave'); setRestored(false); setStep(1); setExtractedData(null); }}
+                    className="text-xs text-yellow-600 underline hover:text-yellow-800">
+                    Start fresh
+                  </button>
+                </div>
+              )}
               <div className="bg-green-50 border border-green-200 rounded-lg p-3">
                 <p className="text-xs text-green-700 font-medium">✓ DEMARA AI successfully extracted your document</p>
                 <p className="text-xs text-green-600 mt-1">Review the extracted information below. Edit any field if needed.</p>
