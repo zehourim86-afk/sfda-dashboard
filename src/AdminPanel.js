@@ -265,6 +265,9 @@ function ShipmentsSection({ token }) {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [selectedState, setSelectedState] = useState('');
+  const [resetShipment, setResetShipment] = useState(null);
+  const [resetReason, setResetReason] = useState('');
+  const [resetting, setResetting] = useState(false);
 
   const STATES = [
     'RECORD_OPENED', 'SAMPLING_REQUESTED', 'INSPECTOR_DISPATCHED',
@@ -272,6 +275,38 @@ function ShipmentsSection({ token }) {
     'IN_ANALYSIS', 'RESULT_SUBMITTED', 'CONFORMING', 'NON_CONFORMING',
     'CLEARANCE_IN_PROGRESS', 'BOND_RELEASED', 'DUTIES_PAID', 'FINAL_CLEARANCE'
   ];
+
+    const handleResetDecision = (shipment) => {
+    setResetShipment(shipment);
+    setResetReason('');
+  };
+
+  const confirmReset = async () => {
+    if (!resetReason.trim()) return;
+    setResetting(true);
+    try {
+      const res = await fetch(`${API_URL}/admin/shipments/${resetShipment.id}/reset-decision`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ reason: resetReason })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setResetShipment(null);
+        setResetReason('');
+        // Refresh shipments
+        const refreshRes = await fetch(`${API_URL}/shipments`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const refreshData = await refreshRes.json();
+        setShipments(refreshData.shipments || []);
+      }
+    } catch (err) {
+      console.error('Reset failed');
+    } finally {
+      setResetting(false);
+    }
+  };
 
   useEffect(() => {
     const fetchShipments = async () => {
@@ -326,6 +361,7 @@ function ShipmentsSection({ token }) {
                 <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">State</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Dwell Time</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Updated</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -355,10 +391,44 @@ function ShipmentsSection({ token }) {
                     {s.total_dwell_minutes ? `${Math.floor(s.total_dwell_minutes / 1440)}d ${Math.floor((s.total_dwell_minutes % 1440) / 60)}h` : '—'}
                   </td>
                   <td className="px-4 py-3 text-xs text-gray-500">{formatDate(s.updated_at)}</td>
+                  <td className="px-4 py-3">
+                    {['CONFORMING', 'NON_CONFORMING', 'PARTIALLY_CONFORMING'].includes(s.current_state) && (
+                      <button onClick={() => handleResetDecision(s)}
+                        className="px-2 py-1 text-xs font-medium rounded-lg text-white hover:opacity-90"
+                        style={{background: '#F59E0B'}}>
+                        ↩ Reset Decision
+                      </button>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {resetShipment && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
+            <h2 className="text-lg font-bold text-gray-900 mb-2">↩ Reset Decision</h2>
+            <p className="text-sm text-gray-500 mb-1">{resetShipment.faseh_request_number}</p>
+            <p className="text-xs text-orange-600 mb-4">This will reset the shipment from <strong>{resetShipment.current_state}</strong> to RESULT_SUBMITTED. The corrected SFDA decision email can then be processed.</p>
+            <label className="text-xs font-semibold text-gray-600 uppercase">Reason for reset *</label>
+            <textarea value={resetReason} onChange={e => setResetReason(e.target.value)}
+              rows={3} placeholder="e.g. SFDA issued a corrected decision email..."
+              className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none" />
+            <div className="flex gap-3 mt-4">
+              <button onClick={confirmReset} disabled={resetting || !resetReason.trim()}
+                className="flex-1 py-2 text-white font-semibold text-sm rounded-lg hover:opacity-90 disabled:opacity-50"
+                style={{background: '#F59E0B'}}>
+                {resetting ? 'Resetting...' : 'Confirm Reset'}
+              </button>
+              <button onClick={() => { setResetShipment(null); setResetReason(''); }}
+                className="px-4 py-2 border border-gray-300 text-gray-600 text-sm rounded-lg hover:bg-gray-50">
+                Cancel
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
