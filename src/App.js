@@ -15,6 +15,7 @@ function App() {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showExpiryWarning, setShowExpiryWarning] = useState(false);
 
   useEffect(() => {
     const savedToken = localStorage.getItem('demara_token');
@@ -30,6 +31,39 @@ function App() {
     setUser(userData);
     setToken(userToken);
   };
+
+    // Idle timeout — 1 hour of inactivity
+  useEffect(() => {
+    if (!token) return;
+    let idleTimer;
+    let warningTimer;
+
+    const resetTimers = () => {
+      setShowExpiryWarning(false);
+      clearTimeout(idleTimer);
+      clearTimeout(warningTimer);
+
+      // Show warning after 55 minutes of inactivity
+      warningTimer = setTimeout(() => {
+        setShowExpiryWarning(true);
+      }, 55 * 60 * 1000);
+
+      // Auto logout after 60 minutes of inactivity
+      idleTimer = setTimeout(() => {
+        handleLogout();
+      }, 60 * 60 * 1000);
+    };
+
+    const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
+    events.forEach(e => window.addEventListener(e, resetTimers));
+    resetTimers();
+
+    return () => {
+      clearTimeout(idleTimer);
+      clearTimeout(warningTimer);
+      events.forEach(e => window.removeEventListener(e, resetTimers));
+    };
+  }, [token]);
 
   const handleLogout = () => {
     localStorage.removeItem('demara_token');
@@ -86,7 +120,28 @@ function App() {
     }
   };
 
-  return renderPortal();
+  return (
+    <>
+      {showExpiryWarning && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, zIndex: 9999,
+          background: '#F59E0B', color: 'white', padding: '10px 20px',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          fontSize: '13px', fontWeight: 600
+        }}>
+          <span>⚠️ Your session will expire soon due to inactivity. Click anywhere to stay signed in.</span>
+          <button onClick={handleLogout} style={{
+            background: 'white', color: '#F59E0B', border: 'none',
+            padding: '4px 12px', borderRadius: '6px', cursor: 'pointer',
+            fontWeight: 700, fontSize: '12px'
+          }}>
+            Sign Out Now
+          </button>
+        </div>
+      )}
+      {renderPortal()}
+    </>
+  );
 }
 
 export default App;
