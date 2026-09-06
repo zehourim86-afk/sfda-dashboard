@@ -1157,7 +1157,112 @@ function ShipmentDetailModal({ shipmentId, token, onClose }) {
           {detailTab === 'documents' && (
             <DocumentReadiness shipmentId={shipment.id} token={token} shipment={shipment} />
           )}
-          {detailTab !== 'documents' && <>
+
+          {detailTab === 'timeline' && (
+            <div>
+              <div style={{marginBottom:'16px'}}>
+                <div style={{fontSize:'16px',fontWeight:700,color:'#27306E',marginBottom:'4px'}}>Shipment Timeline</div>
+                <div style={{fontSize:'12px',color:'#808285'}}>Complete audit trail — every state change, action, and notification</div>
+              </div>
+              {shipment.audit_log && shipment.audit_log.length > 0 ? (
+                <div style={{position:'relative'}}>
+                  {/* Vertical line */}
+                  <div style={{position:'absolute',left:'15px',top:'8px',bottom:'8px',width:'2px',background:'rgba(39,48,110,0.08)',borderRadius:'1px'}}></div>
+                  <div style={{display:'flex',flexDirection:'column',gap:'0px'}}>
+                    {[...shipment.audit_log].reverse().map((log, index) => {
+                      const sourceColor = log.trigger_source === 'EMAIL_PARSER' ? '#44C8F5' :
+                                         log.trigger_source === 'SYSTEM' ? '#7C5CFC' : '#00C896';
+                      const sourceLabel = log.trigger_source === 'EMAIL_PARSER' ? '📧 Email Parser' :
+                                         log.trigger_source === 'SYSTEM' ? '⚙️ System' : '👤 Manual';
+                      const isFirst = index === 0;
+                      return (
+                        <div key={log.id} style={{display:'flex',gap:'16px',paddingBottom:'20px',position:'relative'}}>
+                          {/* Dot */}
+                          <div style={{
+                            width:'30px',height:'30px',borderRadius:'50%',
+                            background: isFirst ? '#27306E' : '#FFFFFF',
+                            border:`2px solid ${isFirst ? '#44C8F5' : 'rgba(39,48,110,0.15)'}`,
+                            display:'flex',alignItems:'center',justifyContent:'center',
+                            flexShrink:0,zIndex:1,
+                            boxShadow: isFirst ? '0 0 0 4px rgba(68,200,245,0.15)' : 'none'
+                          }}>
+                            <div style={{
+                              width:'8px',height:'8px',borderRadius:'50%',
+                              background: isFirst ? '#44C8F5' : sourceColor
+                            }}></div>
+                          </div>
+                          {/* Content */}
+                          <div style={{
+                            flex:1,background:'#FFFFFF',
+                            border:`1px solid ${isFirst ? 'rgba(68,200,245,0.3)' : 'rgba(39,48,110,0.08)'}`,
+                            borderRadius:'10px',padding:'12px 14px',
+                            boxShadow: isFirst ? '0 2px 12px rgba(68,200,245,0.1)' : 'none'
+                          }}>
+                            {/* State change */}
+                            <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'6px',flexWrap:'wrap'}}>
+                              <span style={{
+                                fontFamily:'JetBrains Mono,monospace',fontSize:'11px',fontWeight:600,
+                                color:'#808285',background:'rgba(39,48,110,0.06)',
+                                padding:'2px 8px',borderRadius:'4px'
+                              }}>{log.from_state?.replace(/_/g,' ') || '—'}</span>
+                              <span style={{color:'#44C8F5',fontSize:'14px',fontWeight:700}}>→</span>
+                              <span style={{
+                                fontFamily:'JetBrains Mono,monospace',fontSize:'11px',fontWeight:700,
+                                color:'#27306E',background:'rgba(68,200,245,0.1)',
+                                padding:'2px 8px',borderRadius:'4px',
+                                border:'1px solid rgba(68,200,245,0.2)'
+                              }}>{log.to_state?.replace(/_/g,' ') || '—'}</span>
+                            </div>
+                            {/* Event */}
+                            {log.trigger_event && (
+                              <div style={{fontSize:'12px',color:'#3A4080',marginBottom:'4px',fontWeight:500}}>
+                                {log.trigger_event}
+                              </div>
+                            )}
+                            {/* Notes */}
+                            {log.notes && (
+                              <div style={{fontSize:'11px',color:'#808285',marginBottom:'6px',fontStyle:'italic'}}>
+                                "{log.notes}"
+                              </div>
+                            )}
+                            {/* Meta */}
+                            <div style={{display:'flex',alignItems:'center',gap:'12px',flexWrap:'wrap'}}>
+                              <span style={{
+                                fontSize:'10px',fontWeight:600,
+                                color:sourceColor,
+                                background:`${sourceColor}15`,
+                                padding:'2px 8px',borderRadius:'10px',
+                                border:`1px solid ${sourceColor}30`
+                              }}>{sourceLabel}</span>
+                              {log.actor_role && (
+                                <span style={{fontSize:'10px',color:'#808285'}}>
+                                  {log.actor_role.replace(/_/g,' ')}
+                                </span>
+                              )}
+                              <span style={{fontSize:'10px',color:'#808285',marginLeft:'auto'}}>
+                                {new Date(log.occurred_at).toLocaleString('en-SA',{
+                                  day:'2-digit',month:'short',year:'numeric',
+                                  hour:'2-digit',minute:'2-digit'
+                                })}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : (
+                <div style={{textAlign:'center',padding:'40px',color:'#808285'}}>
+                  <div style={{fontSize:'32px',marginBottom:'8px'}}>📅</div>
+                  <div style={{fontSize:'14px',fontWeight:600,color:'#27306E',marginBottom:'4px'}}>No timeline events yet</div>
+                  <div style={{fontSize:'12px'}}>State changes will appear here as the shipment progresses</div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {detailTab !== 'documents' && detailTab !== 'timeline' && <>
           {/* Progress */}
           <ProgressTracker currentStep={stateInfo.step} currentState={shipment.current_state} />
 
