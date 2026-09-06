@@ -297,11 +297,21 @@ export default function DocumentReadiness({ shipmentId, token, shipment }) {
               {/* Paste area */}
               {isPasting && (
                 <div style={{padding:'14px 16px',borderTop:'1px solid rgba(39,48,110,0.06)',background:'#F8F9FF'}}>
+                  {typeKey === 'ARABIC_LABEL' && (
+                    <div style={{marginBottom:'8px',padding:'10px 12px',background:'rgba(68,200,245,0.06)',border:'1px solid rgba(68,200,245,0.15)',borderRadius:'8px',fontSize:'11px',color:'#27306E'}}>
+                      <div style={{fontWeight:700,marginBottom:'4px'}}>📋 Arabic Label Checklist</div>
+                      <div style={{color:'#808285',lineHeight:1.6}}>
+                        Paste all text visible on your Arabic label including: product name, ingredients, allergens, manufacturer details, country of origin, expiry format, nutrition info, storage instructions, net weight, and any claims or certifications.
+                      </div>
+                    </div>
+                  )}
                   <textarea
                     value={pasteText}
                     onChange={e => setPasteText(e.target.value)}
                     rows={5}
-                    placeholder={`Paste the content of your ${typeDef.label} here...`}
+                    placeholder={typeKey === 'ARABIC_LABEL' ?
+                      'Paste all Arabic label text here — product name in Arabic, ingredient list, allergens, manufacturer address, expiry date format, net weight...' :
+                      `Paste the content of your ${typeDef.label} here...`}
                     style={{
                       width:'100%',border:'1px solid rgba(39,48,110,0.15)',borderRadius:'8px',
                       padding:'10px 12px',fontSize:'12px',fontFamily:'JetBrains Mono,monospace',
