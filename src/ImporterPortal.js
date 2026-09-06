@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import NotificationBell from './NotificationBell';
 import OrgAdminPanel from './OrgAdminPanel';
+import DocumentReadiness from './DocumentReadiness';
+import './masaar-design.css';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell
@@ -1092,6 +1094,7 @@ function NonConformingAction({ shipment, token, onClose }) {
 function ShipmentDetailModal({ shipmentId, token, onClose }) {
   const [shipment, setShipment] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [detailTab, setDetailTab] = useState('details');
 
   useEffect(() => {
     const fetchShipment = async () => {
@@ -1130,7 +1133,31 @@ function ShipmentDetailModal({ shipmentId, token, onClose }) {
           </div>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl">×</button>
         </div>
+        {/* Tab navigation */}
+        <div style={{display:'flex',gap:'2px',padding:'0 24px',borderBottom:'1px solid rgba(39,48,110,0.08)',background:'#FAFBFF'}}>
+          {[
+            {key:'details',label:'📋 Shipment Details'},
+            {key:'documents',label:'📁 Document Readiness'},
+            {key:'timeline',label:'📅 Timeline'},
+          ].map(tab => (
+            <div key={tab.key}
+              onClick={() => setDetailTab(tab.key)}
+              style={{
+                padding:'10px 16px',fontSize:'12px',fontWeight:600,cursor:'pointer',
+                borderBottom:`2px solid ${detailTab === tab.key ? '#44C8F5' : 'transparent'}`,
+                color: detailTab === tab.key ? '#27306E' : '#808285',
+                marginBottom:'-1px',transition:'all 0.15s'
+              }}>
+              {tab.label}
+            </div>
+          ))}
+        </div>
+
         <div className="p-6 space-y-5">
+          {detailTab === 'documents' && (
+            <DocumentReadiness shipmentId={shipment.id} token={token} shipment={shipment} />
+          )}
+          {detailTab !== 'documents' && <>
           {/* Progress */}
           <ProgressTracker currentStep={stateInfo.step} currentState={shipment.current_state} />
 
@@ -1319,6 +1346,7 @@ function ShipmentDetailModal({ shipmentId, token, onClose }) {
               </div>
             </div>
           )}
+          </>}
         </div>
       </div>
     </div>
@@ -1503,6 +1531,7 @@ export default function ImporterPortal({ user: initialUser, token, onLogout }) {
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [filterPort, setFilterPort] = useState('');
+  const [activeKpi, setActiveKpi] = useState(null);
 
   const fetchData = async () => {
     try {
@@ -1580,270 +1609,499 @@ export default function ImporterPortal({ user: initialUser, token, onLogout }) {
     }, {})
   ).map(([label, value]) => ({ label, value }));
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div style={{background: 'linear-gradient(135deg, #2D2B7A 0%, #1a1854 100%)'}} className="px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <img src="/demara-logo.png" alt="DEMARA" style={{height: '80px', width: '200px', objectFit: 'contain'}} />
-            <div>
-              <h1 className="text-lg font-bold text-white">DEMARA Platform</h1>
-              <p className="text-xs mt-0.5" style={{color: '#00B4D8'}}>DEMARA Masaar · MAH Portal</p>
+      const conformityRate = shipments.length > 0 ? Math.round((completedShipments.filter(s => s.current_state === 'FINAL_CLEARANCE').length / shipments.length) * 100) : 0;
+    const avgDwell = shipments.filter(s => s.total_dwell_minutes).reduce((acc, s, _, arr) => acc + s.total_dwell_minutes / arr.length, 0);
+    const avgDwellDays = avgDwell > 0 ? (avgDwell / 1440).toFixed(1) : '—';
+    const userInitials = user?.full_name?.split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase() || 'MA';
+
+    return (
+    <div className="m-app">
+
+      {/* Icon Strip */}
+      <div className="m-strip">
+        <div className="m-strip-logo">DM</div>
+        <div className="m-strip-divider"></div>
+        <div className={`m-strip-icon ${activeTab === 'active' ? 'active' : ''}`} title="Dashboard" onClick={() => setActiveTab('active')}>📊</div>
+        <div className={`m-strip-icon ${activeTab === 'completed' ? 'active' : ''}`} title="Completed Shipments" onClick={() => setActiveTab('completed')}>✅</div>
+        <div className="m-strip-icon" title="New Record" onClick={() => setShowNewForm(true)}>➕</div>
+        <div className={`m-strip-icon ${activeTab === 'org-admin' ? 'active' : ''}`} title="My Organisation" onClick={() => setActiveTab('org-admin')}>👥</div>
+        <div className="m-strip-bottom">
+          <div className="m-strip-avatar" title={user?.full_name} onClick={onLogout}>{userInitials}</div>
+        </div>
+      </div>
+
+      {/* Sidebar */}
+      <aside className="m-sidebar">
+        <div className="m-sidebar-header">
+          <div className="m-sidebar-name">MAH Portal</div>
+          <div className="m-sidebar-sub">{user?.full_name || 'MAH User'}</div>
+        </div>
+        <nav className="m-sidebar-nav">
+          <div className="m-sidebar-section">Shipments</div>
+          <div className={`m-nav-item ${activeTab === 'active' ? 'active' : ''}`} onClick={() => { setActiveTab('active'); setFilterStatus(''); setActiveKpi(null); }}>
+            <span className="m-nav-icon">📊</span> Dashboard
+          </div>
+          <div className={`m-nav-item ${activeTab === 'active' && filterStatus === '' ? '' : ''}`} onClick={() => { setActiveTab('active'); setFilterStatus(''); setActiveKpi(null); }}>
+            <span className="m-nav-icon">📦</span> Active Shipments
+            {activeShipments.length > 0 && <span className="m-nav-badge amber">{activeShipments.length}</span>}
+          </div>
+          <div className={`m-nav-item ${activeTab === 'completed' ? 'active' : ''}`} onClick={() => { setActiveTab('completed'); setFilterStatus(''); setActiveKpi(null); }}>
+            <span className="m-nav-icon">✅</span> Completed
+            {completedShipments.length > 0 && <span className="m-nav-badge cyan">{completedShipments.length}</span>}
+          </div>
+          <div className="m-nav-item" onClick={() => setShowNewForm(true)}>
+            <span className="m-nav-icon">➕</span> New Record
+          </div>
+          <div className="m-sidebar-section">Insights</div>
+          <div className={`m-nav-item ${activeTab === 'active' && filterStatus === 'NON_CONFORMING' ? 'active' : ''}`} onClick={() => { setActiveTab('active'); setFilterStatus('NON_CONFORMING'); setActiveKpi('non-conforming'); }}>
+            <span className="m-nav-icon">❌</span> Non-Conforming
+            {nonConformingCount > 0 && <span className="m-nav-badge">{nonConformingCount}</span>}
+          </div>
+          <div className={`m-nav-item ${activeTab === 'active' && filterStatus === 'FINAL_CLEARANCE' ? 'active' : ''}`} onClick={() => { setActiveTab('completed'); setFilterStatus('FINAL_CLEARANCE'); setActiveKpi('cleared'); }}>
+            <span className="m-nav-icon">📈</span> Compliance Profile
+          </div>
+          <div className="m-sidebar-section">Account</div>
+          {user?.is_org_admin && (
+            <div className={`m-nav-item ${activeTab === 'org-admin' ? 'active' : ''}`} onClick={() => setActiveTab('org-admin')}>
+              <span className="m-nav-icon">👥</span> My Organisation
+            </div>
+          )}
+          <div className="m-nav-item" onClick={onLogout} style={{color:'rgba(255,84,112,0.8)'}}>
+            <span className="m-nav-icon">🚪</span> Sign Out
+          </div>
+        </nav>
+        <div className="m-sidebar-footer">
+          <div className="m-status-pill">
+            <div className="m-pulse-dot"></div>
+            Live · All systems operational
+          </div>
+        </div>
+      </aside>
+
+      {/* Main */}
+      <main className="m-main">
+
+        {/* Topbar */}
+        <header className="m-topbar">
+          <div className="m-breadcrumb">
+            <span>Home</span>
+            <span style={{color:'var(--m-text-3)'}}>/</span>
+            <span className="m-breadcrumb-active">Dashboard</span>
+          </div>
+          <div className="m-topbar-right">
+            <div className="m-autorefresh">
+              <div className="m-pulse-dot"></div>
+              Live data
+            </div>
+            <button className="m-btn-ghost" onClick={fetchData}>↻ Refresh</button>
+            <button className="m-btn-ghost">⬇ Export</button>
+            <button className="m-btn-primary" onClick={() => setShowNewForm(true)}>+ New Shipment</button>
+            <button className="m-btn-ghost" onClick={onLogout} style={{color:'var(--m-red)',borderColor:'rgba(255,84,112,0.2)'}}>Sign Out</button>
+          </div>
+        </header>
+
+        {/* Subnav */}
+        <div className="m-subnav">
+          <div className={`m-subnav-tab ${activeTab === 'active' && !activeKpi ? 'active' : ''}`} onClick={() => { setActiveTab('active'); setFilterStatus(''); setActiveKpi(null); }}>Overview</div>
+          <div className={`m-subnav-tab ${activeTab === 'active' && !filterStatus ? 'active' : ''}`} onClick={() => { setActiveTab('active'); setFilterStatus(''); setActiveKpi(null); }}>Active ({activeShipments.length})</div>
+          <div className={`m-subnav-tab ${activeTab === 'completed' ? 'active' : ''}`} onClick={() => { setActiveTab('completed'); setFilterStatus(''); setActiveKpi(null); }}>Completed ({completedShipments.length})</div>
+          {user?.is_org_admin && <div className={`m-subnav-tab ${activeTab === 'org-admin' ? 'active' : ''}`} onClick={() => setActiveTab('org-admin')}>My Organisation</div>}
+          <div className="m-subnav-right">
+            <div className="m-search">
+              <span style={{color:'rgba(255,255,255,0.4)',fontSize:'12px'}}>🔍</span>
+              <input placeholder="Search shipments..." value={search} onChange={e => setSearch(e.target.value)} />
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <span className="flex items-center gap-1.5 text-xs text-green-400 font-medium">
-              <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-              Connected
-            </span>
-            <NotificationBell token={token} />
-            {user && (
-              <div className="flex items-center gap-2 bg-white bg-opacity-10 rounded-lg px-3 py-1.5">
-                <div className="text-right">
-                  <p className="text-white text-xs font-semibold">{user.full_name}</p>
-                  <p className="text-xs" style={{color: '#00B4D8'}}>MAH</p>
+        </div>
+
+        {/* Scroll area */}
+        <div className="m-scroll">
+
+          {/* Org admin — full page, no KPIs */}
+          {activeTab === 'org-admin' && (
+            <div>
+              <div style={{marginBottom:'16px'}}>
+                <div style={{fontSize:'18px',fontWeight:700,color:'#27306E',marginBottom:'4px'}}>My Organisation</div>
+                <div style={{fontSize:'13px',color:'#808285'}}>Manage user access for your organisation</div>
+              </div>
+              <OrgAdminPanel token={token} />
+            </div>
+          )}
+
+          {/* KPI Row — only show when not org-admin */}
+          {activeTab !== 'org-admin' && <>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:'14px',marginBottom:'20px'}}>
+            {[
+              { key:'all', ico:'c', emoji:'📦', value:shipments.length, label:'Total Shipments', foot:'All time', trend:'neutral', trendLabel:'All' },
+              { key:'cleared', ico:'g', emoji:'✅', value:completedShipments.filter(s=>s.current_state==='FINAL_CLEARANCE').length, label:'Cleared', foot:'Final clearance', trend:'up', trendLabel:'↑' },
+              { key:'non-conforming', ico:'r', emoji:'❌', value:nonConformingCount, label:'Non-Conforming', foot:'SFDA rejected', trend:'down', trendLabel:'↑' },
+              { key:'dwell', ico:'a', emoji:'⏱', value:avgDwellDays, label:'Avg Dwell Time', foot:'Days to clearance', trend:'neutral', trendLabel:'Avg', suffix:'d' },
+              { key:'conformity', ico:'v', emoji:'🎯', value:conformityRate, label:'Conformity Rate', foot:'All time average', trend: conformityRate >= 70 ? 'up' : 'down', trendLabel:`${conformityRate}%`, suffix:'%' },
+            ].map(({key, ico, emoji, value, label, foot, trend, trendLabel, suffix}) => (
+              <div
+                key={key}
+                className={`m-kpi ${activeKpi === key ? 'active-filter' : ''}`}
+                onClick={() => {
+                  if (activeKpi === key) {
+                    setActiveKpi(null);
+                    setFilterStatus('');
+                  } else {
+                    setActiveKpi(key);
+                    if (key === 'cleared') setFilterStatus('FINAL_CLEARANCE');
+                    else if (key === 'non-conforming') setFilterStatus('NON_CONFORMING');
+                    else if (key === 'conformity') setFilterStatus('CONFORMING');
+                    else setFilterStatus('');
+                  }
+                }}
+                title={`Click to filter by ${label}`}
+              >
+                <div className="m-kpi-top">
+                  <div className={`m-kpi-ico ${ico}`}>{emoji}</div>
+                  <div className={`m-kpi-trend ${trend}`}>{trendLabel}</div>
+                </div>
+                <div className="m-kpi-num">
+                  {value}{suffix && <span style={{fontSize:'16px',fontWeight:400,color:'var(--m-gray)'}}>{suffix}</span>}
+                </div>
+                <div className="m-kpi-lbl">{label}</div>
+                <div className="m-kpi-foot">{activeKpi === key ? '✕ Click to clear filter' : foot}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Analytics Section */}
+          {activeTab !== 'org-admin' && (
+            <div style={{marginBottom:'18px'}}>
+
+              {/* Charts row */}
+              <div style={{display:'grid',gridTemplateColumns:'1fr 300px',gap:'14px',marginBottom:'14px'}}>
+
+                {/* Area chart */}
+                <div className="m-card">
+                  <div className="m-card-head">
+                    <div>
+                      <div className="m-card-title">Shipment Activity</div>
+                      <div className="m-card-sub">Volume and clearance outcomes · Last 30 days</div>
+                    </div>
+                    <div className="m-three-dot">⋮</div>
+                  </div>
+                  <svg width="100%" height="160" viewBox="0 0 560 160" preserveAspectRatio="none">
+                    <defs>
+                      <linearGradient id="gC" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#00D2C8" stopOpacity="0.25"/>
+                        <stop offset="100%" stopColor="#00D2C8" stopOpacity="0"/>
+                      </linearGradient>
+                      <linearGradient id="gG" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#00C896" stopOpacity="0.18"/>
+                        <stop offset="100%" stopColor="#00C896" stopOpacity="0"/>
+                      </linearGradient>
+                    </defs>
+                    {[40,80,120].map(y => (
+                      <line key={y} x1="0" y1={y} x2="560" y2={y} stroke="rgba(39,48,110,0.06)" strokeWidth="1"/>
+                    ))}
+                    <path d="M0,110 C70,90 140,100 210,60 C280,75 350,45 420,30 C490,22 530,15 560,10 L560,160 L0,160Z" fill="url(#gC)"/>
+                    <path d="M0,110 C70,90 140,100 210,60 C280,75 350,45 420,30 C490,22 530,15 560,10" fill="none" stroke="#00D2C8" strokeWidth="2"/>
+                    <path d="M0,130 C70,115 140,120 210,90 C280,105 350,75 420,55 C490,45 530,38 560,32 L560,160 L0,160Z" fill="url(#gG)"/>
+                    <path d="M0,130 C70,115 140,120 210,90 C280,105 350,75 420,55 C490,45 530,38 560,32" fill="none" stroke="#00C896" strokeWidth="1.5" strokeDasharray="5,3"/>
+                    <path d="M0,152 C70,150 140,151 210,148 C280,150 350,147 420,145 C490,143 530,142 560,140" fill="none" stroke="#FF5470" strokeWidth="1.5" strokeDasharray="5,3"/>
+                    {['Aug 1','Aug 8','Aug 15','Aug 22','Sep 1'].map((label, i) => (
+                      <text key={label} x={i * 140} y="158" fill="#808285" fontSize="8" fontFamily="Inter">{label}</text>
+                    ))}
+                  </svg>
+                  <div style={{display:'flex',gap:'14px',marginTop:'10px',flexWrap:'wrap'}}>
+                    {[['#00D2C8','Total shipments'],['#00C896','Cleared'],['#FF5470','Non-conforming']].map(([color,label]) => (
+                      <div key={label} style={{display:'flex',alignItems:'center',gap:'5px',fontSize:'11px',color:'#808285'}}>
+                        <div style={{width:'8px',height:'8px',borderRadius:'2px',background:color}}></div>
+                        {label}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Right stack */}
+                <div style={{display:'flex',flexDirection:'column',gap:'14px'}}>
+
+                  {/* Donut */}
+                  <div className="m-card">
+                    <div className="m-card-head">
+                      <div className="m-card-title">Status Distribution</div>
+                      <div className="m-three-dot">⋮</div>
+                    </div>
+                    <div style={{display:'flex',alignItems:'center',gap:'14px'}}>
+                      <svg width="90" height="90" viewBox="0 0 90 90" style={{flexShrink:0}}>
+                        <circle cx="45" cy="45" r="30" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="12"/>
+                        <circle cx="45" cy="45" r="30" fill="none" stroke="#00C896" strokeWidth="12"
+                          strokeDasharray={`${conformityRate * 1.885} 188.5`} strokeDashoffset="47" strokeLinecap="round"/>
+                        <circle cx="45" cy="45" r="30" fill="none" stroke="#FF5470" strokeWidth="12"
+                          strokeDasharray={`${(nonConformingCount/Math.max(shipments.length,1)*100)*1.885} 188.5`}
+                          strokeDashoffset={`${-(conformityRate*1.885)+47}`} strokeLinecap="round"/>
+                        <text x="45" y="41" textAnchor="middle" fill="#27306E" fontSize="13" fontWeight="800" fontFamily="Inter">{conformityRate}%</text>
+                        <text x="45" y="52" textAnchor="middle" fill="#808285" fontSize="6" fontFamily="Inter">Conformity</text>
+                      </svg>
+                      <div style={{flex:1,display:'flex',flexDirection:'column',gap:'7px'}}>
+                        {[
+                          ['#00C896','Cleared', completedShipments.filter(s=>s.current_state==='FINAL_CLEARANCE').length],
+                          ['#00D2C8','In Progress', activeShipments.length],
+                          ['#FF5470','Non-Conforming', nonConformingCount],
+                          ['#F5A623','Pending', shipments.filter(s=>['RESULT_SUBMITTED','CONFORMING'].includes(s.current_state)).length],
+                        ].map(([color,label,count]) => (
+                          <div key={label} style={{display:'flex',alignItems:'center',justifyContent:'space-between',fontSize:'11px'}}>
+                            <div style={{display:'flex',alignItems:'center',gap:'6px',color:'#808285'}}>
+                              <div style={{width:'8px',height:'8px',borderRadius:'2px',background:color,flexShrink:0}}></div>
+                              {label}
+                            </div>
+                            <span style={{fontFamily:'JetBrains Mono,monospace',fontWeight:700,color:'#27306E',fontSize:'11px'}}>{count}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Alerts */}
+                  <div className="m-card">
+                    <div className="m-card-head">
+                      <div className="m-card-title">Alerts</div>
+                      <div className="m-three-dot">⋮</div>
+                    </div>
+                    {shipments.filter(s => s.current_state === 'NON_CONFORMING').slice(0,1).map(s => (
+                      <div key={s.id} className="m-alert-danger" style={{marginBottom:'8px'}}>
+                        <span style={{fontSize:'14px',flexShrink:0}}>🚨</span>
+                        <div>
+                          <div className="m-alert-title">Action required</div>
+                          <div className="m-alert-desc">{s.faseh_request_number} — Select re-export or destruction</div>
+                          <span className="m-alert-action" onClick={() => setSelectedShipmentId(s.id)}>Take action →</span>
+                        </div>
+                      </div>
+                    ))}
+                    {shipments.filter(s => ['SAMPLING_REQUESTED','PICKUP_SCHEDULED'].includes(s.current_state)).slice(0,1).map(s => (
+                      <div key={s.id} className="m-alert-warn" style={{marginBottom:'8px'}}>
+                        <span style={{fontSize:'14px',flexShrink:0}}>⚠️</span>
+                        <div>
+                          <div className="m-alert-title">Pickup pending</div>
+                          <div className="m-alert-desc">{s.faseh_request_number} — Awaiting sample collection</div>
+                        </div>
+                      </div>
+                    ))}
+                    {shipments.filter(s => ['NON_CONFORMING','SAMPLING_REQUESTED','PICKUP_SCHEDULED'].includes(s.current_state)).length === 0 && (
+                      <div style={{fontSize:'12px',color:'#808285',textAlign:'center',padding:'12px 0'}}>✓ No active alerts</div>
+                    )}
+                  </div>
+
                 </div>
               </div>
-            )}
-            <button onClick={onLogout} className="px-3 py-1.5 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600">
-              Sign Out
-            </button>
-          </div>
-        </div>
-      </div>
 
-      {/* Stats */}
-      <div className="bg-white border-b border-gray-200 px-6 py-3">
-        <div className="flex gap-6">
-          <div className="text-center">
-            <p className="text-2xl font-bold" style={{color: '#2D2B7A'}}>{shipments.length}</p>
-            <p className="text-xs text-gray-500">Total shipments</p>
-          </div>
-          <div className="text-center">
-            <p className="text-2xl font-bold text-blue-600">{activeShipments.length}</p>
-            <p className="text-xs text-gray-500">Active</p>
-          </div>
-          <div className="text-center">
-            <p className="text-2xl font-bold text-purple-600">{inAnalysisCount}</p>
-            <p className="text-xs text-gray-500">In analysis</p>
-          </div>
-          <div className="text-center">
-            <p className="text-2xl font-bold text-green-600">{conformingCount}</p>
-            <p className="text-xs text-gray-500">Conforming</p>
-          </div>
-          <div className="text-center">
-            <p className="text-2xl font-bold text-red-600">{nonConformingCount}</p>
-            <p className="text-xs text-gray-500">Non-conforming</p>
-          </div>
-          <div className="text-center">
-            <p className="text-2xl font-bold text-green-600">
-              {shipments.length > 0 ? Math.round((completedShipments.filter(s => s.current_state === 'FINAL_CLEARANCE').length / shipments.length) * 100) : 0}%
-            </p>
-            <p className="text-xs text-gray-500">Conformity rate</p>
-          </div>
-        </div>
-      </div>
+              {/* Bottom stats row */}
+              <div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:'14px',marginBottom:'14px'}}>
 
-      {/* Welcome banner for new MAH */}
-      {shipments.length === 0 && (
-        <div className="mx-6 mt-4 bg-gradient-to-r from-blue-600 to-blue-800 rounded-xl p-6 text-white">
-          <h2 className="text-lg font-bold mb-1">Welcome to DEMARA Platform 👋</h2>
-          <p className="text-blue-200 text-sm mb-4">Get started in three simple steps:</p>
-          <div className="grid grid-cols-3 gap-4">
-            <div className="bg-white bg-opacity-10 rounded-lg p-4">
-              <div className="text-2xl mb-2">1️⃣</div>
-              <p className="text-sm font-semibold">Upload your Faseh document</p>
-              <p className="text-xs text-blue-200 mt-1">Click + Open New Record and upload or paste your Faseh confirmation. DEMARA AI extracts all details automatically.</p>
+                {/* Port breakdown */}
+                <div className="m-card">
+                  <div className="m-card-head">
+                    <div className="m-card-title">Shipments by Port</div>
+                    <div className="m-card-sub">Volume distribution</div>
+                  </div>
+                  {[...new Set(shipments.map(s => s.port_of_entry))].slice(0,5).map(port => {
+                    const count = shipments.filter(s => s.port_of_entry === port).length;
+                    const pct = Math.round(count / Math.max(shipments.length,1) * 100);
+                    return (
+                      <div key={port} style={{marginBottom:'10px'}}>
+                        <div style={{display:'flex',justifyContent:'space-between',marginBottom:'4px'}}>
+                          <span style={{fontSize:'11px',color:'#3A4080'}}>{port}</span>
+                          <span style={{fontSize:'11px',fontFamily:'JetBrains Mono,monospace',fontWeight:600,color:'#27306E'}}>{count} <span style={{color:'#808285',fontWeight:400}}>{pct}%</span></span>
+                        </div>
+                        <div style={{height:'5px',background:'rgba(39,48,110,0.08)',borderRadius:'3px',overflow:'hidden'}}>
+                          <div style={{height:'100%',width:`${pct}%`,background:'#44C8F5',borderRadius:'3px',transition:'width 0.3s'}}></div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Country breakdown */}
+                <div className="m-card">
+                  <div className="m-card-head">
+                    <div className="m-card-title">Top Origin Countries</div>
+                    <div className="m-card-sub">By shipment count</div>
+                  </div>
+                  {Object.entries(
+                    shipments.reduce((acc, s) => { acc[s.shipment_country] = (acc[s.shipment_country]||0)+1; return acc; }, {})
+                  ).sort((a,b) => b[1]-a[1]).slice(0,5).map(([country, count]) => {
+                    const pct = Math.round(count / Math.max(shipments.length,1) * 100);
+                    const nonConform = shipments.filter(s => s.shipment_country === country && s.current_state === 'NON_CONFORMING').length;
+                    return (
+                      <div key={country} style={{marginBottom:'10px'}}>
+                        <div style={{display:'flex',justifyContent:'space-between',marginBottom:'4px'}}>
+                          <span style={{fontSize:'11px',color:'#3A4080'}}>{country}</span>
+                          <div style={{display:'flex',gap:'8px',alignItems:'center'}}>
+                            {nonConform > 0 && <span style={{fontSize:'10px',color:'#FF5470',fontWeight:600}}>{nonConform} NC</span>}
+                            <span style={{fontSize:'11px',fontFamily:'JetBrains Mono,monospace',fontWeight:600,color:'#27306E'}}>{count}</span>
+                          </div>
+                        </div>
+                        <div style={{height:'5px',background:'rgba(39,48,110,0.08)',borderRadius:'3px',overflow:'hidden'}}>
+                          <div style={{height:'100%',width:`${pct}%`,background: nonConform > 0 ? '#F5A623' : '#00C896',borderRadius:'3px'}}></div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+              </div>
+
+                        {/* Quick stats strip */}
+          <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:'12px',marginBottom:'14px'}}>
+            {[
+              {icon:'⏱',label:'Avg Dwell Time',value:avgDwellDays+'d',sub:'Days to clearance',color:'#F5A623'},
+                  {icon:'🧪',label:'Active Labs',value:[...new Set(shipments.map(s=>s.lab_id).filter(Boolean))].length,sub:'QC labs assigned',color:'var(--m-violet)'},
+                  {icon:'🏛️',label:'Clearance Cos.',value:[...new Set(shipments.map(s=>s.clearance_company_id).filter(Boolean))].length,sub:'Companies assigned',color:'var(--m-blue)'},
+                  {icon:'📋',label:'Pending Decision',value:shipments.filter(s=>['RESULT_SUBMITTED','CONFORMING'].includes(s.current_state)).length,sub:'Awaiting SFDA',color:'var(--m-cyan)'},
+                ].map(({icon,label,value,sub,color}) => (
+                  <div key={label} className="m-card" style={{display:'flex',alignItems:'center',gap:'14px'}}>
+                    <div style={{width:'40px',height:'40px',borderRadius:'10px',background:`${color}20`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:'18px',flexShrink:0}}>{icon}</div>
+                    <div>
+                      <div style={{fontSize:'22px',fontWeight:800,color:'#27306E',lineHeight:1,fontVariantNumeric:'tabular-nums'}}>{value}</div>
+                      <div style={{fontSize:'10px',color:'#808285',textTransform:'uppercase',letterSpacing:'0.8px',marginTop:'3px'}}>{label}</div>
+                      <div style={{fontSize:'10px',color:'#808285',marginTop:'1px'}}>{sub}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
             </div>
-            <div className="bg-white bg-opacity-10 rounded-lg p-4">
-              <div className="text-2xl mb-2">2️⃣</div>
-              <p className="text-sm font-semibold">Select your QC lab and clearance company</p>
-              <p className="text-xs text-blue-200 mt-1">Choose from SFDA-certified labs and licensed clearance companies. View performance metrics to make the best choice.</p>
-            </div>
-            <div className="bg-white bg-opacity-10 rounded-lg p-4">
-              <div className="text-2xl mb-2">3️⃣</div>
-              <p className="text-sm font-semibold">Track and get notified automatically</p>
-              <p className="text-xs text-blue-200 mt-1">DEMARA monitors every step. You receive instant email notifications when SFDA issues a decision — no manual checking needed.</p>
-            </div>
-          </div>
-          <div className="mt-4 flex justify-center">
-            <button onClick={() => setShowNewForm(true)}
-              className="px-6 py-2.5 bg-white text-blue-700 font-semibold text-sm rounded-lg hover:bg-blue-50 transition-colors">
-              + Open Your First Shipment Record
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Compliance Profile Banner */}
-      <ComplianceProfile shipments={shipments} user={user} />
-
-      {/* Charts */}
-      {shipments.length > 0 && (
-        <div className="px-6 pt-4 grid grid-cols-2 gap-4">
-          <div className="bg-white rounded-xl border border-gray-200 p-4">
-            <h3 className="text-sm font-semibold text-gray-700 mb-3">Shipments by Status</h3>
-            <ResponsiveContainer width="100%" height={150}>
-              <BarChart data={stateChartData} margin={{bottom: 30}}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis dataKey="label" tick={{fontSize: 8}} angle={-30} textAnchor="end" />
-                <YAxis tick={{fontSize: 10}} allowDecimals={false} />
-                <Tooltip />
-                <Bar dataKey="value" fill="#2D2B7A" radius={[4,4,0,0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="bg-white rounded-xl border border-gray-200 p-4">
-            <h3 className="text-sm font-semibold text-gray-700 mb-3">Overview</h3>
-            <ResponsiveContainer width="100%" height={150}>
-              <PieChart>
-                <Pie
-                  data={[
-                    { name: 'Active', value: activeShipments.length },
-                    { name: 'Completed', value: completedShipments.length },
-                    { name: 'Conforming', value: conformingCount },
-                    { name: 'Non-Conforming', value: nonConformingCount },
-                  ].filter(d => d.value > 0)}
-                  cx="50%" cy="50%" outerRadius={60}
-                  dataKey="value"
-                  label={({name, value}) => `${name}: ${value}`}
-                  labelLine={false}>
-                  {CHART_COLORS.map((color, i) => <Cell key={i} fill={color} />)}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-      )}
-
-      {/* Controls */}
-      <div className="px-6 pt-4">
-        <div className="flex items-center gap-3 mb-3">
-          <input type="text" placeholder="Search by Faseh number or importer name..."
-            value={search} onChange={e => setSearch(e.target.value)}
-            className="flex-1 border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none" />
-          <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}
-            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none">
-            <option value="">All States</option>
-            <option value="RECORD_OPENED">Record Opened</option>
-            <option value="SAMPLING_REQUESTED">Sampling Requested</option>
-            <option value="IN_ANALYSIS">In Analysis</option>
-            <option value="RESULT_SUBMITTED">Result Submitted</option>
-            <option value="CONFORMING">Conforming</option>
-            <option value="NON_CONFORMING">Non-Conforming</option>
-            <option value="FINAL_CLEARANCE">Final Clearance</option>
-            <option value="RE_EXPORT_COMPLETED">Re-Export Completed</option>
-          </select>
-          <select value={filterPort} onChange={e => setFilterPort(e.target.value)}
-            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none">
-            <option value="">All Ports</option>
-            {[...new Set(shipments.map(s => s.port_of_entry))].sort().map(p => (
-              <option key={p} value={p}>{p}</option>
-            ))}
-          </select>
-          <button onClick={() => setShowNewForm(true)}
-            className="px-4 py-2 text-white text-sm font-medium rounded-lg hover:opacity-90"
-            style={{background: '#2D2B7A'}}>
-            + Open New Record
-          </button>
-          <button onClick={fetchData}
-            className="px-4 py-2 text-white text-sm font-medium rounded-lg hover:opacity-90"
-            style={{background: '#00B4D8'}}>
-            Refresh
-          </button>
-        </div>
-        <div className="flex gap-2 border-b border-gray-200">
-          <button onClick={() => setActiveTab('active')}
-            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === 'active' ? 'border-b-2' : 'border-transparent text-gray-500'}`}
-            style={activeTab === 'active' ? {borderColor: '#2D2B7A', color: '#2D2B7A'} : {}}>
-            Active ({activeShipments.length})
-          </button>
-          <button onClick={() => setActiveTab('completed')}
-            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === 'completed' ? 'border-b-2' : 'border-transparent text-gray-500'}`}
-            style={activeTab === 'completed' ? {borderColor: '#2D2B7A', color: '#2D2B7A'} : {}}>
-            Completed ({completedShipments.length})
-          </button>
-          {user?.is_org_admin && (
-            <button onClick={() => setActiveTab('org-admin')}
-              className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === 'org-admin' ? 'border-b-2' : 'border-transparent text-gray-500'}`}
-              style={activeTab === 'org-admin' ? {borderColor: '#10B981', color: '#10B981'} : {}}>
-              👥 My Organisation
-            </button>
           )}
+
+          {/* Shipments table */}
+          {activeTab !== 'org-admin' && (
+            <div className="m-table-wrap m-table">
+              <div className="m-table-bar">
+                <div className="m-table-title">Shipments</div>
+                <div className="m-table-count">{filtered.length} results</div>
+                <div className="m-table-right">
+                  <select value={filterStatus} onChange={e => { setFilterStatus(e.target.value); setActiveKpi(null); }} className="m-select">
+                    <option value="">All States</option>
+                    <option value="RECORD_OPENED">Record Opened</option>
+                    <option value="SAMPLING_REQUESTED">Sampling Requested</option>
+                    <option value="IN_ANALYSIS">In Analysis</option>
+                    <option value="RESULT_SUBMITTED">Result Submitted</option>
+                    <option value="CONFORMING">Conforming</option>
+                    <option value="NON_CONFORMING">Non-Conforming</option>
+                    <option value="FINAL_CLEARANCE">Final Clearance</option>
+                    <option value="RE_EXPORT_COMPLETED">Re-Export Completed</option>
+                  </select>
+                  <select value={filterPort} onChange={e => setFilterPort(e.target.value)} className="m-select">
+                    <option value="">All Ports</option>
+                    {[...new Set(shipments.map(s => s.port_of_entry))].sort().map(p => (
+                      <option key={p} value={p}>{p}</option>
+                    ))}
+                  </select>
+                  <button className="m-btn-ghost" style={{fontSize:'11px',padding:'5px 10px'}}>⬇ Export</button>
+                </div>
+              </div>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Faseh Reference</th>
+                    <th>Importer</th>
+                    <th>Port · Country</th>
+                    <th>Status</th>
+                    <th>Lab</th>
+                    <th>Est. Clearance</th>
+                    <th>Dwell</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {loading ? (
+                    <tr><td colSpan="8" style={{textAlign:'center',padding:'40px',color:'var(--m-text-3)'}}>Loading shipments...</td></tr>
+                  ) : filtered.length === 0 ? (
+                    <tr><td colSpan="8" style={{textAlign:'center',padding:'40px',color:'var(--m-text-3)'}}>
+                      {activeTab === 'active' ? 'No active shipments — open a new record to get started' : 'No completed shipments yet'}
+                    </td></tr>
+                  ) : filtered.map(s => {
+                    const badgeClass = {
+                      'FINAL_CLEARANCE': 'm-badge-clear',
+                      'CONFORMING': 'm-badge-conform',
+                      'NON_CONFORMING': 'm-badge-bad',
+                      'PARTIALLY_CONFORMING': 'm-badge-pend',
+                      'IN_ANALYSIS': 'm-badge-anly',
+                      'RESULT_SUBMITTED': 'm-badge-pend',
+                      'SAMPLING_REQUESTED': 'm-badge-pend',
+                      'PICKUP_SCHEDULED': 'm-badge-pend',
+                      'SAMPLE_PICKED_UP': 'm-badge-pend',
+                      'IN_TRANSIT': 'm-badge-pend',
+                      'LAB_RECEIVED': 'm-badge-prog',
+                      'RECORD_OPENED': 'm-badge-pend',
+                      'RE_EXPORT_COMPLETED': 'm-badge-clear',
+                      'DESTRUCTION_CONFIRMED': 'm-badge-clear',
+                    }[s.current_state] || 'm-badge-pend';
+
+                    const stateLabel = {
+                      'FINAL_CLEARANCE': 'Final Clearance',
+                      'CONFORMING': 'Conforming',
+                      'NON_CONFORMING': 'Non-Conforming',
+                      'PARTIALLY_CONFORMING': 'Partially Conforming',
+                      'IN_ANALYSIS': 'In Analysis',
+                      'RESULT_SUBMITTED': 'Result Submitted',
+                      'SAMPLING_REQUESTED': 'Sampling Requested',
+                      'PICKUP_SCHEDULED': 'Pickup Scheduled',
+                      'SAMPLE_PICKED_UP': 'Sample Picked Up',
+                      'IN_TRANSIT': 'In Transit',
+                      'LAB_RECEIVED': 'Lab Received',
+                      'RECORD_OPENED': 'Record Opened',
+                      'RE_EXPORT_COMPLETED': 'Re-Export Done',
+                      'DESTRUCTION_CONFIRMED': 'Destroyed',
+                      'DESTRUCTION_PENDING': 'Destruction Pending',
+                    }[s.current_state] || s.current_state.replace(/_/g, ' ');
+
+                    const dwellDays = s.total_dwell_minutes ? (s.total_dwell_minutes / 1440).toFixed(1) + 'd' : '—';
+                    const dwellColor = s.total_dwell_minutes > 7200 ? 'var(--m-red)' : s.total_dwell_minutes > 4320 ? 'var(--m-amber)' : 'var(--m-green)';
+
+                    return (
+                      <tr key={s.id}>
+                        <td><div className="m-ref">{s.faseh_request_number}</div></td>
+                        <td>
+                          <div className="m-name">{s.importer_name}</div>
+                          <div className="m-cr">{s.ghad_cr_number}</div>
+                        </td>
+                        <td>
+                          <div style={{fontSize:'11px',color:'var(--m-text-2)'}}>{s.port_of_entry}</div>
+                          <div style={{fontSize:'10px',color:'var(--m-text-3)'}}>{s.shipment_country}</div>
+                        </td>
+                        <td>
+                          <span className={`m-badge ${badgeClass}`}>
+                            <span className="m-bd"></span>
+                            {stateLabel}
+                          </span>
+                        </td>
+                        <td><div style={{fontSize:'11px',color:'var(--m-text-2)'}}>{s.lab_name || '—'}</div></td>
+                        <td>
+                          {s.estimated_clearance_date ? (
+                            <>
+                              <div style={{fontSize:'11px',color:'var(--m-cyan)',fontWeight:600}}>{new Date(s.estimated_clearance_date).toLocaleDateString('en-SA',{day:'2-digit',month:'short',year:'numeric'})}</div>
+                              <div style={{fontSize:'10px',color:'var(--m-text-3)'}}>Estimated</div>
+                            </>
+                          ) : s.current_state === 'FINAL_CLEARANCE' ? (
+                            <div style={{fontSize:'11px',color:'var(--m-green)',fontWeight:600}}>Cleared ✓</div>
+                          ) : (
+                            <div style={{fontSize:'10px',color:'var(--m-text-3)'}}>Pending</div>
+                          )}
+                        </td>
+                        <td>
+                          <span className="m-mono" style={{fontSize:'11px',fontWeight:500,color:dwellColor}}>{dwellDays}</span>
+                        </td>
+                        <td>
+                          <button className="m-act-btn" onClick={() => setSelectedShipmentId(s.id)}>Track</button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          </>}
         </div>
-      </div>
-      {/* Org Admin Panel */}
-      {activeTab === 'org-admin' && (
-        <OrgAdminPanel token={token} />
-      )}
+      </main>
 
-      {/* Table */}
-      <div className="px-6 py-4">
-        {error && <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4 text-red-700 text-sm">{error}</div>}
-        {loading ? (
-          <div className="text-center py-12 text-gray-500">Loading shipments...</div>
-        ) : filtered.length === 0 ? (
-          <div className="text-center py-12 text-gray-400">
-            <p className="text-lg">No shipments found</p>
-            <p className="text-sm mt-1">Click "Open New Record" to start tracking a shipment</p>
-          </div>
-        ) : (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            <table className="w-full">
-              <thead>
-                <tr className="bg-gray-50 border-b border-gray-200">
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Faseh Request No.</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Importer</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Country</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Port</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Status</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Last Update</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {filtered.map(s => {
-                  const info = STATE_INFO[s.current_state] || { label: s.current_state, color: 'bg-gray-100 text-gray-700' };
-                  return (
-                    <tr key={s.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-3">
-                        <span className="font-mono text-sm font-semibold" style={{color: '#2D2B7A'}}>{s.faseh_request_number}</span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <p className="text-sm font-medium text-gray-900">{s.importer_name}</p>
-                        <p className="text-xs text-gray-500">{s.ghad_cr_number}</p>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-600">{s.shipment_country}</td>
-                      <td className="px-4 py-3 text-xs text-gray-500">{s.port_of_entry}</td>
-                      <td className="px-4 py-3">
-                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${info.color}`}>
-                          {info.label}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <p className="text-xs text-gray-500">{formatDate(s.updated_at)}</p>
-                        {!['FINAL_CLEARANCE', 'RE_EXPORT_COMPLETED', 'DESTRUCTION_CONFIRMED', 'ARCHIVED'].includes(s.current_state) && (
-                          <EstimatedClearance shipment={s} organisations={organisations} />
-                        )}
-                      </td>
-                      <td className="px-4 py-3">
-                        <button onClick={() => setSelectedShipmentId(s.id)}
-                          className="px-3 py-1 text-xs font-medium rounded-lg text-white hover:opacity-90"
-                          style={{background: '#2D2B7A'}}>
-                          Track
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-
+      {/* Modals — keep all existing */}
       {showNewForm && (
         <NewShipmentForm
           token={token}
@@ -1851,17 +2109,15 @@ export default function ImporterPortal({ user: initialUser, token, onLogout }) {
           onSuccess={(faseRef) => {
             setShowNewForm(false);
             fetchData();
-            alert(`Shipment record opened for ${faseRef}. DEMARA will now monitor for SFDA emails matching this reference.`);
           }}
           onCancel={() => setShowNewForm(false)}
         />
       )}
-
       {selectedShipmentId && (
         <ShipmentDetailModal
           shipmentId={selectedShipmentId}
           token={token}
-          onClose={() => setSelectedShipmentId(null)}
+          onClose={() => { setSelectedShipmentId(null); fetchData(); }}
         />
       )}
     </div>
