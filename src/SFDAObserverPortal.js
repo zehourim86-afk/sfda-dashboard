@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import SFDAObserverAssistant from './SFDAObserverAssistant';
 import NotificationBell from './NotificationBell';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -181,6 +182,10 @@ export default function SFDAObserverPortal({ user, token, onLogout }) {
             className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'shipments' ? 'border-blue-600 text-blue-700' : 'border-transparent text-gray-500'}`}>
             📦 All Shipments ({total})
           </button>
+          <button onClick={() => setActiveTab('assistant')}
+            className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'assistant' ? 'border-blue-600 text-blue-700' : 'border-transparent text-gray-500'}`}>
+            🔍 Intelligence
+          </button>
         </div>
       </div>
 
@@ -336,6 +341,13 @@ export default function SFDAObserverPortal({ user, token, onLogout }) {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Intelligence Tab */}
+      {activeTab === 'assistant' && (
+        <div style={{padding:'24px',height:'calc(100vh - 200px)'}}>
+          <SFDAObserverAssistant token={token} />
         </div>
       )}
 
