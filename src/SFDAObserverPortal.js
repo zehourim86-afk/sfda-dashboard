@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import SFDAObserverAssistant from './SFDAObserverAssistant';
+import ShipmentTimeline from './ShipmentTimeline';
 import NotificationBell from './NotificationBell';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -47,6 +48,7 @@ export default function SFDAObserverPortal({ user, token, onLogout }) {
   const [filterDateFrom, setFilterDateFrom] = useState('');
   const [filterDateTo, setFilterDateTo] = useState('');
   const [activeTab, setActiveTab] = useState('overview');
+  const [timelineShipmentId, setTimelineShipmentId] = useState(null);
 
   const fetchShipments = async () => {
     try {
@@ -422,7 +424,7 @@ export default function SFDAObserverPortal({ user, token, onLogout }) {
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   {filtered.map(s => (
-                    <tr key={s.id} className="hover:bg-gray-50">
+                    <tr key={s.id} className="hover:bg-gray-50" style={{cursor:'pointer'}} onClick={() => setTimelineShipmentId(s.id)}>
                       <td className="px-4 py-3">
                         <span className="font-mono text-sm font-semibold" style={{color: '#1a3a5c'}}>{s.faseh_request_number}</span>
                       </td>
@@ -461,6 +463,13 @@ export default function SFDAObserverPortal({ user, token, onLogout }) {
           shipment={selectedShipment}
           token={token}
           onClose={() => setSelectedShipment(null)}
+        />
+      )}
+      {timelineShipmentId && (
+        <ShipmentTimeline
+          shipmentId={timelineShipmentId}
+          token={token}
+          onClose={() => setTimelineShipmentId(null)}
         />
       )}
     </div>
@@ -611,6 +620,6 @@ function ShipmentDetailReadOnly({ shipment, token, onClose }) {
           )}
         </div>
       </div>
-    </div>
+          </div>
   );
 }
