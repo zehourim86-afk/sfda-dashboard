@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import NotificationBell from './NotificationBell';
 import OrgAdminPanel from './OrgAdminPanel';
 import DocumentReadiness from './DocumentReadiness';
+import AIAssistant from './AIAssistant';
 import './masaar-design.css';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -1730,6 +1731,7 @@ export default function ImporterPortal({ user: initialUser, token, onLogout }) {
         <div className={`m-strip-icon ${activeTab === 'completed' ? 'active' : ''}`} title="Completed Shipments" onClick={() => setActiveTab('completed')}>✅</div>
         <div className="m-strip-icon" title="New Record" onClick={() => setShowNewForm(true)}>➕</div>
         <div className={`m-strip-icon ${activeTab === 'org-admin' ? 'active' : ''}`} title="My Organisation" onClick={() => setActiveTab('org-admin')}>👥</div>
+        <div className={`m-strip-icon ${activeTab === 'assistant' ? 'active' : ''}`} title="AI Assistant" onClick={() => setActiveTab('assistant')}>🤖</div>
         <div className="m-strip-bottom">
           <div className="m-strip-avatar" title={user?.full_name} onClick={onLogout}>{userInitials}</div>
         </div>
@@ -1771,6 +1773,9 @@ export default function ImporterPortal({ user: initialUser, token, onLogout }) {
               <span className="m-nav-icon">👥</span> My Organisation
             </div>
           )}
+          <div className={`m-nav-item ${activeTab === 'assistant' ? 'active' : ''}`} onClick={() => setActiveTab('assistant')}>
+            <span className="m-nav-icon">🤖</span> AI Assistant
+          </div>
           <div className="m-nav-item" onClick={onLogout} style={{color:'rgba(255,84,112,0.8)'}}>
             <span className="m-nav-icon">🚪</span> Sign Out
           </div>
@@ -1811,6 +1816,7 @@ export default function ImporterPortal({ user: initialUser, token, onLogout }) {
           <div className={`m-subnav-tab ${activeTab === 'active' && !filterStatus ? 'active' : ''}`} onClick={() => { setActiveTab('active'); setFilterStatus(''); setActiveKpi(null); }}>Active ({activeShipments.length})</div>
           <div className={`m-subnav-tab ${activeTab === 'completed' ? 'active' : ''}`} onClick={() => { setActiveTab('completed'); setFilterStatus(''); setActiveKpi(null); }}>Completed ({completedShipments.length})</div>
           {user?.is_org_admin && <div className={`m-subnav-tab ${activeTab === 'org-admin' ? 'active' : ''}`} onClick={() => setActiveTab('org-admin')}>My Organisation</div>}
+          <div className={`m-subnav-tab ${activeTab === 'assistant' ? 'active' : ''}`} onClick={() => setActiveTab('assistant')} style={{color: activeTab === 'assistant' ? '#44C8F5' : ''}}>🤖 AI Assistant</div>
           <div className="m-subnav-right">
             <div className="m-search">
               <span style={{color:'rgba(255,255,255,0.4)',fontSize:'12px'}}>🔍</span>
@@ -1821,6 +1827,19 @@ export default function ImporterPortal({ user: initialUser, token, onLogout }) {
 
         {/* Scroll area */}
         <div className="m-scroll">
+
+          {/* AI Assistant */}
+          {activeTab === 'assistant' && (
+            <div style={{height:'calc(100vh - 120px)'}}>
+              <div style={{marginBottom:'16px'}}>
+                <div style={{fontSize:'18px',fontWeight:700,color:'#27306E',marginBottom:'4px'}}>🤖 DEMARA AI Assistant</div>
+                <div style={{fontSize:'13px',color:'#808285'}}>Ask anything about SFDA import regulations, document requirements, and compliance</div>
+              </div>
+              <div style={{height:'calc(100% - 60px)'}}>
+                <AIAssistant token={token} />
+              </div>
+            </div>
+          )}
 
           {/* Org admin — full page, no KPIs */}
           {activeTab === 'org-admin' && (
@@ -1833,8 +1852,8 @@ export default function ImporterPortal({ user: initialUser, token, onLogout }) {
             </div>
           )}
 
-          {/* KPI Row — only show when not org-admin */}
-          {activeTab !== 'org-admin' && <>
+          {/* KPI Row — only show when not org-admin or assistant */}
+          {activeTab !== 'org-admin' && activeTab !== 'assistant' && <>
           <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:'14px',marginBottom:'20px'}}>
             {[
               { key:'all', ico:'c', emoji:'📦', value:shipments.length, label:'Total Shipments', foot:'All time', trend:'neutral', trendLabel:'All' },
