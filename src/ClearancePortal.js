@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import ClearanceDocuments from './ClearanceDocuments';
 import NotificationBell from './NotificationBell';
 import OrgAdminPanel from './OrgAdminPanel';
 
@@ -294,6 +295,7 @@ export default function ClearancePortal({ user: initialUser, token, onLogout }) 
   const [decliningShipment, setDecliningShipment] = useState(null);
   const [declineReason, setDeclineReason] = useState('');
   const [activeTab, setActiveTab] = useState('new');
+const [documentsShipmentId, setDocumentsShipmentId] = useState(null);
   const [search, setSearch] = useState('');
 
   const fetchShipments = async () => {
@@ -528,12 +530,19 @@ export default function ClearancePortal({ user: initialUser, token, onLogout }) 
                       ) : s.current_state === 'CLEARANCE_DECLINED' ? (
                         <span className="text-xs text-red-600 font-medium">✕ Declined</span>
                       ) : (
-                        <button onClick={() => setSelectedShipment(s)}
-                          className={`px-3 py-1 text-xs font-medium rounded-lg text-white hover:opacity-90 ${s.current_state === 'CONFORMING' ? 'animate-pulse' : ''}`}
-                          style={{background: s.current_state === 'NON_CONFORMING' ? '#EF4444' : '#2D2B7A'}}>
-                          {s.current_state === 'CONFORMING' ? '⚡ Act Now' :
-                           s.current_state === 'NON_CONFORMING' ? '⚠ Handle' : 'Manage'}
-                        </button>
+                        <div style={{display:'flex',gap:'4px'}}>
+                          <button onClick={() => setDocumentsShipmentId(s.id)}
+                            className="px-3 py-1 text-xs font-medium rounded-lg hover:opacity-90"
+                            style={{background:'rgba(68,200,245,0.1)',border:'1px solid rgba(68,200,245,0.3)',color:'#27306E'}}>
+                            📁 Docs
+                          </button>
+                          <button onClick={() => setSelectedShipment(s)}
+                            className={`px-3 py-1 text-xs font-medium rounded-lg text-white hover:opacity-90 ${s.current_state === 'CONFORMING' ? 'animate-pulse' : ''}`}
+                            style={{background: s.current_state === 'NON_CONFORMING' ? '#EF4444' : '#2D2B7A'}}>
+                            {s.current_state === 'CONFORMING' ? '⚡ Act Now' :
+                             s.current_state === 'NON_CONFORMING' ? '⚠ Handle' : 'Manage'}
+                          </button>
+                        </div>
                       )}
                     </td>
                   </tr>
@@ -543,6 +552,13 @@ export default function ClearancePortal({ user: initialUser, token, onLogout }) 
           </div>
         )}
       </div>
+      {documentsShipmentId && (
+        <ClearanceDocuments
+          shipmentId={documentsShipmentId}
+          token={token}
+          onClose={() => setDocumentsShipmentId(null)}
+        />
+      )}
       {decliningShipment && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">

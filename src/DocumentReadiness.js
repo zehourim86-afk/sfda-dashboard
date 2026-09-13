@@ -25,6 +25,32 @@ export default function DocumentReadiness({ shipmentId, token, shipment }) {
   const [pasteText, setPasteText] = useState('');
   const [error, setError] = useState(null);
 
+  const [sharing, setSharing] = useState(false);
+  const [shared, setShared] = useState(false);
+  const [shareError, setShareError] = useState(null);
+
+  const handleShare = async () => {
+    setSharing(true);
+    setShareError(null);
+    try {
+      const res = await fetch(`${API_URL}/documents/${shipmentId}/share`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }
+      });
+      const result = await res.json();
+      if (result.success) {
+        setShared(true);
+        await fetchDocuments();
+      } else {
+        setShareError(result.message || 'Failed to share documents');
+      }
+    } catch (err) {
+      setShareError('Failed to connect to platform');
+    } finally {
+      setSharing(false);
+    }
+  };
+
   const fetchDocuments = async () => {
     try {
       setLoading(true);
@@ -146,6 +172,47 @@ export default function DocumentReadiness({ shipmentId, token, shipment }) {
           <div style={{fontSize:'13px',color:'#808285'}}>{overall.desc}</div>
         </div>
 
+        {/* Share button */}
+        <div style={{display:'flex',flexDirection:'column',gap:'8px',flexShrink:0}}>
+          {shared || data?.documents?.some(d => d.shared_with_clearance) ? (
+            <div style={{
+              display:'flex',alignItems:'center',gap:'8px',
+              background:'rgba(0,200,150,0.1)',border:'1px solid rgba(0,200,150,0.2)',
+              borderRadius:'10px',padding:'10px 16px',
+              fontSize:'13px',fontWeight:600,color:'#00875A'
+            }}>
+              ✓ Shared with Clearance Company
+            </div>
+          ) : (
+            <button
+              onClick={handleShare}
+              disabled={sharing || data?.summary?.total_uploaded === 0}
+              style={{
+                display:'flex',alignItems:'center',gap:'8px',
+                background: data?.summary?.total_uploaded > 0 ? '#27306E' : '#808285',
+                border:'none',borderRadius:'10px',padding:'10px 16px',
+                fontSize:'13px',fontWeight:700,color:'#FFFFFF',
+                cursor: data?.summary?.total_uploaded > 0 ? 'pointer' : 'not-allowed',
+                opacity: sharing ? 0.7 : 1,
+                transition:'all 0.15s'
+              }}>
+              {sharing ? '⟳ Sharing...' : '📤 Share with Clearance Company'}
+            </button>
+          )}
+          {shareError && (
+            <div style={{fontSize:'11px',color:'#CC0030',maxWidth:'200px'}}>{shareError}</div>
+          )}
+          {data?.summary?.total_uploaded === 0 && (
+            <div style={{fontSize:'11px',color:'#808285',maxWidth:'200px',textAlign:'center'}}>
+              Upload at least one document to share
+            </div>
+          )}
+        </div>
+
+        {/* Summary stats */}
+        <div style={{display:'flex',gap:'16px',flexShrink:0}}>
+
+        </div>
         {/* Summary stats */}
         <div style={{display:'flex',gap:'16px',flexShrink:0}}>
           {[
