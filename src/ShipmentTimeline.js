@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
-
-const API_URL = 'http://localhost:3000/api/v1';
+import { API_URL } from './constants';
 
 const STATE_COLORS = {
   FINAL_CLEARANCE: '#00C896',
@@ -18,6 +17,7 @@ const STATE_COLORS = {
   RE_EXPORT_COMPLETED: '#808285',
   DESTRUCTION_CONFIRMED: '#808285',
   DESTRUCTION_PENDING: '#FF5470',
+  DESTRUCTION_REQUESTED: '#FF5470',
 };
 
 const SOURCE_CONFIG = {

@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-
-const API_URL = 'http://localhost:3000/api/v1';
+import { API_URL } from './constants';
 
 function formatDate(dateStr) {
   if (!dateStr) return '—';
@@ -30,6 +29,9 @@ const STATE_ICONS = {
   LAB_ACCEPTED: '✓',
   CLEARANCE_ACCEPTED: '✓',
   SAMPLE_COLLECTED: '📦',
+  DECISION_PENDING: '⏳',
+  DECISION_OVERDUE: '🚨',
+  SFDA_ORDERED_DESTRUCTION: '⛔',
 };
 
 export default function NotificationBell({ token }) {

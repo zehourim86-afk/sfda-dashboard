@@ -306,23 +306,7 @@ export default function ClearanceDocuments({ shipmentId, token, onClose }) {
                             </div>
                           )}
 
-                          {/* Document content */}
-                          {doc.file_content && (
-                            <div style={{marginBottom:'12px'}}>
-                              <div style={{fontSize:'10px',fontWeight:700,color:'#808285',textTransform:'uppercase',letterSpacing:'0.8px',marginBottom:'6px'}}>Document Content</div>
-                              <div style={{
-                                background:'#F8F9FF',border:'1px solid rgba(39,48,110,0.08)',
-                                borderRadius:'8px',padding:'12px',
-                                fontFamily:'JetBrains Mono,monospace',fontSize:'11px',
-                                color:'#3A4080',lineHeight:1.6,
-                                maxHeight:'200px',overflowY:'auto',
-                                whiteSpace:'pre-wrap',wordBreak:'break-word'
-                              }}>
-                                {doc.file_content}
-                              </div>
-                            </div>
-                          )}
-                          
+
                           {/* Issues */}
                           {validation.issues && validation.issues.length > 0 && validation.issues[0] !== 'issue1' && (
                             <div>

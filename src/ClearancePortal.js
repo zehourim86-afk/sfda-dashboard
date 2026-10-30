@@ -1,17 +1,8 @@
 import { useState, useEffect } from 'react';
+import { API_URL, formatDate } from './constants';
 import ClearanceDocuments from './ClearanceDocuments';
 import NotificationBell from './NotificationBell';
 import OrgAdminPanel from './OrgAdminPanel';
-
-const API_URL = 'http://localhost:3000/api/v1';
-
-function formatDate(dateStr) {
-  if (!dateStr) return '—';
-  return new Date(dateStr).toLocaleString('en-SA', {
-    day: '2-digit', month: 'short', year: 'numeric',
-    hour: '2-digit', minute: '2-digit'
-  });
-}
 
 const STATE_COLORS = {
   RECORD_OPENED: 'bg-gray-100 text-gray-700',

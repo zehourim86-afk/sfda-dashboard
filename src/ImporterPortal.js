@@ -1,24 +1,17 @@
 import { useState, useEffect } from 'react';
+import { API_URL, formatDate, PRODUCT_CATEGORIES } from './constants';
 import NotificationBell from './NotificationBell';
 import OrgAdminPanel from './OrgAdminPanel';
 import DocumentReadiness from './DocumentReadiness';
 import AIAssistant from './AIAssistant';
+import PreShipmentCheck from './PreShipmentCheck';
 import './masaar-design.css';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell
 } from 'recharts';
 
-const API_URL = 'http://localhost:3000/api/v1';
 const CHART_COLORS = ['#2D2B7A', '#00B4D8', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
-
-function formatDate(dateStr) {
-  if (!dateStr) return '—';
-  return new Date(dateStr).toLocaleString('en-SA', {
-    day: '2-digit', month: 'short', year: 'numeric',
-    hour: '2-digit', minute: '2-digit'
-  });
-}
 
 const STATE_INFO = {
   RECORD_OPENED: { label: 'Record Opened', color: 'bg-gray-100 text-gray-700', step: 1 },
@@ -29,25 +22,36 @@ const STATE_INFO = {
   CHANGES_SUBMITTED: { label: 'Changes Submitted', color: 'bg-yellow-100 text-yellow-700', step: 2 },
   CB_APPROVED: { label: 'CB Approved', color: 'bg-green-100 text-green-700', step: 2 },
   CB_REJECTED: { label: 'CB Rejected', color: 'bg-red-100 text-red-700', step: 2 },
+  CLEARANCE_DECLINED: { label: 'Clearance Declined', color: 'bg-red-100 text-red-700', step: 2 },
   SAMPLING_REQUESTED: { label: 'Sampling Requested', color: 'bg-orange-100 text-orange-700', step: 3 },
   INSPECTOR_DISPATCHED: { label: 'Inspector Dispatched', color: 'bg-orange-100 text-orange-700', step: 3 },
   SAMPLE_COLLECTED: { label: 'Sample Collected', color: 'bg-yellow-100 text-yellow-700', step: 3 },
   IN_TRANSIT_TO_LAB: { label: 'In Transit to Lab', color: 'bg-yellow-100 text-yellow-700', step: 3 },
+  PICKUP_SCHEDULED: { label: 'Pickup Scheduled', color: 'bg-orange-100 text-orange-700', step: 3 },
+  SAMPLE_PICKED_UP: { label: 'Sample Picked Up', color: 'bg-yellow-100 text-yellow-700', step: 3 },
+  IN_TRANSIT: { label: 'In Transit to Lab', color: 'bg-yellow-100 text-yellow-700', step: 3 },
+  LAB_ACCEPTED: { label: 'Lab Confirmed', color: 'bg-purple-100 text-purple-700', step: 4 },
+  LAB_DECLINED: { label: 'Lab Declined', color: 'bg-red-100 text-red-700', step: 4 },
   LAB_RECEIVED: { label: 'Lab Received', color: 'bg-purple-100 text-purple-700', step: 4 },
   IN_ANALYSIS: { label: 'In Analysis', color: 'bg-purple-100 text-purple-700', step: 4 },
   ANALYSIS_COMPLETE: { label: 'Analysis Complete', color: 'bg-purple-100 text-purple-700', step: 4 },
   RESULT_SUBMITTED: { label: 'Result Submitted', color: 'bg-blue-100 text-blue-700', step: 4 },
   SFDA_NOTIFIED: { label: 'SFDA Notified', color: 'bg-blue-100 text-blue-700', step: 4 },
-  DECISION_PENDING: { label: 'Decision Pending', color: 'bg-yellow-100 text-yellow-700', step: 5 },
+  DECISION_PENDING: { label: 'Awaiting SFDA Decision', color: 'bg-amber-100 text-amber-800', step: 5 },
   CONFORMING: { label: 'Conforming ✓', color: 'bg-green-100 text-green-700', step: 5 },
   NON_CONFORMING: { label: 'Non-Conforming ✗', color: 'bg-red-100 text-red-700', step: 5 },
   PARTIALLY_CONFORMING: { label: 'Partially Conforming', color: 'bg-orange-100 text-orange-700', step: 5 },
   CLEARANCE_IN_PROGRESS: { label: 'Clearance In Progress', color: 'bg-blue-100 text-blue-700', step: 6 },
+  PARTIAL_CLEARANCE_IN_PROGRESS: { label: 'Partial Clearance', color: 'bg-blue-100 text-blue-700', step: 6 },
+  PARTIAL_FINAL_CLEARANCE: { label: 'Partial Cleared', color: 'bg-green-100 text-green-700', step: 6 },
   BOND_RELEASED: { label: 'Bond Released', color: 'bg-blue-100 text-blue-700', step: 6 },
   DUTIES_PAID: { label: 'Duties Paid', color: 'bg-blue-100 text-blue-700', step: 6 },
   FINAL_CLEARANCE: { label: 'Final Clearance ✓', color: 'bg-green-100 text-green-700', step: 6 },
   RE_EXPORT_INITIATED: { label: 'Re-Export Initiated', color: 'bg-red-100 text-red-700', step: 6 },
   RE_EXPORT_COMPLETED: { label: 'Re-Export Completed', color: 'bg-gray-100 text-gray-700', step: 6 },
+  DECISION_OVERDUE: { label: 'Decision Overdue — Action Required', color: 'bg-red-100 text-red-700', step: 6 },
+  SFDA_ORDERED_DESTRUCTION: { label: 'SFDA Ordered Destruction', color: 'bg-red-100 text-red-700', step: 6 },
+  DESTRUCTION_PENDING: { label: 'Destruction Pending (24h grace)', color: 'bg-red-100 text-red-700', step: 6 },
   DESTRUCTION_REQUESTED: { label: 'Destruction Requested', color: 'bg-red-100 text-red-700', step: 6 },
   DESTRUCTION_CONFIRMED: { label: 'Destruction Confirmed', color: 'bg-gray-100 text-gray-700', step: 6 },
   ARCHIVED: { label: 'Archived', color: 'bg-gray-100 text-gray-500', step: 6 },
@@ -84,7 +88,8 @@ function ProgressTracker({ currentStep, currentState }) {
     FINAL_CLEARANCE: 'Cleared ✓',
     RE_EXPORT_INITIATED: 'Re-export started',
     RE_EXPORT_COMPLETED: 'Re-exported',
-    DESTRUCTION_REQUESTED: 'Destruction pending',
+    DESTRUCTION_PENDING: 'Grace period (24h)',
+    DESTRUCTION_REQUESTED: 'Destruction requested',
     DESTRUCTION_CONFIRMED: 'Destroyed',
   };
 
@@ -291,6 +296,8 @@ Saudi Food and Drug Authority`;
         importer_name: extractedData.importer_name,
         port_of_entry: extractedData.port_of_entry,
         shipment_country: extractedData.shipment_country,
+        supplier_name: extractedData.supplier_name?.trim() || null,
+        product_category: extractedData.product_category || null,
         clearance_company_id: selectedClearanceId || null,
         lab_id: selectedLabId || null,
         products: (extractedData.products || []).map(p => ({
@@ -490,6 +497,27 @@ Saudi Food and Drug Authority`;
                     </div>
                   );
                 })}
+              <div>
+                <label className="text-xs font-semibold text-gray-600 uppercase">
+                  Supplier Name <span className="normal-case font-normal text-gray-400">(optional)</span>
+                </label>
+                <input type="text" value={extractedData.supplier_name || ''}
+                  onChange={e => setExtractedData({...extractedData, supplier_name: e.target.value})}
+                  placeholder="e.g. Almarai Company"
+                  maxLength={255}
+                  className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2" />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-gray-600 uppercase">
+                  Product Category <span className="normal-case font-normal text-gray-400">(optional)</span>
+                </label>
+                <select value={extractedData.product_category || ''}
+                  onChange={e => setExtractedData({...extractedData, product_category: e.target.value})}
+                  className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2">
+                  <option value="">Select SFDA category</option>
+                  {PRODUCT_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
                               <div>
                 <label className="text-xs font-semibold text-gray-600 uppercase">QC Lab</label>
                 <select value={selectedLabId}
@@ -1091,6 +1119,37 @@ function NonConformingAction({ shipment, token, onClose }) {
   );
 }
 
+// Shown while a non-conforming shipment is DECISION_OVERDUE. The escalation job
+// moves it to SFDA_ORDERED_DESTRUCTION 24 hours after it entered this state.
+function OverdueDecisionBanner({ shipment, token, onClose }) {
+  const hoursLeft = () => {
+    const deadline = new Date(shipment.state_entered_at).getTime() + 24 * 60 * 60 * 1000;
+    return Math.max(0, Math.ceil((deadline - Date.now()) / 3600000));
+  };
+  const [hours, setHours] = useState(hoursLeft);
+
+  useEffect(() => {
+    setHours(hoursLeft());
+    const interval = setInterval(() => setHours(hoursLeft()), 60000);
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shipment.state_entered_at]);
+
+  const when = hours > 0 ? `in ${hours} hour${hours === 1 ? '' : 's'}` : 'at any moment';
+
+  return (
+    <div className="px-6 pt-4">
+      <div className="bg-red-600 text-white rounded-xl p-4 mb-3 shadow-md" role="alert">
+        <p className="text-base font-bold">⚠ Urgent: SFDA will order destruction {when} if you do not act now.</p>
+        <p className="text-xs text-red-100 mt-1">
+          No re-export or destruction choice was made within 24 hours of the non-conforming result.
+        </p>
+      </div>
+      <NonConformingAction shipment={shipment} token={token} onClose={onClose} />
+    </div>
+  );
+}
+
 // Shipment Detail Modal
 function ShipmentDetailModal({ shipmentId, token, onClose }) {
   const [shipment, setShipment] = useState(null);
@@ -1134,6 +1193,9 @@ function ShipmentDetailModal({ shipmentId, token, onClose }) {
           </div>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl">×</button>
         </div>
+        {shipment.current_state === 'DECISION_OVERDUE' && (
+          <OverdueDecisionBanner shipment={shipment} token={token} onClose={onClose} />
+        )}
         {/* Tab navigation */}
         <div style={{display:'flex',gap:'2px',padding:'0 24px',borderBottom:'1px solid rgba(39,48,110,0.08)',background:'#FAFBFF'}}>
           {[
@@ -1638,6 +1700,7 @@ export default function ImporterPortal({ user: initialUser, token, onLogout }) {
   const [filterStatus, setFilterStatus] = useState('');
   const [filterPort, setFilterPort] = useState('');
   const [activeKpi, setActiveKpi] = useState(null);
+  const [showPreCheck, setShowPreCheck] = useState(true);
 
   const fetchData = async () => {
     try {
@@ -1719,6 +1782,18 @@ export default function ImporterPortal({ user: initialUser, token, onLogout }) {
     const avgDwell = shipments.filter(s => s.total_dwell_minutes).reduce((acc, s, _, arr) => acc + s.total_dwell_minutes / arr.length, 0);
     const avgDwellDays = avgDwell > 0 ? (avgDwell / 1440).toFixed(1) : '—';
     const userInitials = user?.full_name?.split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase() || 'MA';
+
+    if (showPreCheck) {
+      return (
+        <PreShipmentCheck
+          token={token}
+          onProceed={(destination) => {
+            setShowPreCheck(false);
+            if (destination === 'new-shipment') setShowNewForm(true);
+          }}
+        />
+      );
+    }
 
     return (
     <div className="m-app">
@@ -2172,6 +2247,7 @@ export default function ImporterPortal({ user: initialUser, token, onLogout }) {
                       'RE_EXPORT_COMPLETED': 'Re-Export Done',
                       'DESTRUCTION_CONFIRMED': 'Destroyed',
                       'DESTRUCTION_PENDING': 'Destruction Pending',
+                      'DESTRUCTION_REQUESTED': 'Destruction Requested',
                     }[s.current_state] || s.current_state.replace(/_/g, ' ');
 
                     const dwellDays = s.total_dwell_minutes ? (s.total_dwell_minutes / 1440).toFixed(1) + 'd' : '—';

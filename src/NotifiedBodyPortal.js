@@ -1,14 +1,5 @@
 import { useState, useEffect } from 'react';
-
-const API_URL = 'http://localhost:3000/api/v1';
-
-function formatDate(dateStr) {
-  if (!dateStr) return '—';
-  return new Date(dateStr).toLocaleString('en-SA', {
-    day: '2-digit', month: 'short', year: 'numeric',
-    hour: '2-digit', minute: '2-digit'
-  });
-}
+import { API_URL, formatDate } from './constants';
 
 function formatDateShort(dateStr) {
   if (!dateStr) return '—';

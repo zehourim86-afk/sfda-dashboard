@@ -1,16 +1,7 @@
 import { useState, useEffect } from 'react';
+import { API_URL, formatDate } from './constants';
 import NotificationBell from './NotificationBell';
 import OrgAdminPanel from './OrgAdminPanel';
-
-const API_URL = 'http://localhost:3000/api/v1';
-
-function formatDate(dateStr) {
-  if (!dateStr) return '—';
-  return new Date(dateStr).toLocaleString('en-SA', {
-    day: '2-digit', month: 'short', year: 'numeric',
-    hour: '2-digit', minute: '2-digit'
-  });
-}
 
 const INSPECTOR_STATES = [
   'SAMPLING_REQUESTED',
@@ -28,8 +19,201 @@ const STATE_INFO = {
   LAB_RECEIVED: { label: 'Delivered to Lab', color: 'bg-green-100 text-green-700', action: null, next: null },
 };
 
+// ─── MASAAR Sampling Recommendation ────────────────────────────
+
+const MANDATORY_CATEGORIES = ['Cosmetic', 'Cosmetic Device', 'Food Supplement'];
+
+const RECOMMENDATION_STYLE = {
+  MANDATORY: { label: 'MANDATORY', color: '#FF5470', bg: 'rgba(255,84,112,.1)', border: 'rgba(255,84,112,.3)' },
+  EXEMPT: { label: 'EXEMPT', color: '#00C896', bg: 'rgba(0,200,150,.1)', border: 'rgba(0,200,150,.3)' },
+  SFDA_DISCRETION: { label: 'SFDA DISCRETION', color: '#F5A623', bg: 'rgba(245,166,35,.1)', border: 'rgba(245,166,35,.3)' },
+};
+
+// Fields come from GET /shipments. null means "not known yet", which never triggers a rule.
+function getSamplingRecommendation(s) {
+  const mandatoryReasons = [];
+  if (s.sampling_history === 0) mandatoryReasons.push('First shipment of this product by this MAH — no clean sampling history');
+  if (s.supplier_first_time === true) mandatoryReasons.push('First shipment from this supplier');
+  if (s.country_risk === 'HIGH') mandatoryReasons.push(`Country of origin (${s.shipment_country || 'unknown'}) is rated high risk`);
+  if (s.previous_non_conformity === true) mandatoryReasons.push('This MAH has a previous non-conformity for this product');
+  if (MANDATORY_CATEGORIES.includes(s.product_category)) mandatoryReasons.push(`${s.product_category} is a mandatory-sampling category`);
+
+  const unknown = [];
+  if (s.sampling_history == null) unknown.push('sampling history');
+  if (s.certificate_of_conformity == null) unknown.push('certificate of conformity');
+  if (s.supplier_first_time == null) unknown.push('supplier history');
+  if (s.product_category == null) unknown.push('product category');
+
+  if (mandatoryReasons.length > 0) {
+    return { recommendation: 'MANDATORY', reasons: mandatoryReasons, unknown };
+  }
+
+  const hasCoc = s.certificate_of_conformity === true;
+  const history = s.sampling_history;
+  const cleanRecord = s.previous_non_conformity === false;
+
+  if (hasCoc && history >= 3 && cleanRecord) {
+    return {
+      recommendation: 'EXEMPT',
+      reasons: [
+        'Valid Certificate of Conformity on file',
+        `${history} prior clean shipments of this product by this MAH`,
+        'No previous non-conformity recorded',
+      ],
+      unknown,
+    };
+  }
+
+  const reasons = ['No mandatory sampling triggers found'];
+  if (!hasCoc) reasons.push(s.certificate_of_conformity === false ? 'No valid Certificate of Conformity on file' : 'Certificate of Conformity could not be checked');
+  if (history == null) reasons.push('Sampling history could not be checked — no products listed on this shipment');
+  else if (history < 3) reasons.push(`Only ${history} prior clean shipment${history === 1 ? '' : 's'} (3 needed for exemption)`);
+  if (s.previous_non_conformity == null) reasons.push('Non-conformity history could not be checked');
+  return { recommendation: 'SFDA_DISCRETION', reasons, unknown };
+}
+
+const panel = {
+  wrap: { background: '#0D1940', border: '1px solid rgba(56,198,255,0.12)', borderRadius: 14, padding: 20, fontFamily: 'Inter, sans-serif', color: '#fff' },
+  eyebrow: { fontSize: 11, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: '#38C6FF', marginBottom: 12 },
+  reason: { display: 'flex', gap: 8, alignItems: 'flex-start', fontSize: 12, color: 'rgba(255,255,255,0.65)', lineHeight: 1.5, marginBottom: 6 },
+  primary: { flex: 1, background: '#38C6FF', color: '#0B1535', border: 'none', borderRadius: 8, padding: '10px 14px', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' },
+  ghost: { flex: 1, background: 'rgba(255,255,255,.06)', color: 'rgba(255,255,255,.75)', border: '1px solid rgba(255,255,255,.12)', borderRadius: 8, padding: '10px 14px', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' },
+  input: { width: '100%', boxSizing: 'border-box', background: 'rgba(255,255,255,.05)', border: '1px solid rgba(255,255,255,.12)', borderRadius: 8, padding: '8px 12px', fontSize: 12, color: '#fff', fontFamily: 'inherit', outline: 'none', resize: 'vertical' },
+  error: { background: 'rgba(255,84,112,.08)', border: '1px solid rgba(255,84,112,.2)', borderRadius: 8, padding: '8px 12px', fontSize: 12, color: '#FF5470', marginTop: 12 },
+};
+
+function SamplingRecommendation({ shipment, token, onExempted }) {
+  const { recommendation, reasons, unknown } = getSamplingRecommendation(shipment);
+  const style = RECOMMENDATION_STYLE[recommendation];
+  const [recorded, setRecorded] = useState(shipment.sampling_decision || null);
+  const [overriding, setOverriding] = useState(false);
+  const [overrideReason, setOverrideReason] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState(null);
+
+  const opposite = recommendation === 'MANDATORY' ? 'EXEMPT' : 'MANDATORY';
+
+  const submit = async (decision, override) => {
+    setSubmitting(true);
+    setError(null);
+    try {
+      const res = await fetch(`${API_URL}/shipments/${shipment.id}/sampling-decision`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          decision,
+          override,
+          override_reason: override ? overrideReason.trim() : '',
+          recommendation,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.success) {
+        setError(data.message || 'Failed to record sampling decision');
+        return;
+      }
+      if (decision === 'EXEMPT') {
+        onExempted();
+      } else {
+        setRecorded('MANDATORY');
+        setOverriding(false);
+      }
+    } catch {
+      setError('Failed to connect to platform');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (recorded === 'MANDATORY') {
+    return (
+      <div style={panel.wrap}>
+        <div style={panel.eyebrow}>MASAAR Sampling Recommendation</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: 'rgba(255,255,255,.8)' }}>
+          <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#FF5470', flexShrink: 0 }}></span>
+          Decision recorded: sampling is mandatory. Proceed with sample collection below.
+        </div>
+      </div>
+    );
+  }
+
+  const busy = submitting ? { opacity: 0.5, cursor: 'not-allowed' } : {};
+
+  return (
+    <div style={panel.wrap}>
+      <div style={panel.eyebrow}>MASAAR Sampling Recommendation</div>
+
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '8px 16px', borderRadius: 20, fontSize: 16, fontWeight: 800, letterSpacing: '.05em', background: style.bg, color: style.color, border: `1px solid ${style.border}` }}>
+        <span style={{ width: 8, height: 8, borderRadius: '50%', background: style.color }}></span>
+        {style.label}
+      </span>
+
+      <div style={{ marginTop: 14 }}>
+        {reasons.map((r, i) => (
+          <div key={i} style={panel.reason}>
+            <span style={{ width: 5, height: 5, borderRadius: '50%', background: style.color, marginTop: 6, flexShrink: 0 }}></span>
+            <span>{r}</span>
+          </div>
+        ))}
+        {unknown.length > 0 && (
+          <div style={{ fontSize: 11, color: 'rgba(255,255,255,.35)', marginTop: 8 }}>
+            Not yet available: {unknown.join(', ')}
+          </div>
+        )}
+      </div>
+
+      {overriding ? (
+        <div style={{ marginTop: 16 }}>
+          <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,.5)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 6 }}>
+            Override to {RECOMMENDATION_STYLE[opposite].label} — reason
+          </label>
+          <textarea
+            value={overrideReason}
+            onChange={e => setOverrideReason(e.target.value)}
+            rows={2}
+            placeholder="Why are you overriding the recommendation?"
+            style={panel.input}
+          />
+          <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+            <button
+              onClick={() => submit(opposite, true)}
+              disabled={submitting || !overrideReason.trim()}
+              style={{ ...panel.primary, ...(submitting || !overrideReason.trim() ? { opacity: 0.5, cursor: 'not-allowed' } : {}) }}
+            >
+              {submitting ? 'Saving…' : 'Confirm Override'}
+            </button>
+            <button onClick={() => { setOverriding(false); setOverrideReason(''); }} disabled={submitting} style={{ ...panel.ghost, ...busy }}>
+              Cancel
+            </button>
+          </div>
+        </div>
+      ) : recommendation === 'SFDA_DISCRETION' ? (
+        <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
+          <button onClick={() => submit('MANDATORY', false)} disabled={submitting} style={{ ...panel.primary, ...busy }}>
+            Require Sampling
+          </button>
+          <button onClick={() => submit('EXEMPT', false)} disabled={submitting} style={{ ...panel.ghost, ...busy }}>
+            Exempt
+          </button>
+        </div>
+      ) : (
+        <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
+          <button onClick={() => submit(recommendation, false)} disabled={submitting} style={{ ...panel.primary, ...busy }}>
+            {submitting ? 'Saving…' : 'Accept Recommendation'}
+          </button>
+          <button onClick={() => setOverriding(true)} disabled={submitting} style={{ ...panel.ghost, ...busy }}>
+            Override
+          </button>
+        </div>
+      )}
+
+      {error && <div style={panel.error}>{error}</div>}
+    </div>
+  );
+}
+
 // Sample Collection Modal
-function SampleActionModal({ shipment, token, onClose, onRefresh }) {
+function SampleActionModal({ shipment, token, isInspector, onClose, onRefresh }) {
   const [acting, setActing] = useState(false);
   const [sealId, setSealId] = useState('');
   const [samplePhoto, setSamplePhoto] = useState(null);
@@ -199,6 +383,10 @@ function SampleActionModal({ shipment, token, onClose, onRefresh }) {
               rows={2} placeholder="Any observations or notes..."
               className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none" />
           </div>
+
+          {isInspector && shipment.current_state === 'SAMPLING_REQUESTED' && (
+            <SamplingRecommendation shipment={shipment} token={token} onExempted={onRefresh} />
+          )}
 
           {stateInfo?.action && (
             <button onClick={performTransition} disabled={acting}
@@ -466,6 +654,7 @@ export default function InspectorApp({ user: initialUser, token, onLogout }) {
         <SampleActionModal
           shipment={selectedShipment}
           token={token}
+          isInspector={user?.role === 'SFDA_INSPECTOR'}
           onClose={() => setSelectedShipment(null)}
           onRefresh={() => {
             fetchShipments();

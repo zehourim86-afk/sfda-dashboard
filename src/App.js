@@ -86,7 +86,6 @@ function App() {
   }
 
   const renderPortal = () => {
-    console.log('Current user role:', user.role);
     switch (user.role) {
       case 'DEMARA_ADMIN':
         return <AdminPanel user={user} token={token} onLogout={handleLogout} />;

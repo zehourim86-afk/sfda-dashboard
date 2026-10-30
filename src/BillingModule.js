@@ -1,20 +1,11 @@
 import { useState, useEffect } from 'react';
+import { API_URL, formatDate } from './constants';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell
 } from 'recharts';
 
-const API_URL = 'http://localhost:3000/api/v1';
-
 const CHART_COLORS = ['#F59E0B', '#EF4444', '#10B981', '#3B82F6'];
-function formatDate(dateStr) {
-  if (!dateStr) return '—';
-  return new Date(dateStr).toLocaleString('en-SA', {
-    day: '2-digit', month: 'short', year: 'numeric',
-    hour: '2-digit', minute: '2-digit'
-  });
-}
-
 // Fee calculation
 function calculateFees(trace) {
   const lineItems = trace.line_items || [];

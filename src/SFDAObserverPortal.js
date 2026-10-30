@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { API_URL, formatDate } from './constants';
 import SFDAObserverAssistant from './SFDAObserverAssistant';
 import ShipmentTimeline from './ShipmentTimeline';
 import NotificationBell from './NotificationBell';
@@ -6,16 +7,6 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell
 } from 'recharts';
-
-const API_URL = 'http://localhost:3000/api/v1';
-
-function formatDate(dateStr) {
-  if (!dateStr) return '—';
-  return new Date(dateStr).toLocaleString('en-SA', {
-    day: '2-digit', month: 'short', year: 'numeric',
-    hour: '2-digit', minute: '2-digit'
-  });
-}
 
 const STATE_COLORS = {
   RECORD_OPENED: 'bg-gray-100 text-gray-700',
@@ -32,7 +23,19 @@ const STATE_COLORS = {
   FINAL_CLEARANCE: 'bg-green-100 text-green-700',
   RE_EXPORT_COMPLETED: 'bg-gray-100 text-gray-700',
   DESTRUCTION_CONFIRMED: 'bg-gray-100 text-gray-700',
+  DECISION_PENDING: 'bg-amber-100 text-amber-800 border border-amber-300',
+  DECISION_OVERDUE: 'bg-red-100 text-red-700 border border-red-300',
+  SFDA_ORDERED_DESTRUCTION: 'bg-red-600 text-white',
 };
+
+// Badge text overrides; other states show their name with spaces.
+const STATE_BADGE_LABELS = {
+  DECISION_PENDING: '⏳ Awaiting SFDA Decision',
+};
+
+function stateBadgeLabel(state) {
+  return STATE_BADGE_LABELS[state] || state.replace(/_/g, ' ');
+}
 
 const CHART_COLORS = ['#2D2B7A', '#00B4D8', '#10B981', '#F59E0B', '#EF4444'];
 
@@ -263,7 +266,7 @@ export default function SFDAObserverPortal({ user, token, onLogout }) {
                     </div>
                     <div className="flex items-center gap-3">
                       <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${STATE_COLORS[s.current_state] || 'bg-gray-100 text-gray-700'}`}>
-                        {s.current_state.replace(/_/g, ' ')}
+                        {stateBadgeLabel(s.current_state)}
                       </span>
                       <span className="text-xs text-red-600 font-bold">
                         {Math.floor((new Date() - new Date(s.state_entered_at)) / (1000 * 60 * 60))}h stuck
@@ -335,7 +338,7 @@ export default function SFDAObserverPortal({ user, token, onLogout }) {
                     <div className="flex items-center gap-3">
                       <span className="text-xs text-gray-500">{s.port_of_entry}</span>
                       <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${STATE_COLORS[s.current_state] || 'bg-gray-100 text-gray-700'}`}>
-                        {s.current_state.replace(/_/g, ' ')}
+                        {stateBadgeLabel(s.current_state)}
                       </span>
                     </div>
                   </div>
@@ -367,6 +370,7 @@ export default function SFDAObserverPortal({ user, token, onLogout }) {
               <option value="SAMPLING_REQUESTED">Sampling Requested</option>
               <option value="IN_ANALYSIS">In Analysis</option>
               <option value="RESULT_SUBMITTED">Result Submitted</option>
+              <option value="DECISION_PENDING">Awaiting SFDA Decision</option>
               <option value="CONFORMING">Conforming</option>
               <option value="NON_CONFORMING">Non-Conforming</option>
               <option value="PARTIALLY_CONFORMING">Partially Conforming</option>
@@ -437,7 +441,7 @@ export default function SFDAObserverPortal({ user, token, onLogout }) {
                       <td className="px-4 py-3 text-xs text-gray-500">{s.lab_name || '—'}</td>
                       <td className="px-4 py-3">
                         <span className={`px-2 py-1 rounded-full text-xs font-semibold ${STATE_COLORS[s.current_state] || 'bg-gray-100 text-gray-700'}`}>
-                          {s.current_state.replace(/_/g, ' ')}
+                          {stateBadgeLabel(s.current_state)}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-xs text-gray-500">{formatDate(s.updated_at)}</td>
@@ -543,7 +547,7 @@ function ShipmentDetailReadOnly({ shipment, token, onClose }) {
             'bg-blue-50 border border-blue-200'
           }`}>
             <span className={`px-3 py-1 rounded-full text-sm font-semibold ${STATE_COLORS[detail.current_state] || 'bg-gray-100 text-gray-700'}`}>
-              {detail.current_state.replace(/_/g, ' ')}
+              {stateBadgeLabel(detail.current_state)}
             </span>
             <p className="text-sm text-gray-600 mt-2">Since {formatDate(detail.state_entered_at)}</p>
           </div>

@@ -1,19 +1,11 @@
 import { useState, useEffect } from 'react';
+import { API_URL, formatDate } from './constants';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, LineChart, Line
 } from 'recharts';
 
-const API_URL = 'http://localhost:3000/api/v1';
 const COLORS = ['#2D2B7A', '#00B4D8', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899'];
-
-function formatDate(dateStr) {
-  if (!dateStr) return '—';
-  return new Date(dateStr).toLocaleString('en-SA', {
-    day: '2-digit', month: 'short', year: 'numeric',
-    hour: '2-digit', minute: '2-digit'
-  });
-}
 
 function StatCard({ label, value, color, sub }) {
   return (

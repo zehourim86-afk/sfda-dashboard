@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
-
-const API_URL = 'http://localhost:3000/api/v1';
+import { API_URL } from './constants';
 
 function formatDate(dateStr) {
   if (!dateStr) return '—';
