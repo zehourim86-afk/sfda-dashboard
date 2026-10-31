@@ -102,6 +102,8 @@ export default function Login({ onLogin }) {
     { value: 'IMPORTER', label: 'Importer' },
     { value: 'NOTIFIED_BODY', label: 'Notified Body' },
     { value: 'GMP_AUDITOR', label: 'GMP Auditor' },
+    { value: 'CLEARANCE_COMPANY', label: 'Clearance Company' },
+    { value: 'SHIPPING_COMPANY', label: 'Shipping / Logistics Company' },
   ];
 
   const ORG_TYPES = [
@@ -109,8 +111,32 @@ export default function Login({ onLogin }) {
     { value: 'IMPORTER', label: 'Importing Company' },
     { value: 'LAB', label: 'Testing Laboratory' },
     { value: 'NOTIFIED_BODY', label: 'Notified Body' },
-    { value: 'MANUFACTURER', label: 'Manufacturer' },
+    { value: 'CLEARANCE_COMPANY', label: 'Clearance Company' },
+    { value: 'SHIPPING_COMPANY', label: 'Shipping / Logistics Company' },
   ];
+  // Not offered on its own; only reached through the GMP Auditor role
+  const MANUFACTURER_ORG = { value: 'MANUFACTURER', label: 'Manufacturer' };
+
+  // Each role belongs to exactly one organisation type (the backend enforces the same pairs)
+  const ROLE_TO_ORG_TYPE = {
+    IMPORTER: 'IMPORTER',
+    CLEARANCE_COMPANY: 'CLEARANCE_COMPANY',
+    SHIPPING_COMPANY: 'SHIPPING_COMPANY',
+    LAB_ANALYST: 'LAB',
+    SFDA_REVIEWER: 'SFDA',
+    SFDA_INSPECTOR: 'SFDA',
+    NOTIFIED_BODY: 'NOTIFIED_BODY',
+    GMP_AUDITOR: 'MANUFACTURER',
+  };
+  const orgTypeOptions = registerForm.organisation_type === MANUFACTURER_ORG.value
+    ? [...ORG_TYPES, MANUFACTURER_ORG] : ORG_TYPES;
+  const orgTypeAutoMatched = Boolean(ROLE_TO_ORG_TYPE[registerForm.requested_role]);
+
+  const selectRole = (role) => setRegisterForm({
+    ...registerForm,
+    requested_role: role,
+    organisation_type: ROLE_TO_ORG_TYPE[role] || registerForm.organisation_type
+  });
 
   return (
     <div className="min-h-screen flex items-center justify-center" style={{background: 'linear-gradient(135deg, #2D2B7A 0%, #1a1854 100%)'}}>
@@ -312,16 +338,20 @@ export default function Login({ onLogin }) {
                   <select
                     value={registerForm.organisation_type}
                     onChange={e => setRegisterForm({...registerForm, organisation_type: e.target.value})}
-                    className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2"
+                    disabled={orgTypeAutoMatched}
+                    className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 disabled:bg-gray-100 disabled:text-gray-600"
                   >
-                    {ORG_TYPES.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                    {orgTypeOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                   </select>
+                  {orgTypeAutoMatched && (
+                    <p className="text-xs text-gray-400 mt-1">Auto-matched to your role</p>
+                  )}
                 </div>
                 <div>
                   <label className="text-xs font-semibold text-gray-600 uppercase">Requested Role</label>
                   <select
                     value={registerForm.requested_role}
-                    onChange={e => setRegisterForm({...registerForm, requested_role: e.target.value})}
+                    onChange={e => selectRole(e.target.value)}
                     className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2"
                   >
                     {ROLE_OPTIONS.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
