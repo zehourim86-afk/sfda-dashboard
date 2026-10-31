@@ -16,7 +16,50 @@ const STATE_COLORS = {
   DUTIES_PAID: 'bg-blue-100 text-blue-700',
   FINAL_CLEARANCE: 'bg-green-100 text-green-700',
   RE_EXPORT_INITIATED: 'bg-red-100 text-red-700',
+  CLEARANCE_ACCEPTED: 'bg-blue-100 text-blue-700',
+  PARTIAL_CLEARANCE_IN_PROGRESS: 'bg-blue-100 text-blue-700',
+  DESTRUCTION_REQUESTED: 'bg-red-100 text-red-700',
+  DECISION_OVERDUE: 'bg-red-100 text-red-700',
+  SFDA_ORDERED_DESTRUCTION: 'bg-red-100 text-red-700',
 };
+
+const CONFIDENCE_LEVELS = [
+  { min: 80, label: 'HIGH', color: '#00C896' },
+  { min: 50, label: 'MEDIUM', color: '#F5A623' },
+  { min: 0, label: 'LOW', color: '#FF5470' },
+];
+
+// Read-only view of the MAH's document confirmation and AI score
+function SubmissionConfidencePanel({ confirmedAt, score }) {
+  const panel = { background: '#0D1940', border: '1px solid rgba(56,198,255,0.15)', borderRadius: '8px', padding: '12px 14px' };
+
+  if (!confirmedAt) {
+    return (
+      <div style={{ ...panel, display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'rgba(255,255,255,0.3)' }}></span>
+        <span style={{ fontSize: '12px', fontWeight: 600, color: 'rgba(255,255,255,0.6)' }}>Awaiting MAH document confirmation</span>
+      </div>
+    );
+  }
+
+  const level = CONFIDENCE_LEVELS.find(l => (score ?? 0) >= l.min);
+  return (
+    <div style={panel}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+        <span style={{ fontSize: '11px', fontWeight: 700, color: '#FFFFFF', textTransform: 'uppercase', letterSpacing: '0.8px' }}>
+          Submission Confidence
+        </span>
+        <span style={{ fontSize: '11px', fontWeight: 700, color: level.color, background: `${level.color}1F`,
+          border: `1px solid ${level.color}66`, borderRadius: '20px', padding: '2px 10px' }}>
+          {level.label} · {score}/100
+        </span>
+      </div>
+      <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)' }}>
+        Documents reviewed and confirmed by MAH on {formatDate(confirmedAt)}. AI validation score: {score}/100
+      </div>
+    </div>
+  );
+}
 
 // Shipment detail and action modal
 function ShipmentActionModal({ shipment, token, onClose, onRefresh }) {
@@ -25,6 +68,10 @@ function ShipmentActionModal({ shipment, token, onClose, onRefresh }) {
   const [reference, setReference] = useState('');
   const [error, setError] = useState(null);
   const [task, setTask] = useState(null);
+  const [confirmation, setConfirmation] = useState({
+    at: shipment.document_confirmed_at,
+    score: shipment.document_ai_score
+  });
 
   useEffect(() => {
     const fetchTask = async () => {
@@ -33,6 +80,9 @@ function ShipmentActionModal({ shipment, token, onClose, onRefresh }) {
           headers: { Authorization: `Bearer ${token}` }
         });
         const data = await res.json();
+        if (data.shipment) {
+          setConfirmation({ at: data.shipment.document_confirmed_at, score: data.shipment.document_ai_score });
+        }
         if (data.shipment && data.shipment.clearance_tasks && data.shipment.clearance_tasks.length > 0) {
           setTask(data.shipment.clearance_tasks[0]);
         }
@@ -41,7 +91,7 @@ function ShipmentActionModal({ shipment, token, onClose, onRefresh }) {
       }
     };
     fetchTask();
-  }, [shipment.id]);
+  }, [shipment.id, token]);
 
   const performAction = async (action, requiresRef = false) => {
     if (requiresRef && !reference.trim()) {
@@ -170,6 +220,8 @@ function ShipmentActionModal({ shipment, token, onClose, onRefresh }) {
             <div><p className="text-xs text-gray-500 uppercase font-semibold">Country</p>
               <p className="text-sm font-medium">{shipment.shipment_country}</p></div>
           </div>
+
+          <SubmissionConfidencePanel confirmedAt={confirmation.at} score={confirmation.score} />
 
           {/* Clearance checklist with timestamps and references */}
           <div className="bg-gray-50 rounded-xl p-4">
@@ -460,7 +512,8 @@ const [documentsShipmentId, setDocumentsShipmentId] = useState(null);
         </div>
       </div>
 
-      {/* Table */}
+      {/* Table (hidden on the org admin tab, which shows OrgAdminPanel instead) */}
+      {activeTab !== 'org-admin' && (
       <div className="px-6 py-4">
         {error && <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4 text-red-700 text-sm">{error}</div>}
         {loading ? (
@@ -469,7 +522,8 @@ const [documentsShipmentId, setDocumentsShipmentId] = useState(null);
           <div className="text-center py-12 text-gray-400">
             <p className="text-lg">No shipments in this queue</p>
             <p className="text-sm mt-1">
-              {activeTab === 'pending' ? 'Shipments will appear here when SFDA issues a conforming decision' :
+              {activeTab === 'new' ? 'New clearance assignments will appear here' :
+               activeTab === 'pending' ? 'Shipments will appear here when SFDA issues a conforming decision' :
                activeTab === 'alerts' ? 'Non-conforming shipments requiring action will appear here' :
                'Completed clearances will appear here'}
             </p>
@@ -543,6 +597,7 @@ const [documentsShipmentId, setDocumentsShipmentId] = useState(null);
           </div>
         )}
       </div>
+      )}
       {documentsShipmentId && (
         <ClearanceDocuments
           shipmentId={documentsShipmentId}

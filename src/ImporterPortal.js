@@ -1151,10 +1151,153 @@ function OverdueDecisionBanner({ shipment, token, onClose }) {
 }
 
 // Shipment Detail Modal
+const scoreColor = (score) => score >= 80 ? '#00C896' : score >= 50 ? '#F5A623' : '#FF5470';
+
+// AI findings for one uploaded document: its issues plus any failed or warned checks
+const documentFindings = (doc) => {
+  const v = doc?.validation_result || {};
+  const issues = Array.isArray(v.issues) ? v.issues : [];
+  const checks = (Array.isArray(v.checks) ? v.checks : [])
+    .filter(c => c.status === 'FAIL' || c.status === 'WARN')
+    .map(c => `${c.item} — ${c.message}`);
+  return [...issues, ...checks];
+};
+
+// MAH reviews the AI validation and confirms before documents go to the clearance company
+function ConfirmDocumentsPanel({ shipment, token, readiness, confirmation, onConfirmed }) {
+  const [checked, setChecked] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState(null);
+
+  if (!readiness) return null;
+
+  if (confirmation.at) {
+    return (
+      <div style={{background:'rgba(0,200,150,0.08)',border:'1px solid rgba(0,200,150,0.3)',borderRadius:'12px',padding:'14px 18px',marginBottom:'20px'}}>
+        <div style={{fontSize:'14px',fontWeight:700,color:'#00875A'}}>✓ Documents confirmed and shared</div>
+        <div style={{fontSize:'12px',color:'#3A4080',marginTop:'2px'}}>
+          Confirmed {formatDate(confirmation.at)} · AI validation score {confirmation.score}/100 · Visible to {shipment.clearance_company_name || 'your clearance company'}
+        </div>
+      </div>
+    );
+  }
+
+  const uploadedCount = readiness.summary?.total_uploaded || 0;
+  if (shipment.current_state !== 'DECLARATION_FILED' && uploadedCount === 0) return null;
+
+  const score = readiness.overall_score ?? 0;
+  const uploadedMap = {};
+  (readiness.documents || []).forEach(d => { uploadedMap[d.document_type] = d; });
+
+  const rows = Object.entries(readiness.document_types || {}).map(([type, def]) => {
+    const doc = uploadedMap[type];
+    if (!doc) {
+      return def.required
+        ? { type, label: def.label, icon: '✗', color: '#FF5470', status: 'Missing', findings: [] }
+        : { type, label: def.label, icon: '○', color: '#808285', status: 'Optional — not uploaded', findings: [] };
+    }
+    const findings = documentFindings(doc);
+    return doc.readiness_status === 'READY'
+      ? { type, label: def.label, icon: '✓', color: '#00C896', status: 'Valid', findings }
+      : { type, label: def.label, icon: '⚠', color: '#F5A623', status: 'Issues found', findings };
+  });
+
+  const canConfirm = checked && !submitting && uploadedCount > 0 && !!shipment.clearance_company_id;
+
+  const handleConfirm = async () => {
+    setSubmitting(true);
+    setError(null);
+    try {
+      const res = await fetch(`${API_URL}/shipments/${shipment.id}/confirm-documents`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ confirmed: true, ai_score: score, confirmed_at: new Date().toISOString() })
+      });
+      const result = await res.json();
+      if (result.success) {
+        onConfirmed({ at: result.confirmed_at, score: result.ai_score });
+      } else {
+        setError(result.message || 'Confirmation failed');
+      }
+    } catch (err) {
+      setError('Failed to connect to platform');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const scrollToUploads = () => {
+    document.getElementById(`document-upload-list-${shipment.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  return (
+    <div style={{background:'#FFFFFF',border:`2px solid ${scoreColor(score)}`,borderRadius:'14px',padding:'18px 20px',marginBottom:'20px'}}>
+      <div style={{display:'flex',alignItems:'center',gap:'16px',marginBottom:'14px'}}>
+        <div style={{width:'64px',height:'64px',borderRadius:'50%',flexShrink:0,
+          border:`5px solid ${scoreColor(score)}`,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center'}}>
+          <div style={{fontSize:'18px',fontWeight:800,color:scoreColor(score),lineHeight:1}}>{score}</div>
+          <div style={{fontSize:'8px',color:'#808285'}}>/ 100</div>
+        </div>
+        <div>
+          <div style={{fontSize:'16px',fontWeight:800,color:'#27306E'}}>Review &amp; Confirm Documents</div>
+          <div style={{fontSize:'12px',color:'#808285',marginTop:'2px'}}>
+            Review the AI validation below, then confirm to share your documents with the clearance company.
+          </div>
+        </div>
+      </div>
+
+      {/* Per-document status */}
+      <div style={{display:'flex',flexDirection:'column',gap:'4px',marginBottom:'14px'}}>
+        {rows.map(r => (
+          <div key={r.type} style={{padding:'7px 10px',borderRadius:'8px',background:'#FAFBFF',border:'1px solid rgba(39,48,110,0.06)'}}>
+            <div style={{display:'flex',alignItems:'center',gap:'8px'}}>
+              <span style={{color:r.color,fontWeight:700,width:'14px',textAlign:'center'}}>{r.icon}</span>
+              <span style={{fontSize:'12px',fontWeight:600,color:'#27306E',flex:1}}>{r.label}</span>
+              <span style={{fontSize:'11px',fontWeight:600,color:r.color}}>{r.status}</span>
+            </div>
+            {r.findings.length > 0 && (
+              <ul style={{margin:'4px 0 0 22px',padding:0,listStyle:'disc'}}>
+                {r.findings.map((f, i) => (
+                  <li key={i} style={{fontSize:'11px',color:'#3A4080',lineHeight:1.5}}>{f}</li>
+                ))}
+              </ul>
+            )}
+          </div>
+        ))}
+      </div>
+
+      <label style={{display:'flex',alignItems:'flex-start',gap:'8px',fontSize:'12px',color:'#27306E',cursor:'pointer',marginBottom:'12px'}}>
+        <input type="checkbox" checked={checked} onChange={e => setChecked(e.target.checked)} style={{marginTop:'2px'}} />
+        I have reviewed the AI findings and confirm these documents are ready for submission to the clearance company
+      </label>
+
+      {!shipment.clearance_company_id && (
+        <div style={{fontSize:'11px',color:'#CC0030',marginBottom:'8px'}}>Assign a clearance company before confirming.</div>
+      )}
+      {error && <div style={{fontSize:'12px',color:'#CC0030',marginBottom:'8px'}}>⚠ {error}</div>}
+
+      <div style={{display:'flex',gap:'8px'}}>
+        <button onClick={scrollToUploads}
+          style={{padding:'9px 16px',borderRadius:'8px',fontSize:'12px',fontWeight:600,cursor:'pointer',
+            border:'1px solid rgba(39,48,110,0.2)',background:'#FFFFFF',color:'#27306E'}}>
+          Correct Issues
+        </button>
+        <button onClick={handleConfirm} disabled={!canConfirm}
+          style={{flex:1,padding:'9px 16px',borderRadius:'8px',fontSize:'12px',fontWeight:700,border:'none',color:'#FFFFFF',
+            background: canConfirm ? '#27306E' : '#B8BAC2', cursor: canConfirm ? 'pointer' : 'not-allowed'}}>
+          {submitting ? '⟳ Confirming...' : 'Confirm & Share with Clearance'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function ShipmentDetailModal({ shipmentId, token, onClose }) {
   const [shipment, setShipment] = useState(null);
   const [loading, setLoading] = useState(true);
   const [detailTab, setDetailTab] = useState('details');
+  const [readiness, setReadiness] = useState(null);
+  const [confirmation, setConfirmation] = useState({ at: null, score: null });
 
   useEffect(() => {
     const fetchShipment = async () => {
@@ -1164,6 +1307,9 @@ function ShipmentDetailModal({ shipmentId, token, onClose }) {
         });
         const data = await res.json();
         setShipment(data.shipment);
+        if (data.shipment) {
+          setConfirmation({ at: data.shipment.document_confirmed_at, score: data.shipment.document_ai_score });
+        }
       } catch (err) {
         console.error('Failed to fetch shipment');
       } finally {
@@ -1218,7 +1364,25 @@ function ShipmentDetailModal({ shipmentId, token, onClose }) {
 
         <div className="p-6 space-y-5">
           {detailTab === 'documents' && (
-            <DocumentReadiness shipmentId={shipment.id} token={token} shipment={shipment} />
+            <>
+              <ConfirmDocumentsPanel
+                shipment={shipment}
+                token={token}
+                readiness={readiness}
+                confirmation={confirmation}
+                onConfirmed={setConfirmation}
+              />
+              <DocumentReadiness
+                shipmentId={shipment.id}
+                token={token}
+                shipment={shipment}
+                onDataLoaded={(data, { changed }) => {
+                  setReadiness(data);
+                  // An upload or delete clears the confirmation on the server too
+                  if (changed) setConfirmation({ at: null, score: null });
+                }}
+              />
+            </>
           )}
 
           {detailTab === 'timeline' && (
@@ -2269,6 +2433,12 @@ export default function ImporterPortal({ user: initialUser, token, onLogout }) {
                             <span className="m-bd"></span>
                             {stateLabel}
                           </span>
+                          {s.document_confirmed_at && (
+                            <div title={`Documents confirmed and shared with clearance on ${formatDate(s.document_confirmed_at)}`}
+                              style={{fontSize:'10px',color:'var(--m-green)',fontWeight:600,marginTop:'4px'}}>
+                              ✓ Docs shared
+                            </div>
+                          )}
                         </td>
                         <td><div style={{fontSize:'11px',color:'var(--m-text-2)'}}>{s.lab_name || '—'}</div></td>
                         <td>
