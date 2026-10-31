@@ -52,6 +52,28 @@ export default function SFDAObserverPortal({ user, token, onLogout }) {
   const [filterDateTo, setFilterDateTo] = useState('');
   const [activeTab, setActiveTab] = useState('overview');
   const [timelineShipmentId, setTimelineShipmentId] = useState(null);
+  const [labPerformance, setLabPerformance] = useState([]);
+  const [labPerformanceLoading, setLabPerformanceLoading] = useState(true);
+
+  // Live per-lab metrics. On failure, fall back to the empty-state message.
+  useEffect(() => {
+    let cancelled = false;
+    const fetchLabPerformance = async () => {
+      try {
+        const res = await fetch(`${API_URL}/analytics/lab-performance`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (!cancelled) setLabPerformance(Array.isArray(data.labs) ? data.labs : []);
+      } catch (err) {
+        if (!cancelled) setLabPerformance([]);
+      } finally {
+        if (!cancelled) setLabPerformanceLoading(false);
+      }
+    };
+    fetchLabPerformance();
+    return () => { cancelled = true; };
+  }, [token]);
 
   const fetchShipments = async () => {
     try {
@@ -104,12 +126,6 @@ export default function SFDAObserverPortal({ user, token, onLogout }) {
     rate: data.total > 0 ? Math.round((data.nonConforming / data.total) * 100) : 0
   })).filter(d => d.rate > 0);
 
-  const labPerformanceData = [
-    { name: 'KKIA Lab — Riyadh', turnaround: 24, tests: 412 },
-    { name: 'SFDA Central Lab', turnaround: 36, tests: 284 },
-    { name: 'Saudi National Lab', turnaround: 48, tests: 127 },
-    { name: 'Saudi Drug Analysis', turnaround: 72, tests: 56 },
-  ];
   const portData = Object.entries(
     shipments.reduce((acc, s) => {
       const port = s.port_of_entry?.split(' - ')[0]?.replace('King ', '') || 'Unknown';
@@ -209,7 +225,7 @@ export default function SFDAObserverPortal({ user, token, onLogout }) {
             </div>
             <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
               <p className="text-3xl font-bold text-green-600">{conformityRate}%</p>
-              <p className="text-xs text-gray-500 mt-1">Conformity rate</p>
+              <p className="text-xs text-gray-500 mt-1">Clearance rate</p>
             </div>
             <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
               <p className="text-3xl font-bold text-red-600">{nonConforming}</p>
@@ -295,32 +311,49 @@ export default function SFDAObserverPortal({ user, token, onLogout }) {
           )}
 
           {/* Lab performance comparison */}
-          {labPerformanceData.length > 0 && (
-            <div className="bg-white rounded-xl border border-gray-200 p-4">
-              <h3 className="text-sm font-semibold text-gray-700 mb-3">Lab Network Performance</h3>
+          <div className="bg-white rounded-xl border border-gray-200 p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <h3 className="text-sm font-semibold text-gray-700">Lab Network Performance</h3>
+              <span style={{fontSize:'9px',fontWeight:700,letterSpacing:'0.8px',color:'#00C896',
+                background:'rgba(0,200,150,0.1)',border:'1px solid rgba(0,200,150,0.3)',
+                borderRadius:'10px',padding:'2px 8px'}}>
+                LIVE DATA
+              </span>
+            </div>
+            {labPerformanceLoading ? (
+              <p className="text-xs text-gray-400 py-6 text-center">Loading lab performance...</p>
+            ) : labPerformance.length === 0 ? (
+              <p className="text-xs text-gray-400 py-6 text-center">
+                No lab performance data yet — data will appear as shipments are processed
+              </p>
+            ) : (
               <div className="grid grid-cols-2 gap-4">
-                {labPerformanceData.map((lab, i) => (
-                  <div key={i} className="bg-gray-50 rounded-lg p-3">
-                    <p className="text-xs font-semibold text-gray-900 mb-2">{lab.name}</p>
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs text-gray-500">Avg turnaround</span>
-                      <span className="text-xs font-bold" style={{color: '#1a3a5c'}}>{lab.turnaround}h</span>
-                    </div>
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs text-gray-500">Tests completed</span>
-                      <span className="text-xs font-bold text-green-600">{lab.tests}</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-1.5 mt-2">
+                {labPerformance.map(lab => (
+                  <div key={lab.lab_id} className="bg-gray-50 rounded-lg p-3">
+                    <p className="text-xs font-semibold text-gray-900 mb-2">{lab.lab_name}</p>
+                    {[
+                      ['Assigned', lab.total_assigned, '#1a3a5c'],
+                      ['Completed', lab.completed, '#059669'],
+                      ['Pending', lab.pending, '#D97706'],
+                      ['Avg turnaround', lab.avg_turnaround_hours != null ? `${lab.avg_turnaround_hours}h` : '—', '#1a3a5c'],
+                      ['Conformity', lab.conformity_rate != null ? `${lab.conformity_rate}%` : '—', '#1a3a5c'],
+                    ].map(([label, value, color]) => (
+                      <div key={label} className="flex items-center justify-between mb-1">
+                        <span className="text-xs text-gray-500">{label}</span>
+                        <span className="text-xs font-bold" style={{color}}>{value}</span>
+                      </div>
+                    ))}
+                    <div className="w-full bg-gray-200 rounded-full h-1.5 mt-2" title="Completed of assigned">
                       <div className="h-1.5 rounded-full" style={{
-                        width: `${Math.min(100, (lab.tests / 500) * 100)}%`,
+                        width: `${lab.total_assigned > 0 ? Math.round((lab.completed / lab.total_assigned) * 100) : 0}%`,
                         background: '#1a3a5c'
                       }}></div>
                     </div>
                   </div>
                 ))}
               </div>
-            </div>
-          )}
+            )}
+          </div>
 
           {/* In progress shipments */}
           {inProgress > 0 && (

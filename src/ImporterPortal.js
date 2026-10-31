@@ -1151,6 +1151,97 @@ function OverdueDecisionBanner({ shipment, token, onClose }) {
 }
 
 // Shipment Detail Modal
+// ============================================
+// SLA timing — frontend only, timed from state_entered_at (per state, not per stage)
+// ============================================
+const HOUR_MS = 60 * 60 * 1000;
+const OVERDUE_TO_DESTRUCTION_MS = 24 * HOUR_MS; // escalationJob: DECISION_OVERDUE → SFDA_ORDERED_DESTRUCTION
+
+// SLA target in hours per state. States not listed have no SLA.
+const SLA_HOURS = {};
+[
+  // Stage 2 — CB review and Faseh
+  [24, ['CB_ASSIGNED', 'CB_REVIEWING', 'CHANGES_REQUESTED', 'CHANGES_SUBMITTED', 'CB_APPROVED', 'CLEARANCE_DECLINED', 'CLEARANCE_ACCEPTED']],
+  // Stage 3 — sampling, 24h per step
+  [24, ['SAMPLING_REQUESTED', 'INSPECTOR_DISPATCHED', 'SAMPLE_COLLECTED', 'PICKUP_SCHEDULED', 'SAMPLE_PICKED_UP', 'IN_TRANSIT', 'IN_TRANSIT_TO_LAB', 'LAB_RECEIVED']],
+  // Stage 4 — lab analysis
+  [48, ['LAB_ACCEPTED', 'IN_ANALYSIS', 'ANALYSIS_COMPLETE', 'RESULT_SUBMITTED']],
+  // Stage 6 — clearance (CONFORMING: clearance company must start procedures)
+  [24, ['CONFORMING', 'CLEARANCE_IN_PROGRESS', 'PARTIAL_CLEARANCE_IN_PROGRESS', 'BOND_RELEASED', 'DUTIES_PAID']],
+  // Stage 6C — MAH must choose what happens to non-conforming goods
+  [24, ['NON_CONFORMING', 'PARTIALLY_CONFORMING']],
+].forEach(([hours, states]) => states.forEach(s => { SLA_HOURS[s] = hours; }));
+
+// "5h 12m" under a day, "2 days 3 hours" from a day up
+const formatSlaDuration = (ms) => {
+  const totalMinutes = Math.max(0, Math.floor(ms / 60000));
+  const days = Math.floor(totalMinutes / 1440);
+  const hours = Math.floor((totalMinutes % 1440) / 60);
+  const minutes = totalMinutes % 60;
+  if (days === 0) return `${hours}h ${minutes}m`;
+  return `${days} day${days === 1 ? '' : 's'} ${hours} hour${hours === 1 ? '' : 's'}`;
+};
+
+// level: 'none' | 'ok' | 'approaching' | 'breached' | 'destruction-countdown'
+function getSlaStatus(state, enteredAt, now = Date.now()) {
+  if (!enteredAt) return null;
+  const entered = new Date(enteredAt).getTime();
+  const elapsed = Math.max(0, now - entered);
+
+  if (state === 'DECISION_OVERDUE') {
+    return { level: 'destruction-countdown', elapsed, remaining: entered + OVERDUE_TO_DESTRUCTION_MS - now };
+  }
+  const hours = SLA_HOURS[state];
+  if (!hours) return { level: 'none', elapsed };
+
+  const limit = hours * HOUR_MS;
+  if (elapsed > limit) return { level: 'breached', elapsed, overBy: elapsed - limit };
+  if (elapsed > limit * 0.75) return { level: 'approaching', elapsed, remaining: limit - elapsed };
+  return { level: 'ok', elapsed };
+}
+
+const SLA_DOT = { ok: '🟢', approaching: '🟡', breached: '🔴', 'destruction-countdown': '🔴' };
+const SLA_DOT_TITLE = { ok: 'On track', approaching: 'Approaching SLA', breached: 'SLA breached', 'destruction-countdown': 'Decision overdue' };
+
+// Live SLA line for the detail modal; re-renders every minute
+function SlaTimer({ state, enteredAt }) {
+  const [now, setNow] = useState(Date.now());
+
+  useEffect(() => {
+    setNow(Date.now());
+    const interval = setInterval(() => setNow(Date.now()), 60000);
+    return () => clearInterval(interval);
+  }, [state, enteredAt]);
+
+  const sla = getSlaStatus(state, enteredAt, now);
+  if (!sla) return null;
+
+  let color, text, pulse = false;
+  switch (sla.level) {
+    case 'ok':
+      color = '#00C896'; text = `On track · ${formatSlaDuration(sla.elapsed)} elapsed`; break;
+    case 'approaching':
+      color = '#F5A623'; text = `⚠ ${formatSlaDuration(sla.remaining)} remaining`; break;
+    case 'breached':
+      color = '#FF5470'; text = `⚠ Overdue by ${formatSlaDuration(sla.overBy)}`; break;
+    case 'destruction-countdown': {
+      const hoursLeft = Math.ceil(sla.remaining / HOUR_MS);
+      color = '#FF5470'; pulse = true;
+      text = hoursLeft > 0 ? `🚨 SFDA orders destruction in ${hoursLeft}h` : '🚨 SFDA destruction order imminent';
+      break;
+    }
+    default:
+      color = '#808285'; text = `${formatSlaDuration(sla.elapsed)} in this state`;
+  }
+
+  return (
+    <p className={`text-sm font-semibold mt-2 ${pulse ? 'animate-pulse' : ''}`} style={{ color }}
+      title={`In this state since ${formatDate(enteredAt)}`}>
+      {text}
+    </p>
+  );
+}
+
 const scoreColor = (score) => score >= 80 ? '#00C896' : score >= 50 ? '#F5A623' : '#FF5470';
 
 // AI findings for one uploaded document: its issues plus any failed or warned checks
@@ -1502,7 +1593,7 @@ function ShipmentDetailModal({ shipmentId, token, onClose }) {
             <span className={`px-3 py-1 rounded-full text-sm font-semibold ${stateInfo.color}`}>
               {stateInfo.label}
             </span>
-            <p className="text-sm text-gray-600 mt-2">Since {formatDate(shipment.state_entered_at)}</p>
+            <SlaTimer state={shipment.current_state} enteredAt={shipment.state_entered_at} />
           </div>
 
           {/* Details */}
@@ -2433,6 +2524,12 @@ export default function ImporterPortal({ user: initialUser, token, onLogout }) {
                             <span className="m-bd"></span>
                             {stateLabel}
                           </span>
+                          {(() => {
+                            const sla = getSlaStatus(s.current_state, s.state_entered_at);
+                            return sla && SLA_DOT[sla.level] ? (
+                              <span title={SLA_DOT_TITLE[sla.level]} style={{ marginLeft: '6px', fontSize: '10px' }}>{SLA_DOT[sla.level]}</span>
+                            ) : null;
+                          })()}
                           {s.document_confirmed_at && (
                             <div title={`Documents confirmed and shared with clearance on ${formatDate(s.document_confirmed_at)}`}
                               style={{fontSize:'10px',color:'var(--m-green)',fontWeight:600,marginTop:'4px'}}>
