@@ -36,6 +36,9 @@ const DESTRUCTION_START_STATES = ['DESTRUCTION_REQUESTED', 'SFDA_ORDERED_DESTRUC
 const DESTRUCTION_STEPS = ['DESTRUCTION_SCHEDULED', 'DESTRUCTION_IN_PROGRESS', 'DESTRUCTION_CERTIFICATE_ISSUED', 'DESTRUCTION_CONFIRMED'];
 const destructionReached = (state, step) => DESTRUCTION_STEPS.indexOf(state) >= DESTRUCTION_STEPS.indexOf(step);
 
+// A shipment whose history reaches one of these had a partially conforming SFDA decision
+const PARTIAL_DECISION_STATES = ['PARTIALLY_CONFORMING', 'PARTIAL_CLEARANCE_IN_PROGRESS'];
+
 // Re-export sub-flow, in order
 const RE_EXPORT_STATES = ['RE_EXPORT_INITIATED', 'RE_EXPORT_BOOKING_CONFIRMED', 'RE_EXPORT_PERMIT_ISSUED', 'RE_EXPORT_LOADED', 'RE_EXPORT_COMPLETED'];
 const reExportReached = (state, step) => RE_EXPORT_STATES.indexOf(state) >= RE_EXPORT_STATES.indexOf(step);
@@ -89,6 +92,11 @@ function ShipmentActionModal({ shipment, token, onClose, onRefresh }) {
     at: shipment.document_confirmed_at,
     score: shipment.document_ai_score
   });
+  // Whether SFDA's decision was partially conforming. After the bond step the state no longer
+  // says so, so it is read from the audit log once the full shipment has loaded (null = not yet).
+  const [isPartial, setIsPartial] = useState(
+    PARTIAL_DECISION_STATES.includes(shipment.current_state) || shipment.current_state === 'PARTIAL_FINAL_CLEARANCE' ? true : null
+  );
 
   useEffect(() => {
     const fetchTask = async () => {
@@ -99,6 +107,8 @@ function ShipmentActionModal({ shipment, token, onClose, onRefresh }) {
         const data = await res.json();
         if (data.shipment) {
           setConfirmation({ at: data.shipment.document_confirmed_at, score: data.shipment.document_ai_score });
+          setIsPartial(PARTIAL_DECISION_STATES.includes(data.shipment.current_state) ||
+            (data.shipment.audit_log || []).some(log => PARTIAL_DECISION_STATES.includes(log.to_state)));
         }
         if (data.shipment && data.shipment.clearance_tasks && data.shipment.clearance_tasks.length > 0) {
           setTask(data.shipment.clearance_tasks[0]);
@@ -172,12 +182,13 @@ function ShipmentActionModal({ shipment, token, onClose, onRefresh }) {
         { label: 'Re-export or destruction completed', done: ['RE_EXPORT_COMPLETED', 'DESTRUCTION_CONFIRMED'].includes(shipment.current_state), timestamp: task?.completed_at, reference: null },
       ];
     }
-        if (shipment.current_state === 'PARTIAL_CLEARANCE_IN_PROGRESS' || shipment.current_state === 'PARTIAL_FINAL_CLEARANCE') {
+    if (shipment.current_state === 'PARTIAL_CLEARANCE_IN_PROGRESS' || shipment.current_state === 'PARTIAL_FINAL_CLEARANCE' ||
+        (isPartial && ['BOND_RELEASED', 'DUTIES_PAID'].includes(shipment.current_state))) {
       return [
         { label: 'Received SFDA partially conforming decision', done: true, timestamp: task?.notified_at, reference: null },
         { label: 'MAH selected actions for non-conforming products', done: true, timestamp: null, reference: null },
-        { label: 'Conforming products — bond released', done: ['PARTIAL_FINAL_CLEARANCE'].includes(shipment.current_state), timestamp: task?.bond_released_at, reference: task?.bond_release_reference },
-        { label: 'Conforming products — duties paid', done: ['PARTIAL_FINAL_CLEARANCE'].includes(shipment.current_state), timestamp: task?.duties_paid_at, reference: task?.duties_payment_reference },
+        { label: 'Conforming products — bond released', done: ['BOND_RELEASED', 'DUTIES_PAID', 'PARTIAL_FINAL_CLEARANCE'].includes(shipment.current_state), timestamp: task?.bond_released_at, reference: task?.bond_release_reference },
+        { label: 'Conforming products — duties paid', done: ['DUTIES_PAID', 'PARTIAL_FINAL_CLEARANCE'].includes(shipment.current_state), timestamp: task?.duties_paid_at, reference: task?.duties_payment_reference },
         { label: 'Conforming products — final clearance', done: shipment.current_state === 'PARTIAL_FINAL_CLEARANCE', timestamp: task?.release_permit_at, reference: task?.release_permit_number },
       ];
     }
@@ -210,7 +221,10 @@ function ShipmentActionModal({ shipment, token, onClose, onRefresh }) {
       case 'BOND_RELEASED':
         return { label: 'Confirm Duties Paid', action: 'DUTIES_PAID', requiresRef: true, placeholder: 'SADAD payment reference or receipt number', color: '#00B4D8' };
       case 'DUTIES_PAID':
-        return { label: 'Confirm Final Clearance', action: 'FINAL_CLEARANCE', requiresRef: true, placeholder: 'Release permit number', color: '#10B981' };
+        if (isPartial === null) return null; // wait for the audit log before offering the final step
+        return isPartial
+          ? { label: 'Confirm Final Clearance for Conforming Products', action: 'PARTIAL_FINAL_CLEARANCE', requiresRef: true, placeholder: 'Release permit number', color: '#10B981' }
+          : { label: 'Confirm Final Clearance', action: 'FINAL_CLEARANCE', requiresRef: true, placeholder: 'Release permit number', color: '#10B981' };
            case 'NON_CONFORMING':
       case 'PARTIALLY_CONFORMING':
         return null;

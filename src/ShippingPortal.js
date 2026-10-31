@@ -589,7 +589,13 @@ export default function InspectorApp({ user: initialUser, token, onLogout }) {
       ]);
       const shipmentsData = await shipmentsRes.json();
       const meData = await meRes.json();
-      setShipments(shipmentsData.shipments || []);
+      const me = meData.user || user;
+      // Shipping companies see their own shipments plus unassigned ones (shipping_company_id
+      // NULL, as all older shipments are). The backend applies the same rule.
+      const visible = (shipmentsData.shipments || []).filter(s =>
+        me?.role !== 'SHIPPING_COMPANY' || s.shipping_company_id == null ||
+        String(s.shipping_company_id) === String(me.organisation_id));
+      setShipments(visible);
       if (meData.user) setUser(meData.user);
       setError(null);
     } catch (err) {

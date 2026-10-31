@@ -334,6 +334,16 @@ export default function Login({ onLogin }) {
                   <p className="text-xs text-gray-600 mt-1">By registering, you consent to DEMARA receiving a copy of SFDA communications related to your shipments when CC'd to qc@demara.sa. DEMARA uses these emails solely to automate shipment tracking and notifications. SFDA systems are never accessed or modified by DEMARA.</p>
                 </div>
                 <div>
+                  <label className="text-xs font-semibold text-gray-600 uppercase">Requested Role</label>
+                  <select
+                    value={registerForm.requested_role}
+                    onChange={e => selectRole(e.target.value)}
+                    className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2"
+                  >
+                    {ROLE_OPTIONS.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
+                  </select>
+                </div>
+                <div>
                   <label className="text-xs font-semibold text-gray-600 uppercase">Organisation Type</label>
                   <select
                     value={registerForm.organisation_type}
@@ -346,16 +356,6 @@ export default function Login({ onLogin }) {
                   {orgTypeAutoMatched && (
                     <p className="text-xs text-gray-400 mt-1">Auto-matched to your role</p>
                   )}
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-gray-600 uppercase">Requested Role</label>
-                  <select
-                    value={registerForm.requested_role}
-                    onChange={e => selectRole(e.target.value)}
-                    className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2"
-                  >
-                    {ROLE_OPTIONS.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
-                  </select>
                 </div>
                 <div>
                   <label className="text-xs font-semibold text-gray-600 uppercase">CR Number (optional)</label>
