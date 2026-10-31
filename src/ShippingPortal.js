@@ -427,6 +427,151 @@ function SampleActionModal({ shipment, token, isInspector, onClose, onRefresh })
 }
 
 // Main Inspector App
+// ─── Re-export loading (SFDA_INSPECTOR) ──────────────────────
+// Shipments with an SFDA re-export permit, waiting for the inspector to confirm loading at port.
+function ReExportLoadingSection({ shipments, token, onRefresh }) {
+  const [actingId, setActingId] = useState(null);
+  const [error, setError] = useState(null);
+
+  if (shipments.length === 0) return null;
+
+  const confirmLoaded = async (shipment) => {
+    setActingId(shipment.id);
+    setError(null);
+    try {
+      const res = await fetch(`${API_URL}/shipments/${shipment.id}/clearance`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ action: 'RE_EXPORT_LOADED' })
+      });
+      const data = await res.json();
+      if (data.success) {
+        onRefresh();
+      } else {
+        setError(`${shipment.faseh_request_number}: ${data.message || 'Action failed'}`);
+      }
+    } catch (err) {
+      setError('Failed to connect to platform');
+    } finally {
+      setActingId(null);
+    }
+  };
+
+  return (
+    <div className="mx-6 mt-4 bg-amber-50 border border-amber-200 rounded-xl p-4">
+      <h3 className="text-sm font-semibold text-amber-800 mb-2">🚢 Re-export — Awaiting Loading Confirmation ({shipments.length})</h3>
+      {error && <div className="bg-red-50 border border-red-200 rounded-lg p-2 mb-2 text-red-700 text-xs">{error}</div>}
+      <div className="space-y-2">
+        {shipments.map(s => (
+          <div key={s.id} className="flex items-center justify-between bg-white rounded-lg px-3 py-2 border border-amber-100">
+            <div>
+              <span className="font-mono text-xs font-semibold" style={{color: '#2D2B7A'}}>{s.faseh_request_number}</span>
+              <span className="text-xs text-gray-500 ml-2">{s.importer_name}</span>
+              <p className="text-xs text-gray-500 mt-0.5">
+                {s.port_of_entry} · Booking ref: <span className="font-mono font-semibold text-gray-700">{s.re_export_reference || '—'}</span>
+              </p>
+            </div>
+            <button onClick={() => confirmLoaded(s)} disabled={actingId === s.id}
+              className="px-3 py-1.5 text-xs font-semibold rounded-lg text-white hover:opacity-90 disabled:opacity-50"
+              style={{background: '#D97706'}}>
+              {actingId === s.id ? 'Confirming...' : '✓ Confirm Goods Loaded'}
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Destruction witness (SFDA_INSPECTOR) ────────────────────
+// Scheduled supervised destructions. The inspector confirms with their name/ID before witnessing.
+function DestructionWitnessSection({ shipments, token, defaultWitness, onRefresh }) {
+  const [confirmingId, setConfirmingId] = useState(null);
+  const [witness, setWitness] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState(null);
+
+  if (shipments.length === 0) return null;
+
+  const startConfirm = (shipment) => {
+    setConfirmingId(shipment.id);
+    setWitness(defaultWitness || '');
+    setError(null);
+  };
+
+  const submitWitness = async (shipment) => {
+    setSubmitting(true);
+    setError(null);
+    try {
+      const res = await fetch(`${API_URL}/shipments/${shipment.id}/clearance`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ action: 'WITNESS_DESTRUCTION', witnessed_by: witness })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setConfirmingId(null);
+        onRefresh();
+      } else {
+        setError(data.message || 'Action failed');
+      }
+    } catch (err) {
+      setError('Failed to connect to platform');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="mx-6 mt-4 bg-red-50 border border-red-200 rounded-xl p-4">
+      <h3 className="text-sm font-semibold text-red-700 mb-2">🔥 Scheduled Destructions — Witness Required ({shipments.length})</h3>
+      <div className="space-y-2">
+        {shipments.map(s => (
+          <div key={s.id} className="bg-white rounded-lg px-3 py-2 border border-red-100">
+            <div className="flex items-center justify-between">
+              <div>
+                <span className="font-mono text-xs font-semibold" style={{color: '#2D2B7A'}}>{s.faseh_request_number}</span>
+                <span className="text-xs text-gray-500 ml-2">{s.importer_name}</span>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  Scheduled: <span className="font-semibold text-gray-700">{s.destruction_scheduled_at ? formatDate(s.destruction_scheduled_at) : '—'}</span>
+                  {' · '}SFDA order: <span className="font-mono font-semibold text-gray-700">{s.destruction_reference || '—'}</span>
+                </p>
+              </div>
+              {confirmingId !== s.id && (
+                <button onClick={() => startConfirm(s)}
+                  className="px-3 py-1.5 text-xs font-semibold rounded-lg text-white hover:opacity-90"
+                  style={{background: '#DC2626'}}>
+                  Witness Destruction
+                </button>
+              )}
+            </div>
+            {confirmingId === s.id && (
+              <div className="mt-2 pt-2 border-t border-red-100">
+                <label className="text-xs font-semibold text-gray-600 uppercase">Witnessing inspector — name / ID *</label>
+                <div className="flex gap-2 mt-1">
+                  <input type="text" value={witness} onChange={e => setWitness(e.target.value)}
+                    placeholder="e.g. Ahmed Al-Harbi / INS-2041"
+                    className="flex-1 border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2" />
+                  <button onClick={() => submitWitness(s)} disabled={submitting || !witness.trim()}
+                    className="px-3 py-1.5 text-xs font-semibold rounded-lg text-white hover:opacity-90 disabled:opacity-50"
+                    style={{background: '#DC2626'}}>
+                    {submitting ? 'Confirming...' : 'Confirm Witness'}
+                  </button>
+                  <button onClick={() => setConfirmingId(null)} disabled={submitting}
+                    className="px-3 py-1.5 text-xs border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50">
+                    Cancel
+                  </button>
+                </div>
+                {error && <p className="text-xs text-red-600 mt-1">{error}</p>}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function InspectorApp({ user: initialUser, token, onLogout }) {
   const [user, setUser] = useState(initialUser);
   const [shipments, setShipments] = useState([]);
@@ -547,6 +692,23 @@ export default function InspectorApp({ user: initialUser, token, onLogout }) {
             ))}
           </div>
         </div>
+      )}
+
+      {user?.role === 'SFDA_INSPECTOR' && (
+        <ReExportLoadingSection
+          shipments={shipments.filter(s => s.current_state === 'RE_EXPORT_PERMIT_ISSUED')}
+          token={token}
+          onRefresh={fetchShipments}
+        />
+      )}
+
+      {user?.role === 'SFDA_INSPECTOR' && (
+        <DestructionWitnessSection
+          shipments={shipments.filter(s => s.current_state === 'DESTRUCTION_SCHEDULED')}
+          token={token}
+          defaultWitness={user?.full_name}
+          onRefresh={fetchShipments}
+        />
       )}
 
       {/* Tabs */}

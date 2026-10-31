@@ -186,6 +186,63 @@ function ExpiringLabsAlert({ token }) {
 }
 
 // ── Overview Section ──
+// Final step of the destruction sub-flow: DEMARA admin formally confirms after the SFDA certificate
+function DestructionConfirmQueue({ shipments, token }) {
+  const [confirmedIds, setConfirmedIds] = useState([]);
+  const [actingId, setActingId] = useState(null);
+  const [error, setError] = useState(null);
+
+  const pending = shipments.filter(s => !confirmedIds.includes(s.id));
+  if (pending.length === 0) return null;
+
+  const confirm = async (shipment) => {
+    setActingId(shipment.id);
+    setError(null);
+    try {
+      const res = await fetch(`${API_URL}/shipments/${shipment.id}/clearance`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ action: 'CONFIRM_DESTRUCTION' })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setConfirmedIds(ids => [...ids, shipment.id]);
+      } else {
+        setError(`${shipment.faseh_request_number}: ${data.message || 'Action failed'}`);
+      }
+    } catch (err) {
+      setError('Failed to connect to platform');
+    } finally {
+      setActingId(null);
+    }
+  };
+
+  return (
+    <div className="bg-amber-50 border border-amber-300 rounded-xl p-4">
+      <h3 className="text-sm font-semibold text-amber-800 mb-2">📄 Destructions Awaiting Confirmation ({pending.length})</h3>
+      {error && <div className="bg-red-50 border border-red-200 rounded-lg p-2 mb-2 text-red-700 text-xs">{error}</div>}
+      <div className="space-y-2">
+        {pending.map(s => (
+          <div key={s.id} className="flex items-center justify-between bg-white rounded-lg px-3 py-2 border border-amber-100">
+            <div>
+              <span className="font-mono text-xs font-semibold" style={{color: '#2D2B7A'}}>{s.faseh_request_number}</span>
+              <span className="text-xs text-gray-500 ml-2">{s.importer_name}</span>
+              <p className="text-xs text-gray-500 mt-0.5">
+                SFDA order {s.destruction_reference || '—'} · witnessed by {s.destruction_witnessed_by || '—'} · certificate issued {formatDate(s.state_entered_at)}
+              </p>
+            </div>
+            <button onClick={() => confirm(s)} disabled={actingId === s.id}
+              className="px-3 py-1.5 text-xs font-semibold rounded-lg text-white hover:opacity-90 disabled:opacity-50"
+              style={{background: '#10B981'}}>
+              {actingId === s.id ? 'Confirming...' : 'Confirm Destruction'}
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function OverviewSection({ token }) {
   const [stats, setStats] = useState(null);
   const [shipments, setShipments] = useState([]);
@@ -267,6 +324,12 @@ function OverviewSection({ token }) {
           </ResponsiveContainer>
         </div>
       </div>
+
+      {/* Destructions with an SFDA certificate, awaiting formal DEMARA confirmation */}
+      <DestructionConfirmQueue
+        shipments={shipments.filter(s => s.current_state === 'DESTRUCTION_CERTIFICATE_ISSUED')}
+        token={token}
+      />
 
       {/* Escalation alerts */}
       <EscalationAlerts token={token} />

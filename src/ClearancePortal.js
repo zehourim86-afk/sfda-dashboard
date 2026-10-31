@@ -21,7 +21,24 @@ const STATE_COLORS = {
   DESTRUCTION_REQUESTED: 'bg-red-100 text-red-700',
   DECISION_OVERDUE: 'bg-red-100 text-red-700',
   SFDA_ORDERED_DESTRUCTION: 'bg-red-100 text-red-700',
+  RE_EXPORT_BOOKING_CONFIRMED: 'bg-amber-100 text-amber-800',
+  RE_EXPORT_PERMIT_ISSUED: 'bg-amber-100 text-amber-800',
+  RE_EXPORT_LOADED: 'bg-amber-100 text-amber-800',
+  RE_EXPORT_COMPLETED: 'bg-gray-100 text-gray-700',
+  DESTRUCTION_SCHEDULED: 'bg-red-100 text-red-700',
+  DESTRUCTION_IN_PROGRESS: 'bg-red-100 text-red-700',
+  DESTRUCTION_CERTIFICATE_ISSUED: 'bg-amber-100 text-amber-800',
+  DESTRUCTION_CONFIRMED: 'bg-gray-100 text-gray-700',
 };
+
+// Destruction sub-flow, in order. The flow starts from either the MAH's choice or an SFDA order.
+const DESTRUCTION_START_STATES = ['DESTRUCTION_REQUESTED', 'SFDA_ORDERED_DESTRUCTION'];
+const DESTRUCTION_STEPS = ['DESTRUCTION_SCHEDULED', 'DESTRUCTION_IN_PROGRESS', 'DESTRUCTION_CERTIFICATE_ISSUED', 'DESTRUCTION_CONFIRMED'];
+const destructionReached = (state, step) => DESTRUCTION_STEPS.indexOf(state) >= DESTRUCTION_STEPS.indexOf(step);
+
+// Re-export sub-flow, in order
+const RE_EXPORT_STATES = ['RE_EXPORT_INITIATED', 'RE_EXPORT_BOOKING_CONFIRMED', 'RE_EXPORT_PERMIT_ISSUED', 'RE_EXPORT_LOADED', 'RE_EXPORT_COMPLETED'];
+const reExportReached = (state, step) => RE_EXPORT_STATES.indexOf(state) >= RE_EXPORT_STATES.indexOf(step);
 
 const CONFIDENCE_LEVELS = [
   { min: 80, label: 'HIGH', color: '#00C896' },
@@ -121,6 +138,33 @@ function ShipmentActionModal({ shipment, token, onClose, onRefresh }) {
   };
 
   const getChecklist = () => {
+    if (DESTRUCTION_START_STATES.includes(shipment.current_state) || DESTRUCTION_STEPS.includes(shipment.current_state)) {
+      const st = shipment.current_state;
+      return [
+        { label: st === 'SFDA_ORDERED_DESTRUCTION' ? 'SFDA ordered destruction (no MAH response)' : 'Destruction requested',
+          done: true, timestamp: null, reference: null },
+        { label: shipment.destruction_scheduled_at
+            ? `SFDA scheduled supervised destruction for ${formatDate(shipment.destruction_scheduled_at)}`
+            : 'SFDA scheduled supervised destruction',
+          done: destructionReached(st, 'DESTRUCTION_SCHEDULED'), timestamp: null, reference: shipment.destruction_reference },
+        { label: shipment.destruction_witnessed_by
+            ? `Inspector witnessed destruction (${shipment.destruction_witnessed_by})`
+            : 'Inspector witnessed destruction',
+          done: destructionReached(st, 'DESTRUCTION_IN_PROGRESS'), timestamp: null, reference: null },
+        { label: 'SFDA destruction certificate issued', done: destructionReached(st, 'DESTRUCTION_CERTIFICATE_ISSUED'), timestamp: null, reference: null },
+        { label: 'Destruction formally confirmed by DEMARA', done: st === 'DESTRUCTION_CONFIRMED', timestamp: task?.completed_at, reference: null },
+      ];
+    }
+    if (RE_EXPORT_STATES.includes(shipment.current_state)) {
+      const st = shipment.current_state;
+      return [
+        { label: 'Received SFDA non-conforming decision', done: true, timestamp: task?.notified_at, reference: null },
+        { label: 'MAH selected re-export', done: true, timestamp: null, reference: null },
+        { label: 'Re-export booking confirmed', done: reExportReached(st, 'RE_EXPORT_BOOKING_CONFIRMED'), timestamp: null, reference: shipment.re_export_reference },
+        { label: 'SFDA re-export permit issued', done: reExportReached(st, 'RE_EXPORT_PERMIT_ISSUED'), timestamp: null, reference: null },
+        { label: 'Inspector confirmed goods loaded at port', done: reExportReached(st, 'RE_EXPORT_LOADED'), timestamp: task?.completed_at, reference: null },
+      ];
+    }
     if (['NON_CONFORMING', 'PARTIALLY_CONFORMING', 'RE_EXPORT_INITIATED', 'RE_EXPORT_COMPLETED', 'DESTRUCTION_REQUESTED', 'DESTRUCTION_CONFIRMED'].includes(shipment.current_state)) {
       return [
         { label: 'Received SFDA non-conforming decision', done: true, timestamp: task?.notified_at, reference: null },
@@ -173,9 +217,9 @@ function ShipmentActionModal({ shipment, token, onClose, onRefresh }) {
       case 'PARTIAL_CLEARANCE_IN_PROGRESS':
         return { label: 'Confirm Bond Released for Conforming Products', action: 'BOND_RELEASED', requiresRef: true, placeholder: 'Bond release reference number', color: '#00B4D8' };
       case 'RE_EXPORT_INITIATED':
-        return { label: 'Confirm Re-Export Completed', action: 'RE_EXPORT_COMPLETED', requiresRef: true, placeholder: 'Re-export bill of lading or reference number', color: '#EF4444' };
-      case 'DESTRUCTION_REQUESTED':
-        return { label: 'Confirm Destruction Completed', action: 'DESTRUCTION_CONFIRMED', requiresRef: true, placeholder: 'Destruction certificate reference number', color: '#EF4444' };
+        return { label: 'Confirm Re-export Booking', action: 'RE_EXPORT_BOOKING', requiresRef: true, placeholder: 'Shipping booking reference', color: '#EF4444' };
+      // RE_EXPORT_BOOKING_CONFIRMED and RE_EXPORT_PERMIT_ISSUED wait on SFDA, not the clearance company
+      // Destruction states wait on SFDA, the inspector and DEMARA — the clearance company only tracks them
       default:
         return null;
     }
@@ -295,17 +339,65 @@ function ShipmentActionModal({ shipment, token, onClose, onRefresh }) {
             </div>
           )}
 
-          {shipment.current_state === 'RE_EXPORT_COMPLETED' && (
+          {shipment.current_state === 'RE_EXPORT_BOOKING_CONFIRMED' && (
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-center">
+              <p className="text-amber-800 font-semibold">⏳ Awaiting SFDA permit</p>
+              <p className="text-amber-700 text-sm mt-1">Booking {shipment.re_export_reference} confirmed. SFDA will issue the re-export permit.</p>
+            </div>
+          )}
+
+          {shipment.current_state === 'RE_EXPORT_PERMIT_ISSUED' && (
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-center">
+              <p className="text-amber-800 font-semibold">⏳ Awaiting inspector confirmation</p>
+              <p className="text-amber-700 text-sm mt-1">SFDA has issued the re-export permit. The inspector will confirm when goods are loaded at port.</p>
+            </div>
+          )}
+
+          {(shipment.current_state === 'RE_EXPORT_LOADED' || shipment.current_state === 'RE_EXPORT_COMPLETED') && (
             <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 text-center">
-              <p className="text-orange-700 font-semibold text-lg">🚢 Re-Export Completed</p>
-              <p className="text-orange-600 text-sm mt-1">Goods have been successfully re-exported out of Saudi Arabia.</p>
+              <p className="text-orange-700 font-semibold text-lg">🚢 Re-export complete</p>
+              <p className="text-orange-600 text-sm mt-1">Goods have been loaded and re-exported out of Saudi Arabia.</p>
+              {shipment.re_export_reference && (
+                <p className="text-orange-500 text-xs mt-1">Booking ref: {shipment.re_export_reference}</p>
+              )}
+            </div>
+          )}
+
+          {DESTRUCTION_START_STATES.includes(shipment.current_state) && (
+            <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-center">
+              <p className="text-red-700 font-semibold">⏳ Awaiting SFDA scheduling</p>
+              <p className="text-red-600 text-sm mt-1">SFDA will schedule a supervised destruction date.</p>
+            </div>
+          )}
+
+          {shipment.current_state === 'DESTRUCTION_SCHEDULED' && (
+            <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-center">
+              <p className="text-red-700 font-semibold">📅 Scheduled for {formatDate(shipment.destruction_scheduled_at)}</p>
+              <p className="text-red-600 text-sm mt-1">Awaiting inspector witness · SFDA order {shipment.destruction_reference}</p>
+            </div>
+          )}
+
+          {shipment.current_state === 'DESTRUCTION_IN_PROGRESS' && (
+            <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-center">
+              <p className="text-red-700 font-semibold">🔥 Destruction in progress — awaiting certificate</p>
+              <p className="text-red-600 text-sm mt-1">Witnessed by {shipment.destruction_witnessed_by}. SFDA will issue the destruction certificate.</p>
+            </div>
+          )}
+
+          {shipment.current_state === 'DESTRUCTION_CERTIFICATE_ISSUED' && (
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-center">
+              <p className="text-amber-800 font-semibold">📄 Certificate issued — awaiting admin confirmation</p>
+              <p className="text-amber-700 text-sm mt-1">Update your records. DEMARA will formally confirm the destruction.</p>
             </div>
           )}
 
           {shipment.current_state === 'DESTRUCTION_CONFIRMED' && (
-            <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 text-center">
-              <p className="text-gray-700 font-semibold text-lg">🗑️ Destruction Confirmed</p>
-              <p className="text-gray-600 text-sm mt-1">Goods have been destroyed in accordance with SFDA requirements.</p>
+            <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-center">
+              <p className="text-green-700 font-semibold text-lg">✓ Destruction formally confirmed</p>
+              <p className="text-green-600 text-sm mt-1">Goods have been destroyed under SFDA supervision and the record is closed.</p>
+              {shipment.destruction_reference && (
+                <p className="text-green-500 text-xs mt-1">SFDA order: {shipment.destruction_reference}</p>
+              )}
             </div>
           )}
 
@@ -392,8 +484,9 @@ const [documentsShipmentId, setDocumentsShipmentId] = useState(null);
 
   const newAssignmentStates = ['RECORD_OPENED', 'LAB_ACCEPTED', 'CLEARANCE_DECLINED'];
   const pendingStates = ['CLEARANCE_ACCEPTED', 'CONFORMING', 'PARTIALLY_CONFORMING', 'PARTIAL_CLEARANCE_IN_PROGRESS', 'CLEARANCE_IN_PROGRESS', 'BOND_RELEASED', 'DUTIES_PAID'];
-  const alertStates = ['NON_CONFORMING', 'RE_EXPORT_INITIATED', 'DESTRUCTION_REQUESTED'];
-  const completedStates = ['FINAL_CLEARANCE', 'PARTIAL_FINAL_CLEARANCE', 'RE_EXPORT_COMPLETED', 'DESTRUCTION_CONFIRMED'];
+  const alertStates = ['NON_CONFORMING', 'RE_EXPORT_INITIATED', 'RE_EXPORT_BOOKING_CONFIRMED', 'RE_EXPORT_PERMIT_ISSUED',
+    'DESTRUCTION_REQUESTED', 'SFDA_ORDERED_DESTRUCTION', 'DESTRUCTION_SCHEDULED', 'DESTRUCTION_IN_PROGRESS', 'DESTRUCTION_CERTIFICATE_ISSUED'];
+  const completedStates = ['FINAL_CLEARANCE', 'PARTIAL_FINAL_CLEARANCE', 'RE_EXPORT_LOADED', 'RE_EXPORT_COMPLETED', 'DESTRUCTION_CONFIRMED'];
 
   const newAssignmentShipments = shipments.filter(s => newAssignmentStates.includes(s.current_state));
   const pendingShipments = shipments.filter(s => pendingStates.includes(s.current_state));

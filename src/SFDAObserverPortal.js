@@ -26,7 +26,153 @@ const STATE_COLORS = {
   DECISION_PENDING: 'bg-amber-100 text-amber-800 border border-amber-300',
   DECISION_OVERDUE: 'bg-red-100 text-red-700 border border-red-300',
   SFDA_ORDERED_DESTRUCTION: 'bg-red-600 text-white',
+  RE_EXPORT_INITIATED: 'bg-red-100 text-red-700',
+  RE_EXPORT_BOOKING_CONFIRMED: 'bg-amber-100 text-amber-800',
+  RE_EXPORT_PERMIT_ISSUED: 'bg-amber-100 text-amber-800',
+  RE_EXPORT_LOADED: 'bg-amber-100 text-amber-800',
+  DESTRUCTION_REQUESTED: 'bg-red-100 text-red-700',
+  DESTRUCTION_SCHEDULED: 'bg-red-100 text-red-700',
+  DESTRUCTION_IN_PROGRESS: 'bg-red-100 text-red-700',
+  DESTRUCTION_CERTIFICATE_ISSUED: 'bg-amber-100 text-amber-800',
 };
+
+const DESTRUCTION_TO_SCHEDULE = ['DESTRUCTION_REQUESTED', 'SFDA_ORDERED_DESTRUCTION'];
+
+// SFDA_REVIEWER's action queue: re-export permits, destruction scheduling and destruction certificates.
+// Certificates awaiting DEMARA admin confirmation are listed read-only.
+function SfdaActionQueue({ shipments, token, onRefresh }) {
+  const [actingId, setActingId] = useState(null);
+  const [error, setError] = useState(null);
+  const [schedulingId, setSchedulingId] = useState(null);
+  const [orderRef, setOrderRef] = useState('');
+  const [scheduledAt, setScheduledAt] = useState('');
+
+  const permits = shipments.filter(s => s.current_state === 'RE_EXPORT_BOOKING_CONFIRMED');
+  const toSchedule = shipments.filter(s => DESTRUCTION_TO_SCHEDULE.includes(s.current_state));
+  const certificates = shipments.filter(s => s.current_state === 'DESTRUCTION_IN_PROGRESS');
+  const awaitingAdmin = shipments.filter(s => s.current_state === 'DESTRUCTION_CERTIFICATE_ISSUED');
+  if (permits.length + toSchedule.length + certificates.length + awaitingAdmin.length === 0) return null;
+
+  const act = async (shipment, body) => {
+    setActingId(shipment.id);
+    setError(null);
+    try {
+      const res = await fetch(`${API_URL}/shipments/${shipment.id}/clearance`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(body)
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSchedulingId(null);
+        onRefresh();
+      } else {
+        setError(`${shipment.faseh_request_number}: ${data.message || 'Action failed'}`);
+      }
+    } catch (err) {
+      setError('Failed to connect to platform');
+    } finally {
+      setActingId(null);
+    }
+  };
+
+  const startScheduling = (s) => { setSchedulingId(s.id); setOrderRef(''); setScheduledAt(''); setError(null); };
+  // datetime-local has no zone; new Date() reads it as the reviewer's local time
+  const submitSchedule = (s) => act(s, {
+    action: 'SCHEDULE_DESTRUCTION', reference: orderRef, scheduled_at: new Date(scheduledAt).toISOString()
+  });
+
+  const row = (s, detail, button) => (
+    <div key={s.id} className="flex items-center justify-between bg-white rounded-lg px-3 py-2 border border-amber-100">
+      <div>
+        <span className="font-mono text-xs font-semibold" style={{color: '#1a3a5c'}}>{s.faseh_request_number}</span>
+        <span className="text-xs text-gray-500 ml-2">{s.importer_name}</span>
+        <p className="text-xs text-gray-500 mt-0.5">{detail}</p>
+      </div>
+      {button}
+    </div>
+  );
+  const actionButton = (s, label, busyLabel, onClick, color = '#1a3a5c') => (
+    <button onClick={onClick} disabled={actingId === s.id}
+      className="px-3 py-1.5 text-xs font-semibold rounded-lg text-white hover:opacity-90 disabled:opacity-50"
+      style={{background: color}}>
+      {actingId === s.id ? busyLabel : label}
+    </button>
+  );
+  const groupTitle = (text) => <p className="text-xs font-semibold text-gray-600 uppercase mt-3 mb-1">{text}</p>;
+
+  return (
+    <div className="bg-amber-50 border border-amber-300 rounded-xl p-4">
+      <h3 className="text-sm font-semibold text-amber-800">⚖️ SFDA Actions Required</h3>
+      {error && <div className="bg-red-50 border border-red-200 rounded-lg p-2 mt-2 text-red-700 text-xs">{error}</div>}
+
+      {permits.length > 0 && <>
+        {groupTitle(`🚢 Re-export permits awaiting issue (${permits.length})`)}
+        <div className="space-y-2">
+          {permits.map(s => row(s,
+            <>Booking ref: <span className="font-mono font-semibold text-gray-700">{s.re_export_reference || '—'}</span>{' · '}confirmed {formatDate(s.state_entered_at)}</>,
+            actionButton(s, 'Issue Re-export Permit', 'Issuing...', () => act(s, { action: 'RE_EXPORT_PERMIT' }))
+          ))}
+        </div>
+      </>}
+
+      {toSchedule.length > 0 && <>
+        {groupTitle(`🗓 Destructions to schedule (${toSchedule.length})`)}
+        <div className="space-y-2">
+          {toSchedule.map(s => (
+            <div key={s.id}>
+              {row(s,
+                s.current_state === 'SFDA_ORDERED_DESTRUCTION' ? 'Ordered by SFDA after MAH non-response' : 'MAH selected destruction',
+                schedulingId === s.id ? null : actionButton(s, 'Schedule Destruction', 'Scheduling...', () => startScheduling(s), '#DC2626')
+              )}
+              {schedulingId === s.id && (
+                <div className="bg-white border border-t-0 border-amber-100 rounded-b-lg px-3 py-2 flex flex-wrap items-end gap-2">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-600 uppercase">SFDA order reference *</label>
+                    <input type="text" value={orderRef} onChange={e => setOrderRef(e.target.value)} placeholder="e.g. SFDA-DO-2026-0142"
+                      className="mt-1 border border-gray-300 rounded-lg px-2 py-1 text-xs focus:outline-none" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-600 uppercase">Destruction date &amp; time *</label>
+                    <input type="datetime-local" value={scheduledAt} onChange={e => setScheduledAt(e.target.value)}
+                      className="mt-1 border border-gray-300 rounded-lg px-2 py-1 text-xs focus:outline-none" />
+                  </div>
+                  <button onClick={() => submitSchedule(s)} disabled={actingId === s.id || !orderRef.trim() || !scheduledAt}
+                    className="px-3 py-1.5 text-xs font-semibold rounded-lg text-white hover:opacity-90 disabled:opacity-50"
+                    style={{background: '#DC2626'}}>
+                    {actingId === s.id ? 'Scheduling...' : 'Confirm Schedule'}
+                  </button>
+                  <button onClick={() => setSchedulingId(null)}
+                    className="px-3 py-1.5 text-xs border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50">Cancel</button>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </>}
+
+      {certificates.length > 0 && <>
+        {groupTitle(`📄 Destruction certificates to issue (${certificates.length})`)}
+        <div className="space-y-2">
+          {certificates.map(s => row(s,
+            <>Witnessed by <span className="font-semibold text-gray-700">{s.destruction_witnessed_by || '—'}</span>{' · '}SFDA order <span className="font-mono">{s.destruction_reference || '—'}</span></>,
+            actionButton(s, 'Issue Destruction Certificate', 'Issuing...', () => act(s, { action: 'ISSUE_DESTRUCTION_CERT' }))
+          ))}
+        </div>
+      </>}
+
+      {awaitingAdmin.length > 0 && <>
+        {groupTitle(`⏳ Certificates issued — pending DEMARA admin confirmation (${awaitingAdmin.length})`)}
+        <div className="space-y-2">
+          {awaitingAdmin.map(s => row(s,
+            <>Certificate issued {formatDate(s.state_entered_at)}{' · '}SFDA order <span className="font-mono">{s.destruction_reference || '—'}</span></>,
+            <span className="text-xs text-amber-700 font-medium">Pending admin</span>
+          ))}
+        </div>
+      </>}
+    </div>
+  );
+}
 
 // Badge text overrides; other states show their name with spaces.
 const STATE_BADGE_LABELS = {
@@ -188,7 +334,7 @@ export default function SFDAObserverPortal({ user, token, onLogout }) {
       {/* Observer notice */}
       <div className="bg-blue-50 border-b border-blue-200 px-6 py-2">
         <p className="text-xs text-blue-700 text-center">
-          🔒 Read-only access — This portal provides SFDA with full visibility into import clearance operations. No actions can be performed.
+          🔒 Read-only access — This portal provides SFDA with full visibility into import clearance operations. The only actions available are re-export permits and supervised destruction steps.
         </p>
       </div>
 
@@ -213,6 +359,10 @@ export default function SFDAObserverPortal({ user, token, onLogout }) {
       {/* Overview Tab */}
       {activeTab === 'overview' && (
         <div className="px-6 py-4 space-y-4">
+          {user?.role === 'SFDA_REVIEWER' && (
+            <SfdaActionQueue shipments={shipments} token={token} onRefresh={fetchShipments} />
+          )}
+
           {/* Key metrics */}
           <div className="grid grid-cols-5 gap-4">
             <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
