@@ -64,26 +64,26 @@ export default function AIAssistant({ token, shipmentId }) {
   return (
     <div style={{
       display:'flex', flexDirection:'column', height:'100%',
-      fontFamily:'Inter,sans-serif', background:'#FFFFFF',
-      borderRadius:'14px', border:'1px solid rgba(39,48,110,0.1)',
+      fontFamily:'Inter,sans-serif', background:'#0D1940',
+      borderRadius:'14px', border:'1px solid rgba(0,170,255,0.12)',
       overflow:'hidden'
     }}>
       {/* Header */}
       <div style={{
         padding:'14px 18px',
-        background:'linear-gradient(135deg, #27306E 0%, #1C2460 100%)',
+        background:'linear-gradient(135deg, #0F1E4D 0%, #091230 100%)',
         display:'flex', alignItems:'center', gap:'10px'
       }}>
         <div style={{
           width:'36px', height:'36px', borderRadius:'10px',
-          background:'rgba(68,200,245,0.2)',
-          border:'1px solid rgba(68,200,245,0.3)',
+          background:'rgba(56,198,255,0.2)',
+          border:'1px solid rgba(56,198,255,0.3)',
           display:'flex', alignItems:'center', justifyContent:'center',
           fontSize:'18px', flexShrink:0
         }}>🤖</div>
         <div>
           <div style={{fontSize:'14px', fontWeight:700, color:'#FFFFFF'}}>DEMARA AI Assistant</div>
-          <div style={{fontSize:'11px', color:'#44C8F5'}}>SFDA Import Compliance Expert</div>
+          <div style={{fontSize:'11px', color:'#38C6FF'}}>SFDA Import Compliance Expert</div>
         </div>
         <div style={{
           marginLeft:'auto', display:'flex', alignItems:'center', gap:'6px',
@@ -96,8 +96,8 @@ export default function AIAssistant({ token, shipmentId }) {
 
       {/* Quick questions */}
       {messages.length === 1 && (
-        <div style={{padding:'12px 16px', borderBottom:'1px solid rgba(39,48,110,0.06)', background:'#FAFBFF'}}>
-          <div style={{fontSize:'10px', fontWeight:700, color:'#808285', textTransform:'uppercase', letterSpacing:'0.8px', marginBottom:'8px'}}>
+        <div style={{padding:'12px 16px', borderBottom:'1px solid rgba(255,255,255,0.06)', background:'#0B1535'}}>
+          <div style={{fontSize:'10px', fontWeight:700, color:'rgba(255,255,255,0.4)', textTransform:'uppercase', letterSpacing:'0.8px', marginBottom:'8px'}}>
             Quick Questions
           </div>
           <div style={{display:'flex', flexWrap:'wrap', gap:'6px'}}>
@@ -106,12 +106,12 @@ export default function AIAssistant({ token, shipmentId }) {
                 style={{
                   padding:'5px 10px', borderRadius:'20px', fontSize:'11px',
                   fontWeight:500, cursor:'pointer',
-                  border:'1px solid rgba(39,48,110,0.12)',
-                  background:'#FFFFFF', color:'#27306E',
+                  border:'1px solid rgba(255,255,255,0.12)',
+                  background:'rgba(255,255,255,0.04)', color:'rgba(255,255,255,0.75)',
                   transition:'all 0.15s', textAlign:'left'
                 }}
-                onMouseOver={e => { e.target.style.borderColor = '#44C8F5'; e.target.style.color = '#44C8F5'; }}
-                onMouseOut={e => { e.target.style.borderColor = 'rgba(39,48,110,0.12)'; e.target.style.color = '#27306E'; }}>
+                onMouseOver={e => { e.target.style.borderColor = '#38C6FF'; e.target.style.color = '#38C6FF'; }}
+                onMouseOut={e => { e.target.style.borderColor = 'rgba(255,255,255,0.12)'; e.target.style.color = 'rgba(255,255,255,0.75)'; }}>
                 {q}
               </button>
             ))}
@@ -130,7 +130,7 @@ export default function AIAssistant({ token, shipmentId }) {
             {msg.role === 'assistant' && (
               <div style={{
                 width:'28px', height:'28px', borderRadius:'8px',
-                background:'linear-gradient(135deg, #27306E, #1C2460)',
+                background:'linear-gradient(135deg, #1E3A8A, #091230)',
                 display:'flex', alignItems:'center', justifyContent:'center',
                 fontSize:'13px', flexShrink:0, marginTop:'2px'
               }}>🤖</div>
@@ -139,9 +139,9 @@ export default function AIAssistant({ token, shipmentId }) {
               maxWidth:'80%',
               padding:'10px 14px',
               borderRadius: msg.role === 'user' ? '14px 14px 4px 14px' : '14px 14px 14px 4px',
-              background: msg.role === 'user' ? '#27306E' : '#F5F7FF',
-              border: msg.role === 'user' ? 'none' : '1px solid rgba(39,48,110,0.08)',
-              color: msg.role === 'user' ? '#FFFFFF' : '#27306E',
+              background: msg.role === 'user' ? '#38C6FF' : 'rgba(255,255,255,0.05)',
+              border: msg.role === 'user' ? 'none' : '1px solid rgba(255,255,255,0.08)',
+              color: msg.role === 'user' ? '#0D1940' : 'rgba(255,255,255,0.88)',
               fontSize:'13px', lineHeight:1.6,
               whiteSpace:'pre-wrap',
               fontFamily:'inherit'
@@ -155,7 +155,7 @@ export default function AIAssistant({ token, shipmentId }) {
                     .replace(/\|(.+)\|/g, (match) => {
                       const cells = match.split('|').filter(c => c.trim() && !c.match(/^[-\s]+$/));
                       return '<div style="display:flex;gap:8px;flex-wrap:wrap;margin:2px 0">' +
-                        cells.map(c => '<span style="background:rgba(39,48,110,0.06);padding:2px 8px;border-radius:4px;font-size:12px">' + c.trim() + '</span>').join('') +
+                        cells.map(c => '<span style="background:rgba(255,255,255,0.06);padding:2px 8px;border-radius:4px;font-size:12px">' + c.trim() + '</span>').join('') +
                         '</div>';
                     })
                     .replace(/\n/g, '<br/>')
@@ -165,9 +165,9 @@ export default function AIAssistant({ token, shipmentId }) {
             {msg.role === 'user' && (
               <div style={{
                 width:'28px', height:'28px', borderRadius:'50%',
-                background:'#44C8F5',
+                background:'#38C6FF',
                 display:'flex', alignItems:'center', justifyContent:'center',
-                fontSize:'11px', fontWeight:700, color:'#27306E',
+                fontSize:'11px', fontWeight:700, color:'#0D1940',
                 flexShrink:0, marginTop:'2px'
               }}>M</div>
             )}
@@ -178,19 +178,19 @@ export default function AIAssistant({ token, shipmentId }) {
           <div style={{display:'flex', gap:'8px', alignItems:'flex-start'}}>
             <div style={{
               width:'28px', height:'28px', borderRadius:'8px',
-              background:'linear-gradient(135deg, #27306E, #1C2460)',
+              background:'linear-gradient(135deg, #1E3A8A, #091230)',
               display:'flex', alignItems:'center', justifyContent:'center',
               fontSize:'13px', flexShrink:0
             }}>🤖</div>
             <div style={{
               padding:'10px 14px', borderRadius:'14px 14px 14px 4px',
-              background:'#F5F7FF', border:'1px solid rgba(39,48,110,0.08)',
+              background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.08)',
               display:'flex', gap:'4px', alignItems:'center'
             }}>
               {[0,1,2].map(i => (
                 <div key={i} style={{
                   width:'6px', height:'6px', borderRadius:'50%',
-                  background:'#44C8F5',
+                  background:'#38C6FF',
                   animation:`bounce 1.2s ease-in-out ${i * 0.2}s infinite`
                 }}></div>
               ))}
@@ -202,7 +202,7 @@ export default function AIAssistant({ token, shipmentId }) {
           <div style={{
             padding:'10px 14px', borderRadius:'8px',
             background:'rgba(255,84,112,0.08)', border:'1px solid rgba(255,84,112,0.2)',
-            fontSize:'12px', color:'#CC0030'
+            fontSize:'12px', color:'#FF5470'
           }}>⚠ {error}</div>
         )}
 
@@ -212,8 +212,8 @@ export default function AIAssistant({ token, shipmentId }) {
       {/* Input */}
       <div style={{
         padding:'12px 16px',
-        borderTop:'1px solid rgba(39,48,110,0.08)',
-        background:'#FFFFFF'
+        borderTop:'1px solid rgba(255,255,255,0.08)',
+        background:'#0B1535'
       }}>
         <div style={{display:'flex', gap:'8px', alignItems:'flex-end'}}>
           <textarea
@@ -223,12 +223,12 @@ export default function AIAssistant({ token, shipmentId }) {
             placeholder="Ask about SFDA regulations, document requirements, labeling..."
             rows={2}
             style={{
-              flex:1, border:'1px solid rgba(39,48,110,0.15)',
+              flex:1, border:'1px solid rgba(255,255,255,0.15)',
               borderRadius:'10px', padding:'10px 12px',
-              fontSize:'13px', color:'#27306E',
+              fontSize:'13px', color:'#FFFFFF',
               fontFamily:'Inter,sans-serif', outline:'none',
               resize:'none', lineHeight:1.5,
-              background:'#FAFBFF'
+              background:'rgba(255,255,255,0.04)'
             }}
           />
           <button
@@ -236,7 +236,7 @@ export default function AIAssistant({ token, shipmentId }) {
             disabled={!input.trim() || loading}
             style={{
               width:'40px', height:'40px', borderRadius:'10px',
-              background: input.trim() && !loading ? '#27306E' : '#808285',
+              background: input.trim() && !loading ? '#38C6FF' : 'rgba(255,255,255,0.1)',
               border:'none', cursor: input.trim() && !loading ? 'pointer' : 'not-allowed',
               display:'flex', alignItems:'center', justifyContent:'center',
               fontSize:'16px', color:'white', flexShrink:0,
@@ -245,7 +245,7 @@ export default function AIAssistant({ token, shipmentId }) {
             {loading ? '⟳' : '↑'}
           </button>
         </div>
-        <div style={{fontSize:'10px', color:'#808285', marginTop:'6px', textAlign:'center'}}>
+        <div style={{fontSize:'10px', color:'rgba(255,255,255,0.4)', marginTop:'6px', textAlign:'center'}}>
           Press Enter to send · Shift+Enter for new line · Powered by DEMARA AI
         </div>
       </div>

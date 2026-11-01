@@ -94,7 +94,7 @@ export default function DocumentReadiness({ shipmentId, token, shipment, onDataL
   };
 
   if (loading) return (
-    <div style={{padding:'40px',textAlign:'center',color:'#808285'}}>
+    <div style={{padding:'40px',textAlign:'center',color:'rgba(255,255,255,0.45)'}}>
       <div style={{fontSize:'24px',marginBottom:'8px'}}>⟳</div>
       Analyzing documents...
     </div>
@@ -112,7 +112,7 @@ export default function DocumentReadiness({ shipmentId, token, shipment, onDataL
 
       {/* Overall Readiness Score */}
       <div style={{
-        background:'#FFFFFF',
+        background:'#0D1940',
         border:`2px solid ${overall.color}`,
         borderRadius:'14px',
         padding:'20px 24px',
@@ -124,19 +124,19 @@ export default function DocumentReadiness({ shipmentId, token, shipment, onDataL
         {/* Score circle */}
         <div style={{flexShrink:0}}>
           <svg width="80" height="80" viewBox="0 0 80 80">
-            <circle cx="40" cy="40" r="32" fill="none" stroke="rgba(39,48,110,0.08)" strokeWidth="8"/>
+            <circle cx="40" cy="40" r="32" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="8"/>
             <circle cx="40" cy="40" r="32" fill="none" stroke={overall.color} strokeWidth="8"
               strokeDasharray={`${data.overall_score * 2.01} 201`}
               strokeDashoffset="50" strokeLinecap="round"
               style={{transition:'stroke-dasharray 0.5s ease'}}/>
-            <text x="40" y="36" textAnchor="middle" fill="#27306E" fontSize="16" fontWeight="800" fontFamily="Inter">{data.overall_score}</text>
-            <text x="40" y="50" textAnchor="middle" fill="#808285" fontSize="8" fontFamily="Inter">/ 100</text>
+            <text x="40" y="36" textAnchor="middle" fill="#FFFFFF" fontSize="16" fontWeight="800" fontFamily="Inter">{data.overall_score}</text>
+            <text x="40" y="50" textAnchor="middle" fill="rgba(255,255,255,0.45)" fontSize="8" fontFamily="Inter">/ 100</text>
           </svg>
         </div>
 
         {/* Status text */}
         <div style={{flex:1}}>
-          <div style={{fontSize:'18px',fontWeight:800,color:'#27306E',marginBottom:'4px'}}>
+          <div style={{fontSize:'18px',fontWeight:800,color:'#FFFFFF',marginBottom:'4px'}}>
             Document Readiness Report
           </div>
           <div style={{
@@ -149,7 +149,7 @@ export default function DocumentReadiness({ shipmentId, token, shipment, onDataL
           }}>
             {overall.label}
           </div>
-          <div style={{fontSize:'13px',color:'#808285'}}>{overall.desc}</div>
+          <div style={{fontSize:'13px',color:'rgba(255,255,255,0.45)'}}>{overall.desc}</div>
         </div>
 
         {/* Sharing now happens via "Confirm & Share" in the Review & Confirm panel above */}
@@ -157,22 +157,22 @@ export default function DocumentReadiness({ shipmentId, token, shipment, onDataL
         {/* Summary stats */}
         <div style={{display:'flex',gap:'16px',flexShrink:0}}>
           {[
-            {label:'Uploaded',value:data.summary.total_uploaded,color:'#27306E'},
-            {label:'Required',value:data.summary.required_total,color:'#808285'},
+            {label:'Uploaded',value:data.summary.total_uploaded,color:'#FFFFFF'},
+            {label:'Required',value:data.summary.required_total,color:'rgba(255,255,255,0.45)'},
             {label:'Missing',value:data.summary.missing_required,color:'#FF5470'},
             {label:'Issues',value:data.summary.critical_issues,color:'#FF5470'},
             {label:'Warnings',value:data.summary.warnings,color:'#F5A623'},
           ].map(({label,value,color}) => (
             <div key={label} style={{textAlign:'center'}}>
               <div style={{fontSize:'22px',fontWeight:800,color,lineHeight:1}}>{value}</div>
-              <div style={{fontSize:'10px',color:'#808285',marginTop:'2px',textTransform:'uppercase',letterSpacing:'0.5px'}}>{label}</div>
+              <div style={{fontSize:'10px',color:'rgba(255,255,255,0.45)',marginTop:'2px',textTransform:'uppercase',letterSpacing:'0.5px'}}>{label}</div>
             </div>
           ))}
         </div>
       </div>
 
       {error && (
-        <div style={{background:'rgba(255,84,112,0.08)',border:'1px solid rgba(255,84,112,0.2)',borderRadius:'8px',padding:'10px 14px',marginBottom:'16px',fontSize:'13px',color:'#CC0030'}}>
+        <div style={{background:'rgba(255,84,112,0.08)',border:'1px solid rgba(255,84,112,0.2)',borderRadius:'8px',padding:'10px 14px',marginBottom:'16px',fontSize:'13px',color:'#FF5470'}}>
           ⚠ {error}
         </div>
       )}
@@ -180,14 +180,14 @@ export default function DocumentReadiness({ shipmentId, token, shipment, onDataL
       {/* Missing documents alert */}
       {data.missing_documents.length > 0 && (
         <div style={{background:'rgba(255,84,112,0.06)',border:'1px solid rgba(255,84,112,0.15)',borderRadius:'10px',padding:'14px 16px',marginBottom:'16px'}}>
-          <div style={{fontSize:'13px',fontWeight:700,color:'#CC0030',marginBottom:'8px'}}>
+          <div style={{fontSize:'13px',fontWeight:700,color:'#FF5470',marginBottom:'8px'}}>
             🚨 {data.missing_documents.length} required document{data.missing_documents.length > 1 ? 's' : ''} missing
           </div>
           <div style={{display:'flex',flexWrap:'wrap',gap:'6px'}}>
             {data.missing_documents.map(d => (
               <span key={d.document_type} style={{
                 background:'rgba(255,84,112,0.1)',border:'1px solid rgba(255,84,112,0.2)',
-                borderRadius:'20px',padding:'3px 10px',fontSize:'11px',fontWeight:600,color:'#CC0030'
+                borderRadius:'20px',padding:'3px 10px',fontSize:'11px',fontWeight:600,color:'#FF5470'
               }}>
                 {d.label}
               </span>
@@ -209,8 +209,8 @@ export default function DocumentReadiness({ shipmentId, token, shipment, onDataL
 
           return (
             <div key={typeKey} style={{
-              background:'#FFFFFF',
-              border:`1px solid ${uploaded ? cfg.border : 'rgba(39,48,110,0.08)'}`,
+              background:'#0D1940',
+              border:`1px solid ${uploaded ? cfg.border : 'rgba(255,255,255,0.08)'}`,
               borderRadius:'10px',
               overflow:'hidden',
               transition:'all 0.15s'
@@ -219,16 +219,16 @@ export default function DocumentReadiness({ shipmentId, token, shipment, onDataL
               <div style={{
                 display:'flex',alignItems:'center',gap:'12px',
                 padding:'14px 16px',cursor:'pointer',
-                background: uploaded ? cfg.bg : '#FFFFFF'
+                background: uploaded ? cfg.bg : 'transparent'
               }} onClick={() => setExpanded(isExpanded ? null : typeKey)}>
 
                 {/* Status icon */}
                 <div style={{
                   width:'32px',height:'32px',borderRadius:'8px',
-                  background: uploaded ? cfg.bg : 'rgba(39,48,110,0.06)',
-                  border:`1px solid ${uploaded ? cfg.border : 'rgba(39,48,110,0.1)'}`,
+                  background: uploaded ? cfg.bg : 'rgba(255,255,255,0.06)',
+                  border:`1px solid ${uploaded ? cfg.border : 'rgba(255,255,255,0.1)'}`,
                   display:'flex',alignItems:'center',justifyContent:'center',
-                  fontSize:'14px',fontWeight:700,color: uploaded ? cfg.color : '#808285',
+                  fontSize:'14px',fontWeight:700,color: uploaded ? cfg.color : 'rgba(255,255,255,0.45)',
                   flexShrink:0
                 }}>
                   {isUploading ? '⟳' : cfg.icon}
@@ -237,20 +237,20 @@ export default function DocumentReadiness({ shipmentId, token, shipment, onDataL
                 {/* Document info */}
                 <div style={{flex:1,minWidth:0}}>
                   <div style={{display:'flex',alignItems:'center',gap:'8px'}}>
-                    <span style={{fontSize:'13px',fontWeight:600,color:'#27306E'}}>{typeDef.label}</span>
+                    <span style={{fontSize:'13px',fontWeight:600,color:'#FFFFFF'}}>{typeDef.label}</span>
                     {typeDef.required && (
-                      <span style={{fontSize:'9px',background:'rgba(39,48,110,0.08)',color:'#808285',padding:'2px 6px',borderRadius:'10px',fontWeight:600,textTransform:'uppercase',letterSpacing:'0.5px'}}>Required</span>
+                      <span style={{fontSize:'9px',background:'rgba(255,255,255,0.08)',color:'rgba(255,255,255,0.45)',padding:'2px 6px',borderRadius:'10px',fontWeight:600,textTransform:'uppercase',letterSpacing:'0.5px'}}>Required</span>
                     )}
                     {!typeDef.required && (
-                      <span style={{fontSize:'9px',background:'rgba(68,200,245,0.08)',color:'#44C8F5',padding:'2px 6px',borderRadius:'10px',fontWeight:600,textTransform:'uppercase',letterSpacing:'0.5px'}}>Optional</span>
+                      <span style={{fontSize:'9px',background:'rgba(56,198,255,0.08)',color:'#38C6FF',padding:'2px 6px',borderRadius:'10px',fontWeight:600,textTransform:'uppercase',letterSpacing:'0.5px'}}>Optional</span>
                     )}
                   </div>
-                  <div style={{fontSize:'11px',color:'#808285',marginTop:'2px'}}>
+                  <div style={{fontSize:'11px',color:'rgba(255,255,255,0.45)',marginTop:'2px'}}>
                     {uploaded ? (
                       <span>
                         {uploaded.file_name || 'Uploaded'} ·
                         <span style={{color:cfg.color,fontWeight:600,marginLeft:'4px'}}>{cfg.label}</span>
-                        {validation?.score !== undefined && <span style={{color:'#808285',marginLeft:'4px'}}>· Score: {validation.score}/100</span>}
+                        {validation?.score !== undefined && <span style={{color:'rgba(255,255,255,0.45)',marginLeft:'4px'}}>· Score: {validation.score}/100</span>}
                       </span>
                     ) : (
                       typeDef.description
@@ -264,8 +264,8 @@ export default function DocumentReadiness({ shipmentId, token, shipment, onDataL
                     <>
                       <label style={{
                         padding:'5px 12px',borderRadius:'6px',fontSize:'11px',fontWeight:600,
-                        cursor:'pointer',border:'1px solid rgba(68,200,245,0.3)',
-                        background:'rgba(68,200,245,0.08)',color:'#27306E'
+                        cursor:'pointer',border:'1px solid rgba(56,198,255,0.3)',
+                        background:'rgba(56,198,255,0.08)',color:'#38C6FF'
                       }}>
                         ↑ Upload
                         <input type="file" accept=".pdf,.txt,.doc,.docx,.jpg,.png" style={{display:'none'}}
@@ -273,8 +273,8 @@ export default function DocumentReadiness({ shipmentId, token, shipment, onDataL
                       </label>
                       <button onClick={() => { setPasteMode(typeKey); setPasteText(''); }}
                         style={{padding:'5px 12px',borderRadius:'6px',fontSize:'11px',fontWeight:600,
-                          cursor:'pointer',border:'1px solid rgba(39,48,110,0.15)',
-                          background:'#FFFFFF',color:'#808285'}}>
+                          cursor:'pointer',border:'1px solid rgba(255,255,255,0.15)',
+                          background:'rgba(255,255,255,0.05)',color:'rgba(255,255,255,0.45)'}}>
                         ✎ Paste
                       </button>
                     </>
@@ -283,8 +283,8 @@ export default function DocumentReadiness({ shipmentId, token, shipment, onDataL
                     <>
                       <label style={{
                         padding:'5px 10px',borderRadius:'6px',fontSize:'11px',fontWeight:600,
-                        cursor:'pointer',border:'1px solid rgba(68,200,245,0.3)',
-                        background:'rgba(68,200,245,0.08)',color:'#27306E'
+                        cursor:'pointer',border:'1px solid rgba(56,198,255,0.3)',
+                        background:'rgba(56,198,255,0.08)',color:'#38C6FF'
                       }}>
                         ↑ Replace
                         <input type="file" accept=".pdf,.txt,.doc,.docx,.jpg,.png" style={{display:'none'}}
@@ -293,22 +293,22 @@ export default function DocumentReadiness({ shipmentId, token, shipment, onDataL
                       <button onClick={() => handleDelete(typeKey)}
                         style={{padding:'5px 10px',borderRadius:'6px',fontSize:'11px',fontWeight:600,
                           cursor:'pointer',border:'1px solid rgba(255,84,112,0.2)',
-                          background:'rgba(255,84,112,0.06)',color:'#CC0030'}}>
+                          background:'rgba(255,84,112,0.06)',color:'#FF5470'}}>
                         ✕
                       </button>
                     </>
                   )}
-                  <span style={{color:'#808285',fontSize:'14px',padding:'5px'}}>{isExpanded ? '▲' : '▼'}</span>
+                  <span style={{color:'rgba(255,255,255,0.45)',fontSize:'14px',padding:'5px'}}>{isExpanded ? '▲' : '▼'}</span>
                 </div>
               </div>
 
               {/* Paste area */}
               {isPasting && (
-                <div style={{padding:'14px 16px',borderTop:'1px solid rgba(39,48,110,0.06)',background:'#F8F9FF'}}>
+                <div style={{padding:'14px 16px',borderTop:'1px solid rgba(255,255,255,0.06)',background:'#0B1535'}}>
                   {typeKey === 'ARABIC_LABEL' && (
-                    <div style={{marginBottom:'8px',padding:'10px 12px',background:'rgba(68,200,245,0.06)',border:'1px solid rgba(68,200,245,0.15)',borderRadius:'8px',fontSize:'11px',color:'#27306E'}}>
+                    <div style={{marginBottom:'8px',padding:'10px 12px',background:'rgba(56,198,255,0.06)',border:'1px solid rgba(56,198,255,0.15)',borderRadius:'8px',fontSize:'11px',color:'#FFFFFF'}}>
                       <div style={{fontWeight:700,marginBottom:'4px'}}>📋 Arabic Label Checklist</div>
-                      <div style={{color:'#808285',lineHeight:1.6}}>
+                      <div style={{color:'rgba(255,255,255,0.45)',lineHeight:1.6}}>
                         Paste all text visible on your Arabic label including: product name, ingredients, allergens, manufacturer details, country of origin, expiry format, nutrition info, storage instructions, net weight, and any claims or certifications.
                       </div>
                     </div>
@@ -321,9 +321,9 @@ export default function DocumentReadiness({ shipmentId, token, shipment, onDataL
                       'Paste all Arabic label text here — product name in Arabic, ingredient list, allergens, manufacturer address, expiry date format, net weight...' :
                       `Paste the content of your ${typeDef.label} here...`}
                     style={{
-                      width:'100%',border:'1px solid rgba(39,48,110,0.15)',borderRadius:'8px',
+                      width:'100%',border:'1px solid rgba(255,255,255,0.15)',borderRadius:'8px',
                       padding:'10px 12px',fontSize:'12px',fontFamily:'JetBrains Mono,monospace',
-                      color:'#27306E',background:'#FFFFFF',outline:'none',resize:'vertical'
+                      color:'#FFFFFF',background:'#0D1940',outline:'none',resize:'vertical'
                     }}
                   />
                   <div style={{display:'flex',gap:'8px',marginTop:'8px'}}>
@@ -333,14 +333,14 @@ export default function DocumentReadiness({ shipmentId, token, shipment, onDataL
                       style={{
                         padding:'7px 16px',borderRadius:'6px',fontSize:'12px',fontWeight:700,
                         cursor:'pointer',border:'none',
-                        background: pasteText.trim() ? '#44C8F5' : '#808285',
-                        color:'#27306E',opacity: isUploading ? 0.6 : 1
+                        background: pasteText.trim() ? '#38C6FF' : 'rgba(255,255,255,0.1)',
+                        color:'#0D1940',opacity: isUploading ? 0.6 : 1
                       }}>
                       {isUploading ? '⟳ Analyzing...' : '🤖 Analyze with AI'}
                     </button>
                     <button onClick={() => { setPasteMode(null); setPasteText(''); }}
                       style={{padding:'7px 14px',borderRadius:'6px',fontSize:'12px',fontWeight:500,
-                        cursor:'pointer',border:'1px solid rgba(39,48,110,0.15)',background:'#FFFFFF',color:'#808285'}}>
+                        cursor:'pointer',border:'1px solid rgba(255,255,255,0.15)',background:'rgba(255,255,255,0.05)',color:'rgba(255,255,255,0.45)'}}>
                       Cancel
                     </button>
                   </div>
@@ -349,7 +349,7 @@ export default function DocumentReadiness({ shipmentId, token, shipment, onDataL
 
               {/* Expanded validation results */}
               {isExpanded && uploaded && validation && (
-                <div style={{borderTop:'1px solid rgba(39,48,110,0.06)',padding:'16px',background:'#FAFBFF'}}>
+                <div style={{borderTop:'1px solid rgba(255,255,255,0.06)',padding:'16px',background:'#0B1535'}}>
 
                   {/* Summary */}
                   <div style={{
@@ -359,18 +359,18 @@ export default function DocumentReadiness({ shipmentId, token, shipment, onDataL
                     <div style={{fontSize:'12px',fontWeight:700,color:cfg.color,marginBottom:'2px'}}>
                       {cfg.icon} AI Assessment
                     </div>
-                    <div style={{fontSize:'12px',color:'#3A4080'}}>{validation.summary}</div>
+                    <div style={{fontSize:'12px',color:'rgba(255,255,255,0.7)'}}>{validation.summary}</div>
                   </div>
 
                   {/* Extracted data */}
                   {validation.extracted && Object.keys(validation.extracted).some(k => validation.extracted[k]) && (
                     <div style={{marginBottom:'14px'}}>
-                      <div style={{fontSize:'11px',fontWeight:700,color:'#808285',textTransform:'uppercase',letterSpacing:'0.8px',marginBottom:'8px'}}>Extracted Information</div>
+                      <div style={{fontSize:'11px',fontWeight:700,color:'rgba(255,255,255,0.45)',textTransform:'uppercase',letterSpacing:'0.8px',marginBottom:'8px'}}>Extracted Information</div>
                       <div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:'6px'}}>
                         {Object.entries(validation.extracted).filter(([,v]) => v && v !== 'null').map(([key,value]) => (
-                          <div key={key} style={{background:'#FFFFFF',border:'1px solid rgba(39,48,110,0.08)',borderRadius:'6px',padding:'8px 10px'}}>
-                            <div style={{fontSize:'9px',fontWeight:700,color:'#808285',textTransform:'uppercase',letterSpacing:'0.8px',marginBottom:'2px'}}>{key.replace(/_/g,' ')}</div>
-                            <div style={{fontSize:'11px',color:'#27306E',fontWeight:500,fontFamily:'JetBrains Mono,monospace'}}>
+                          <div key={key} style={{background:'#0D1940',border:'1px solid rgba(255,255,255,0.08)',borderRadius:'6px',padding:'8px 10px'}}>
+                            <div style={{fontSize:'9px',fontWeight:700,color:'rgba(255,255,255,0.45)',textTransform:'uppercase',letterSpacing:'0.8px',marginBottom:'2px'}}>{key.replace(/_/g,' ')}</div>
+                            <div style={{fontSize:'11px',color:'#FFFFFF',fontWeight:500,fontFamily:'JetBrains Mono,monospace'}}>
                               {Array.isArray(value) ? value.join(', ') : String(value)}
                             </div>
                           </div>
@@ -382,17 +382,17 @@ export default function DocumentReadiness({ shipmentId, token, shipment, onDataL
                   {/* Checks */}
                   {validation.checks && validation.checks.length > 0 && (
                     <div style={{marginBottom:'14px'}}>
-                      <div style={{fontSize:'11px',fontWeight:700,color:'#808285',textTransform:'uppercase',letterSpacing:'0.8px',marginBottom:'8px'}}>Validation Checks</div>
+                      <div style={{fontSize:'11px',fontWeight:700,color:'rgba(255,255,255,0.45)',textTransform:'uppercase',letterSpacing:'0.8px',marginBottom:'8px'}}>Validation Checks</div>
                       <div style={{display:'flex',flexDirection:'column',gap:'4px'}}>
                         {validation.checks.map((check, i) => {
                           const checkColor = check.status === 'PASS' ? '#00C896' : check.status === 'WARN' ? '#F5A623' : check.status === 'FAIL' ? '#FF5470' : '#808285';
                           const checkIcon = check.status === 'PASS' ? '✓' : check.status === 'WARN' ? '⚠' : check.status === 'FAIL' ? '✕' : '○';
                           return (
-                            <div key={i} style={{display:'flex',alignItems:'flex-start',gap:'8px',padding:'7px 10px',background:'#FFFFFF',borderRadius:'6px',border:'1px solid rgba(39,48,110,0.06)'}}>
+                            <div key={i} style={{display:'flex',alignItems:'flex-start',gap:'8px',padding:'7px 10px',background:'#0D1940',borderRadius:'6px',border:'1px solid rgba(255,255,255,0.06)'}}>
                               <span style={{color:checkColor,fontWeight:700,flexShrink:0,marginTop:'1px'}}>{checkIcon}</span>
                               <div style={{flex:1}}>
-                                <span style={{fontSize:'11px',fontWeight:600,color:'#27306E'}}>{check.item}</span>
-                                <span style={{fontSize:'11px',color:'#808285',marginLeft:'6px'}}>— {check.message}</span>
+                                <span style={{fontSize:'11px',fontWeight:600,color:'#FFFFFF'}}>{check.item}</span>
+                                <span style={{fontSize:'11px',color:'rgba(255,255,255,0.45)',marginLeft:'6px'}}>— {check.message}</span>
                               </div>
                             </div>
                           );
@@ -408,7 +408,7 @@ export default function DocumentReadiness({ shipmentId, token, shipment, onDataL
                       {validation.issues.map((issue, i) => (
                         <div key={i} style={{display:'flex',gap:'8px',padding:'7px 10px',background:'rgba(255,84,112,0.04)',borderRadius:'6px',marginBottom:'4px',border:'1px solid rgba(255,84,112,0.1)'}}>
                           <span style={{color:'#FF5470',flexShrink:0}}>✕</span>
-                          <span style={{fontSize:'12px',color:'#3A4080'}}>{issue}</span>
+                          <span style={{fontSize:'12px',color:'rgba(255,255,255,0.7)'}}>{issue}</span>
                         </div>
                       ))}
                     </div>
@@ -417,11 +417,11 @@ export default function DocumentReadiness({ shipmentId, token, shipment, onDataL
                   {/* Recommendations */}
                   {validation.recommendations && validation.recommendations.length > 0 && (
                     <div>
-                      <div style={{fontSize:'11px',fontWeight:700,color:'#44C8F5',textTransform:'uppercase',letterSpacing:'0.8px',marginBottom:'8px'}}>Recommendations</div>
+                      <div style={{fontSize:'11px',fontWeight:700,color:'#38C6FF',textTransform:'uppercase',letterSpacing:'0.8px',marginBottom:'8px'}}>Recommendations</div>
                       {validation.recommendations.map((rec, i) => (
-                        <div key={i} style={{display:'flex',gap:'8px',padding:'7px 10px',background:'rgba(68,200,245,0.04)',borderRadius:'6px',marginBottom:'4px',border:'1px solid rgba(68,200,245,0.1)'}}>
-                          <span style={{color:'#44C8F5',flexShrink:0}}>→</span>
-                          <span style={{fontSize:'12px',color:'#3A4080'}}>{rec}</span>
+                        <div key={i} style={{display:'flex',gap:'8px',padding:'7px 10px',background:'rgba(56,198,255,0.04)',borderRadius:'6px',marginBottom:'4px',border:'1px solid rgba(56,198,255,0.1)'}}>
+                          <span style={{color:'#38C6FF',flexShrink:0}}>→</span>
+                          <span style={{fontSize:'12px',color:'rgba(255,255,255,0.7)'}}>{rec}</span>
                         </div>
                       ))}
                     </div>
