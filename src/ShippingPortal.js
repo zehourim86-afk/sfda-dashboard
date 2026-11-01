@@ -11,13 +11,56 @@ const INSPECTOR_STATES = [
   'LAB_RECEIVED'
 ];
 
-const STATE_INFO = {
-  SAMPLING_REQUESTED: { label: 'Pickup Requested', color: 'bg-orange-100 text-orange-700', action: 'Confirm Pickup Scheduled with MAH', next: 'PICKUP_SCHEDULED' },
-  PICKUP_SCHEDULED: { label: 'Pickup Scheduled', color: 'bg-blue-100 text-blue-700', action: 'Confirm Sample Picked Up from MAH', next: 'SAMPLE_PICKED_UP' },
-  SAMPLE_PICKED_UP: { label: 'Sample Picked Up', color: 'bg-yellow-100 text-yellow-700', action: 'Confirm In Transit to Lab', next: 'IN_TRANSIT' },
-  IN_TRANSIT: { label: 'In Transit to Lab', color: 'bg-purple-100 text-purple-700', action: 'Confirm Lab Receipt', next: 'LAB_RECEIVED' },
-  LAB_RECEIVED: { label: 'Delivered to Lab', color: 'bg-green-100 text-green-700', action: null, next: null },
+// ── Dark theme ───────────────────────────────────────────────────
+// Each tone: [text colour, rgb triplet for tinted backgrounds and borders]
+const TONES = {
+  cyan:   ['#38C6FF', '0,170,255'],
+  green:  ['#00C896', '0,200,150'],
+  amber:  ['#F5A623', '245,166,35'],
+  red:    ['#FF5470', '255,84,112'],
+  purple: ['#a78bfa', '124,92,252'],
+  grey:   ['rgba(255,255,255,.6)', '255,255,255'],
 };
+const tint = (tone, alpha) => `rgba(${TONES[tone][1]},${alpha})`;
+
+const STATE_INFO = {
+  SAMPLING_REQUESTED: { label: 'Pickup Requested', tone: 'amber', action: 'Confirm Pickup Scheduled with MAH', next: 'PICKUP_SCHEDULED' },
+  PICKUP_SCHEDULED: { label: 'Pickup Scheduled', tone: 'cyan', action: 'Confirm Sample Picked Up from MAH', next: 'SAMPLE_PICKED_UP' },
+  SAMPLE_PICKED_UP: { label: 'Sample Picked Up', tone: 'amber', action: 'Confirm In Transit to Lab', next: 'IN_TRANSIT' },
+  IN_TRANSIT: { label: 'In Transit to Lab', tone: 'purple', action: 'Confirm Lab Receipt', next: 'LAB_RECEIVED' },
+  LAB_RECEIVED: { label: 'Delivered to Lab', tone: 'green', action: null, next: null },
+};
+
+// Tones for the downstream states listed on the Completed tab
+const COMPLETED_TONE = {
+  IN_ANALYSIS: 'purple', ANALYSIS_COMPLETE: 'amber', RESULT_SUBMITTED: 'cyan',
+  CONFORMING: 'green', NON_CONFORMING: 'red', FINAL_CLEARANCE: 'green',
+};
+
+function badge(label, tone) {
+  const color = TONES[tone][0];
+  return (
+    <span style={{display:'inline-flex',alignItems:'center',gap:5,padding:'4px 10px',borderRadius:20,fontSize:11,fontWeight:600,whiteSpace:'nowrap',background:tint(tone,.1),color,border:`1px solid ${tint(tone,.3)}`}}>
+      <span style={{width:5,height:5,borderRadius:'50%',background:color,flexShrink:0}}></span>
+      {label}
+    </span>
+  );
+}
+
+const S = {
+  backdrop: {position:'fixed',inset:0,background:'rgba(0,0,0,.8)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:100,padding:20,backdropFilter:'blur(6px)'},
+  closeBtn: {width:32,height:32,borderRadius:8,background:'rgba(255,255,255,.06)',border:'1px solid rgba(255,255,255,.1)',color:'rgba(255,255,255,.6)',fontSize:18,cursor:'pointer',fontFamily:'inherit',display:'flex',alignItems:'center',justifyContent:'center'},
+  ipt: {width:'100%',background:'rgba(255,255,255,.05)',border:'1px solid rgba(255,255,255,.1)',borderRadius:8,padding:'8px 12px',fontSize:12,color:'#fff',fontFamily:'inherit',outline:'none'},
+  lbl: {fontSize:10,fontWeight:700,color:'rgba(255,255,255,.3)',textTransform:'uppercase',letterSpacing:'1px',marginBottom:4,display:'block'},
+  hint: {fontSize:10,color:'rgba(255,255,255,.3)',marginTop:4},
+  listRow: {display:'flex',alignItems:'center',justifyContent:'space-between',gap:12,background:'rgba(255,255,255,.03)',border:'1px solid rgba(255,255,255,.05)',borderRadius:9,padding:'9px 12px'},
+  error: {background:'rgba(255,84,112,.08)',border:'1px solid rgba(255,84,112,.2)',borderRadius:8,padding:'10px 14px',fontSize:12,color:'#FF5470'},
+  mono: 'JetBrains Mono,monospace',
+};
+const smallBtn = (tone) => ({background:tint(tone,.12),border:`1px solid ${tint(tone,.25)}`,color:TONES[tone][0],fontSize:11,fontWeight:700,padding:'6px 12px',borderRadius:7,cursor:'pointer',fontFamily:'inherit',whiteSpace:'nowrap',flexShrink:0});
+// Tinted alert card used for the pickup / re-export / destruction queues
+const alertCard = (tone) => ({background:tint(tone,.05),border:`1px solid ${tint(tone,.22)}`,borderRadius:14,padding:'16px 18px'});
+const alertTitle = (tone) => ({fontSize:13,fontWeight:700,color:TONES[tone][0],marginBottom:12});
 
 // ─── MASAAR Sampling Recommendation ────────────────────────────
 
@@ -304,53 +347,54 @@ function SampleActionModal({ shipment, token, isInspector, onClose, onRefresh })
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg">
-        <div className="flex items-center justify-between p-6 border-b">
+    <div style={S.backdrop}>
+      <div style={{background:'#0D1940',border:'1px solid rgba(0,170,255,.15)',borderRadius:18,width:'100%',maxWidth:560,maxHeight:'92vh',overflowY:'auto',boxShadow:'0 32px 80px rgba(0,0,0,.8)'}}>
+        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'18px 22px',borderBottom:'1px solid rgba(0,170,255,.1)',background:'linear-gradient(180deg,rgba(0,170,255,.05),transparent)'}}>
           <div>
-            <h2 className="text-lg font-bold text-gray-900">{shipment.faseh_request_number}</h2>
-            <p className="text-sm text-gray-500">{shipment.importer_name} · {shipment.port_of_entry}</p>
+            <div style={{fontSize:15,fontWeight:800,color:'#fff',fontFamily:S.mono}}>{shipment.faseh_request_number}</div>
+            <div style={{fontSize:11,color:'rgba(255,255,255,.4)',marginTop:2}}>{shipment.importer_name} · {shipment.port_of_entry}</div>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl">×</button>
+          <button onClick={onClose} style={S.closeBtn}>×</button>
         </div>
 
-        <div className="p-6 space-y-4">
+        <div style={{padding:'18px 22px',display:'flex',flexDirection:'column',gap:14}}>
           {/* Current status */}
-          <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-            <span className={`px-3 py-1 rounded-full text-sm font-semibold ${stateInfo?.color}`}>
-              {stateInfo?.label}
-            </span>
-            <p className="text-sm text-gray-600 mt-2">Since {formatDate(shipment.state_entered_at)}</p>
+          <div style={{display:'flex',alignItems:'center',gap:10,background:tint(stateInfo?.tone || 'amber',.06),border:`1px solid ${tint(stateInfo?.tone || 'amber',.2)}`,borderRadius:10,padding:'12px 14px'}}>
+            {stateInfo && badge(stateInfo.label, stateInfo.tone)}
+            <span style={{fontSize:11,color:'rgba(255,255,255,.4)'}}>Since {formatDate(shipment.state_entered_at)}</span>
           </div>
 
           {/* Shipment details */}
-          <div className="grid grid-cols-2 gap-3">
-            <div><p className="text-xs text-gray-500 uppercase font-semibold">Faseh Reference</p>
-              <p className="text-sm font-medium">{shipment.faseh_request_number}</p></div>
-            <div><p className="text-xs text-gray-500 uppercase font-semibold">Port of Entry</p>
-              <p className="text-sm font-medium">{shipment.port_of_entry}</p></div>
-            <div><p className="text-xs text-gray-500 uppercase font-semibold">Shipment Country</p>
-              <p className="text-sm font-medium">{shipment.shipment_country}</p></div>
-            <div><p className="text-xs text-gray-500 uppercase font-semibold">QC Lab</p>
-              <p className="text-sm font-medium">{shipment.lab_name || '—'}</p></div>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
+            {[
+              ['Faseh Reference', shipment.faseh_request_number, '#38C6FF', true],
+              ['Port of Entry', shipment.port_of_entry, '#fff', false],
+              ['Shipment Country', shipment.shipment_country, '#fff', false],
+              ['QC Lab', shipment.lab_name || '—', '#fff', false],
+            ].map(([label, value, color, mono]) => (
+              <div key={label} style={{background:'rgba(0,170,255,.04)',border:'1px solid rgba(0,170,255,.1)',borderRadius:9,padding:'8px 12px'}}>
+                <div style={S.lbl}>{label}</div>
+                <div style={{fontSize:13,fontWeight:600,color,fontFamily:mono?S.mono:'inherit'}}>{value}</div>
+              </div>
+            ))}
           </div>
 
-          {error && <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-red-700 text-sm">{error}</div>}
+          {error && <div style={S.error}>{error}</div>}
 
           {/* Seal ID and photo — when collecting sample or doing bulk journey */}
           {(shipment.current_state === 'PICKUP_SCHEDULED' || shipment.current_state === 'SAMPLING_REQUESTED') && (
-            <div className="space-y-3">
+            <div style={{display:'flex',flexDirection:'column',gap:12}}>
               <div>
-                <label className="text-xs font-semibold text-gray-600 uppercase">Seal ID *</label>
+                <label style={S.lbl}>Seal ID *</label>
                 <input type="text" value={sealId} onChange={e => setSealId(e.target.value)}
                   placeholder="e.g. SEAL-SA-2026-00441"
-                  className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2" />
-                <p className="text-xs text-gray-400 mt-1">Record the seal ID placed on the sample container</p>
+                  style={{...S.ipt,fontFamily:S.mono}} />
+                <div style={S.hint}>Record the seal ID placed on the sample container</div>
               </div>
               <div>
-                <label className="text-xs font-semibold text-gray-600 uppercase">Sample Photo</label>
-                <div className="mt-1 border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
-                  <input type="file" accept="image/*" id="sample-photo" className="hidden"
+                <label style={S.lbl}>Sample Photo</label>
+                <div style={{border:'2px dashed rgba(0,170,255,.2)',borderRadius:12,padding:16,textAlign:'center',background:'rgba(0,170,255,.02)'}}>
+                  <input type="file" accept="image/*" id="sample-photo" style={{display:'none'}}
                     onChange={e => {
                       const file = e.target.files[0];
                       if (file) {
@@ -362,14 +406,14 @@ function SampleActionModal({ shipment, token, isInspector, onClose, onRefresh })
                   />
                   {samplePhoto ? (
                     <div>
-                      <img src={samplePhoto} alt="Sample" className="max-h-32 mx-auto rounded-lg" />
+                      <img src={samplePhoto} alt="Sample" style={{maxHeight:128,margin:'0 auto',display:'block',borderRadius:8}} />
                       <button type="button" onClick={() => setSamplePhoto(null)}
-                        className="mt-2 text-xs text-red-500 hover:underline">Remove photo</button>
+                        style={{marginTop:8,background:'none',border:'none',color:'#FF5470',fontSize:11,cursor:'pointer',fontFamily:'inherit',textDecoration:'underline'}}>Remove photo</button>
                     </div>
                   ) : (
-                    <label htmlFor="sample-photo" className="cursor-pointer">
-                      <p className="text-2xl mb-1">📷</p>
-                      <p className="text-xs text-gray-500">Click to take or upload a photo of the sealed sample</p>
+                    <label htmlFor="sample-photo" style={{cursor:'pointer',display:'block'}}>
+                      <div style={{fontSize:24,marginBottom:4}}>📷</div>
+                      <div style={{fontSize:11,color:'rgba(255,255,255,.4)'}}>Click to take or upload a photo of the sealed sample</div>
                     </label>
                   )}
                 </div>
@@ -378,10 +422,10 @@ function SampleActionModal({ shipment, token, isInspector, onClose, onRefresh })
           )}
 
           <div>
-            <label className="text-xs font-semibold text-gray-600 uppercase">Notes (optional)</label>
+            <label style={S.lbl}>Notes (optional)</label>
             <textarea value={notes} onChange={e => setNotes(e.target.value)}
               rows={2} placeholder="Any observations or notes..."
-              className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none" />
+              style={{...S.ipt,resize:'vertical'}} />
           </div>
 
           {isInspector && shipment.current_state === 'SAMPLING_REQUESTED' && (
@@ -390,34 +434,34 @@ function SampleActionModal({ shipment, token, isInspector, onClose, onRefresh })
 
           {stateInfo?.action && (
             <button onClick={performTransition} disabled={acting}
-              className="w-full py-2.5 text-white font-semibold text-sm rounded-lg hover:opacity-90 disabled:opacity-50"
-              style={{background: '#2D2B7A'}}>
+              style={{width:'100%',padding:13,background:'linear-gradient(135deg,#38C6FF,#0088DD)',color:'#0D1940',fontSize:13,fontWeight:800,borderRadius:10,border:'none',
+                cursor:acting?'default':'pointer',opacity:acting?.6:1,fontFamily:'inherit',boxShadow:'0 4px 20px rgba(0,170,255,.3)'}}>
               {acting ? 'Processing...' : stateInfo.action}
             </button>
           )}
 
           {shipment.current_state === 'SAMPLING_REQUESTED' && (
-            <div className="mt-2">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="flex-1 h-px bg-gray-200"></div>
-                <span className="text-xs text-gray-400">or</span>
-                <div className="flex-1 h-px bg-gray-200"></div>
+            <div>
+              <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:10}}>
+                <div style={{flex:1,height:1,background:'rgba(255,255,255,.08)'}}></div>
+                <span style={{fontSize:11,color:'rgba(255,255,255,.3)'}}>or</span>
+                <div style={{flex:1,height:1,background:'rgba(255,255,255,.08)'}}></div>
               </div>
               <button onClick={handleBulkJourney} disabled={acting}
-                className="w-full py-2.5 font-semibold text-sm rounded-lg hover:opacity-90 disabled:opacity-50 border-2"
-                style={{color: '#2D2B7A', borderColor: '#2D2B7A', background: 'white'}}>
+                style={{width:'100%',padding:12,background:'rgba(124,92,252,.1)',border:'1px solid rgba(124,92,252,.35)',color:'#a78bfa',fontSize:13,fontWeight:700,borderRadius:10,
+                  cursor:acting?'default':'pointer',opacity:acting?.6:1,fontFamily:'inherit'}}>
                 {acting ? '⏳ Completing journey...' : '⚡ Complete Full Sample Journey'}
               </button>
-              <p className="text-xs text-gray-400 text-center mt-1">
+              <div style={{...S.hint,textAlign:'center',marginTop:6}}>
                 Records all steps from collection to lab receipt in one action
-              </p>
+              </div>
             </div>
           )}
 
           {shipment.current_state === 'LAB_RECEIVED' && (
-            <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-center">
-              <p className="text-green-700 font-semibold text-sm">✓ Sample successfully delivered to lab</p>
-              <p className="text-green-600 text-xs mt-1">The lab will now proceed with analysis</p>
+            <div style={{background:'rgba(0,200,150,.08)',border:'1px solid rgba(0,200,150,.2)',borderRadius:12,padding:16,textAlign:'center'}}>
+              <div style={{fontSize:13,fontWeight:700,color:'#00C896'}}>✓ Sample successfully delivered to lab</div>
+              <div style={{fontSize:11,color:'rgba(0,200,150,.6)',marginTop:4}}>The lab will now proceed with analysis</div>
             </div>
           )}
         </div>
@@ -458,22 +502,21 @@ function ReExportLoadingSection({ shipments, token, onRefresh }) {
   };
 
   return (
-    <div className="mx-6 mt-4 bg-amber-50 border border-amber-200 rounded-xl p-4">
-      <h3 className="text-sm font-semibold text-amber-800 mb-2">🚢 Re-export — Awaiting Loading Confirmation ({shipments.length})</h3>
-      {error && <div className="bg-red-50 border border-red-200 rounded-lg p-2 mb-2 text-red-700 text-xs">{error}</div>}
-      <div className="space-y-2">
+    <div style={alertCard('amber')}>
+      <div style={alertTitle('amber')}>🚢 Re-export — Awaiting Loading Confirmation ({shipments.length})</div>
+      {error && <div style={{...S.error,marginBottom:10}}>{error}</div>}
+      <div style={{display:'flex',flexDirection:'column',gap:6}}>
         {shipments.map(s => (
-          <div key={s.id} className="flex items-center justify-between bg-white rounded-lg px-3 py-2 border border-amber-100">
+          <div key={s.id} style={S.listRow}>
             <div>
-              <span className="font-mono text-xs font-semibold" style={{color: '#2D2B7A'}}>{s.faseh_request_number}</span>
-              <span className="text-xs text-gray-500 ml-2">{s.importer_name}</span>
-              <p className="text-xs text-gray-500 mt-0.5">
-                {s.port_of_entry} · Booking ref: <span className="font-mono font-semibold text-gray-700">{s.re_export_reference || '—'}</span>
-              </p>
+              <span style={{fontFamily:S.mono,fontSize:11,fontWeight:700,color:'#38C6FF'}}>{s.faseh_request_number}</span>
+              <span style={{fontSize:11,color:'rgba(255,255,255,.45)',marginLeft:8}}>{s.importer_name}</span>
+              <div style={{fontSize:11,color:'rgba(255,255,255,.4)',marginTop:3}}>
+                {s.port_of_entry} · Booking ref: <span style={{fontFamily:S.mono,fontWeight:600,color:'rgba(255,255,255,.75)'}}>{s.re_export_reference || '—'}</span>
+              </div>
             </div>
             <button onClick={() => confirmLoaded(s)} disabled={actingId === s.id}
-              className="px-3 py-1.5 text-xs font-semibold rounded-lg text-white hover:opacity-90 disabled:opacity-50"
-              style={{background: '#D97706'}}>
+              style={{...smallBtn('amber'),opacity:actingId === s.id ? .5 : 1}}>
               {actingId === s.id ? 'Confirming...' : '✓ Confirm Goods Loaded'}
             </button>
           </div>
@@ -523,46 +566,44 @@ function DestructionWitnessSection({ shipments, token, defaultWitness, onRefresh
   };
 
   return (
-    <div className="mx-6 mt-4 bg-red-50 border border-red-200 rounded-xl p-4">
-      <h3 className="text-sm font-semibold text-red-700 mb-2">🔥 Scheduled Destructions — Witness Required ({shipments.length})</h3>
-      <div className="space-y-2">
+    <div style={alertCard('red')}>
+      <div style={alertTitle('red')}>🔥 Scheduled Destructions — Witness Required ({shipments.length})</div>
+      <div style={{display:'flex',flexDirection:'column',gap:6}}>
         {shipments.map(s => (
-          <div key={s.id} className="bg-white rounded-lg px-3 py-2 border border-red-100">
-            <div className="flex items-center justify-between">
+          <div key={s.id} style={{background:'rgba(255,255,255,.03)',border:'1px solid rgba(255,255,255,.05)',borderRadius:9,padding:'9px 12px'}}>
+            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:12}}>
               <div>
-                <span className="font-mono text-xs font-semibold" style={{color: '#2D2B7A'}}>{s.faseh_request_number}</span>
-                <span className="text-xs text-gray-500 ml-2">{s.importer_name}</span>
-                <p className="text-xs text-gray-500 mt-0.5">
-                  Scheduled: <span className="font-semibold text-gray-700">{s.destruction_scheduled_at ? formatDate(s.destruction_scheduled_at) : '—'}</span>
-                  {' · '}SFDA order: <span className="font-mono font-semibold text-gray-700">{s.destruction_reference || '—'}</span>
-                </p>
+                <span style={{fontFamily:S.mono,fontSize:11,fontWeight:700,color:'#38C6FF'}}>{s.faseh_request_number}</span>
+                <span style={{fontSize:11,color:'rgba(255,255,255,.45)',marginLeft:8}}>{s.importer_name}</span>
+                <div style={{fontSize:11,color:'rgba(255,255,255,.4)',marginTop:3}}>
+                  Scheduled: <span style={{fontWeight:600,color:'rgba(255,255,255,.75)'}}>{s.destruction_scheduled_at ? formatDate(s.destruction_scheduled_at) : '—'}</span>
+                  {' · '}SFDA order: <span style={{fontFamily:S.mono,fontWeight:600,color:'rgba(255,255,255,.75)'}}>{s.destruction_reference || '—'}</span>
+                </div>
               </div>
               {confirmingId !== s.id && (
                 <button onClick={() => startConfirm(s)}
-                  className="px-3 py-1.5 text-xs font-semibold rounded-lg text-white hover:opacity-90"
-                  style={{background: '#DC2626'}}>
+                  style={smallBtn('red')}>
                   Witness Destruction
                 </button>
               )}
             </div>
             {confirmingId === s.id && (
-              <div className="mt-2 pt-2 border-t border-red-100">
-                <label className="text-xs font-semibold text-gray-600 uppercase">Witnessing inspector — name / ID *</label>
-                <div className="flex gap-2 mt-1">
+              <div style={{marginTop:10,paddingTop:10,borderTop:'1px solid rgba(255,84,112,.15)'}}>
+                <label style={S.lbl}>Witnessing inspector — name / ID *</label>
+                <div style={{display:'flex',gap:8}}>
                   <input type="text" value={witness} onChange={e => setWitness(e.target.value)}
                     placeholder="e.g. Ahmed Al-Harbi / INS-2041"
-                    className="flex-1 border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2" />
+                    style={{...S.ipt,flex:1}} />
                   <button onClick={() => submitWitness(s)} disabled={submitting || !witness.trim()}
-                    className="px-3 py-1.5 text-xs font-semibold rounded-lg text-white hover:opacity-90 disabled:opacity-50"
-                    style={{background: '#DC2626'}}>
+                    style={{...smallBtn('red'),padding:'8px 14px',opacity:submitting || !witness.trim() ? .5 : 1}}>
                     {submitting ? 'Confirming...' : 'Confirm Witness'}
                   </button>
                   <button onClick={() => setConfirmingId(null)} disabled={submitting}
-                    className="px-3 py-1.5 text-xs border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50">
+                    style={{...smallBtn('grey'),padding:'8px 14px',color:'rgba(255,255,255,.6)'}}>
                     Cancel
                   </button>
                 </div>
-                {error && <p className="text-xs text-red-600 mt-1">{error}</p>}
+                {error && <div style={{fontSize:11,color:'#FF5470',marginTop:6}}>{error}</div>}
               </div>
             )}
           </div>
@@ -624,199 +665,224 @@ export default function InspectorApp({ user: initialUser, token, onLogout }) {
   const samplingRequested = shipments.filter(s => s.current_state === 'SAMPLING_REQUESTED').length;
   const inProgress = shipments.filter(s => ['PICKUP_SCHEDULED', 'SAMPLE_PICKED_UP', 'IN_TRANSIT'].includes(s.current_state)).length;
 
+  const navItems = [
+    { id: 'active', icon: '🚚', label: 'Active Pickups', count: activeShipments.length, tone: 'cyan' },
+    { id: 'completed', icon: '✅', label: 'Completed', count: completedShipments.length, tone: 'green' },
+  ];
+  if (user?.is_org_admin) navItems.push({ id: 'org-admin', icon: '👥', label: 'Organisation', count: null, tone: 'green' });
+
+  const kpis = [
+    { label: 'Awaiting Pickup', value: samplingRequested, color: '#F5A623', icon: '📥' },
+    { label: 'In Progress', value: inProgress, color: '#38C6FF', icon: '🚚' },
+    { label: 'Completed', value: completedShipments.length, color: '#00C896', icon: '✅' },
+    { label: 'Total Assigned', value: shipments.length, color: '#fff', icon: '📦' },
+  ];
+
+  const th = {padding:'11px 16px',textAlign:'left',fontSize:10,fontWeight:700,color:'rgba(255,255,255,.3)',textTransform:'uppercase',letterSpacing:'1px',borderBottom:'1px solid rgba(0,170,255,.08)',whiteSpace:'nowrap'};
+  const td = {padding:'13px 16px'};
+  const isInspectorUser = user?.role === 'SFDA_INSPECTOR';
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div style={{background: 'linear-gradient(135deg, #2D2B7A 0%, #1a1854 100%)'}} className="px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <img src="/demara-logo.png" alt="DEMARA" style={{height: '80px', width: '200px', objectFit: 'contain'}} />
-            <div>
-              <h1 className="text-lg font-bold text-white">DEMARA Platform</h1>
-              <p className="text-xs mt-0.5" style={{color: '#00B4D8'}}>DEMARA Masaar · Shipping Portal</p>
+    <div style={{display:'flex',flexDirection:'column',height:'100vh',background:'#0B1535',fontFamily:'Inter,sans-serif',color:'#fff',overflow:'hidden'}}>
+      <style>{`
+        @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+        @keyframes glow{0%,100%{opacity:1}50%{opacity:.6}}
+        *{box-sizing:border-box}
+        ::-webkit-scrollbar{width:4px;height:4px}
+        ::-webkit-scrollbar-track{background:transparent}
+        ::-webkit-scrollbar-thumb{background:rgba(0,170,255,.2);border-radius:2px}
+        input:focus,textarea:focus,select:focus{border-color:rgba(0,170,255,.5)!important;outline:none}
+        input::placeholder,textarea::placeholder{color:rgba(255,255,255,.2)}
+        tr.row:hover td{background:rgba(0,170,255,.04)!important}
+      `}</style>
+
+      {/* ── Topbar ── */}
+      <div style={{height:58,background:'#091230',borderBottom:'1px solid rgba(0,170,255,.1)',display:'flex',alignItems:'center',padding:'0 24px',gap:14,flexShrink:0,zIndex:10}}>
+        <img src="/demara-logo.png" alt="DEMARA" style={{height:34,objectFit:'contain'}}/>
+        <div style={{width:1,height:28,background:'rgba(255,255,255,.08)'}}></div>
+        <div>
+          <div style={{fontSize:14,fontWeight:800,color:'#fff',letterSpacing:'-.3px'}}>DEMARA Platform</div>
+          <div style={{fontSize:10,color:'#38C6FF',fontWeight:600,letterSpacing:'.3px'}}>DEMARA Masaar · Shipping Portal</div>
+        </div>
+        <div style={{marginLeft:'auto',display:'flex',alignItems:'center',gap:10}}>
+          <div style={{display:'flex',alignItems:'center',gap:5,fontSize:11,fontWeight:600,color:'#00C896',background:'rgba(0,200,150,.08)',border:'1px solid rgba(0,200,150,.2)',borderRadius:20,padding:'4px 10px'}}>
+            <span style={{width:6,height:6,borderRadius:'50%',background:'#00C896',animation:'pulse 2s infinite',display:'inline-block'}}></span>Live
+          </div>
+          <NotificationBell token={token} />
+          {user && (
+            <div style={{display:'flex',alignItems:'center',gap:9,background:'rgba(255,255,255,.05)',border:'1px solid rgba(255,255,255,.1)',borderRadius:10,padding:'6px 12px'}}>
+              <div style={{width:28,height:28,borderRadius:'50%',background:'linear-gradient(135deg,#38C6FF,#1E3A8A)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:800,color:'#fff',flexShrink:0}}>{user.full_name?.charAt(0) || 'S'}</div>
+              <div><div style={{fontSize:12,fontWeight:700,color:'#fff'}}>{user.full_name}</div><div style={{fontSize:10,color:'#38C6FF',marginTop:1}}>{isInspectorUser ? 'SFDA Inspector' : 'Shipping Agent'}</div></div>
+            </div>
+          )}
+          <button onClick={onLogout} style={{background:'rgba(255,84,112,.12)',border:'1px solid rgba(255,84,112,.25)',color:'#FF5470',fontSize:11,fontWeight:700,padding:'7px 14px',borderRadius:8,cursor:'pointer',fontFamily:'inherit'}}>Sign Out</button>
+        </div>
+      </div>
+
+      {/* ── Body ── */}
+      <div style={{display:'flex',flex:1,overflow:'hidden'}}>
+
+        {/* ── Sidebar ── */}
+        <div style={{width:220,background:'#0D1940',borderRight:'1px solid rgba(0,170,255,.08)',display:'flex',flexDirection:'column',flexShrink:0,overflowY:'auto'}}>
+          {/* KPI section */}
+          <div style={{padding:'16px 14px',borderBottom:'1px solid rgba(0,170,255,.06)'}}>
+            <div style={{fontSize:9,fontWeight:700,color:'rgba(255,255,255,.2)',textTransform:'uppercase',letterSpacing:'2px',marginBottom:12}}>Overview</div>
+            <div style={{display:'flex',flexDirection:'column',gap:6}}>
+              {kpis.map(k => (
+                <div key={k.label} style={{display:'flex',alignItems:'center',gap:10,padding:'8px 10px',borderRadius:9,background:'rgba(255,255,255,.03)',border:'1px solid rgba(255,255,255,.05)'}}>
+                  <span style={{fontSize:14,flexShrink:0}}>{k.icon}</span>
+                  <span style={{fontSize:11,color:'rgba(255,255,255,.5)',flex:1}}>{k.label}</span>
+                  <span style={{fontSize:16,fontWeight:900,color:k.color,letterSpacing:'-0.5px'}}>{k.value}</span>
+                </div>
+              ))}
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <span className="flex items-center gap-1.5 text-xs text-green-400 font-medium">
-              <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-              Connected
-            </span>
-            <NotificationBell token={token} />
-            {user && (
-              <div className="flex items-center gap-2 bg-white bg-opacity-10 rounded-lg px-3 py-1.5">
-                <div className="text-right">
-                  <p className="text-white text-xs font-semibold">{user.full_name}</p>
-                  <p className="text-xs" style={{color: '#00B4D8'}}>Shipping Agent</p>
+
+          {/* Nav */}
+          <div style={{padding:'12px 10px',flex:1}}>
+            <div style={{fontSize:9,fontWeight:700,color:'rgba(255,255,255,.2)',textTransform:'uppercase',letterSpacing:'2px',marginBottom:10,paddingLeft:4}}>Navigation</div>
+            {navItems.map(n => {
+              const on = activeTab === n.id;
+              const color = TONES[n.tone][0];
+              return (
+                <button key={n.id} onClick={() => setActiveTab(n.id)} style={{width:'100%',display:'flex',alignItems:'center',gap:10,padding:'9px 12px',borderRadius:9,cursor:'pointer',marginBottom:3,fontFamily:'inherit',fontSize:12,fontWeight:on?700:500,
+                  background:on?tint(n.tone,.12):'transparent',color:on?color:'rgba(255,255,255,.45)',border:on?`1px solid ${color}33`:'1px solid transparent',transition:'all .15s',textAlign:'left'}}>
+                  <span style={{fontSize:15}}>{n.icon}</span>
+                  <span style={{flex:1}}>{n.label}</span>
+                  {n.count != null && n.count > 0 && (
+                    <span style={{fontSize:10,fontWeight:700,background:on?color:'rgba(255,255,255,.1)',color:on?'#0D1940':'rgba(255,255,255,.5)',padding:'1px 7px',borderRadius:10}}>{n.count}</span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Refresh */}
+          <div style={{padding:'12px 14px',borderTop:'1px solid rgba(0,170,255,.06)'}}>
+            <button onClick={fetchShipments} style={{width:'100%',padding:'9px',background:'rgba(0,170,255,.1)',border:'1px solid rgba(0,170,255,.2)',color:'#38C6FF',fontSize:12,fontWeight:700,borderRadius:9,cursor:'pointer',fontFamily:'inherit'}}>↻ Refresh</button>
+          </div>
+        </div>
+
+        {/* ── Main content ── */}
+        <div style={{flex:1,overflowY:'auto',background:'#0B1535'}}>
+
+          {/* Work queues: pending pickups, plus re-export loading and destruction witness for inspectors */}
+          <div style={{display:'flex',flexDirection:'column',gap:12,padding:'16px 20px 0'}}>
+            {samplingRequested > 0 && (
+              <div style={alertCard('amber')}>
+                <div style={alertTitle('amber')}>⚠️ Pending Sample Pickups</div>
+                <div style={{display:'flex',flexDirection:'column',gap:6}}>
+                  {shipments.filter(s => s.current_state === 'SAMPLING_REQUESTED').map(s => (
+                    <div key={s.id} style={S.listRow}>
+                      <div>
+                        <span style={{fontFamily:S.mono,fontSize:11,fontWeight:700,color:'#38C6FF'}}>{s.faseh_request_number}</span>
+                        <span style={{fontSize:11,color:'rgba(255,255,255,.45)',marginLeft:8}}>{s.importer_name}</span>
+                      </div>
+                      <div style={{textAlign:'right'}}>
+                        <div style={{fontSize:11,color:'rgba(255,255,255,.4)'}}>{s.port_of_entry}</div>
+                        <div style={{fontSize:11,fontWeight:700,color:'#F5A623',marginTop:1}}>Waiting {Math.floor((new Date() - new Date(s.state_entered_at)) / (1000 * 60 * 60))}h</div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
-            <button onClick={onLogout} className="px-3 py-1.5 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600">
-              Sign Out
-            </button>
-          </div>
-        </div>
-      </div>
 
-      {/* Stats */}
-      <div className="bg-white border-b border-gray-200 px-6 py-3">
-        <div className="flex gap-6">
-          <div className="text-center">
-            <p className="text-2xl font-bold text-orange-600">{samplingRequested}</p>
-            <p className="text-xs text-gray-500">Awaiting pickup</p>
-          </div>
-          <div className="text-center">
-            <p className="text-2xl font-bold" style={{color: '#2D2B7A'}}>{inProgress}</p>
-            <p className="text-xs text-gray-500">In progress</p>
-          </div>
-          <div className="text-center">
-            <p className="text-2xl font-bold text-green-600">{completedShipments.length}</p>
-            <p className="text-xs text-gray-500">Completed</p>
-          </div>
-          <div className="text-center">
-            <p className="text-2xl font-bold text-gray-600">{shipments.length}</p>
-            <p className="text-xs text-gray-500">Total assigned</p>
-          </div>
-        </div>
-      </div>
+            {user?.role === 'SFDA_INSPECTOR' && (
+              <ReExportLoadingSection
+                shipments={shipments.filter(s => s.current_state === 'RE_EXPORT_PERMIT_ISSUED')}
+                token={token}
+                onRefresh={fetchShipments}
+              />
+            )}
 
-      {/* Workload summary */}
-      {samplingRequested > 0 && (
-        <div className="mx-6 mt-4 bg-orange-50 border border-orange-200 rounded-xl p-4">
-          <h3 className="text-sm font-semibold text-orange-700 mb-2">⚠️ Pending Sample Pickups</h3>
-          <div className="space-y-2">
-            {shipments.filter(s => s.current_state === 'SAMPLING_REQUESTED').map(s => (
-              <div key={s.id} className="flex items-center justify-between bg-white rounded-lg px-3 py-2 border border-orange-100">
-                <div>
-                  <span className="font-mono text-xs font-semibold" style={{color: '#2D2B7A'}}>{s.faseh_request_number}</span>
-                  <span className="text-xs text-gray-500 ml-2">{s.importer_name}</span>
-                </div>
-                <div className="text-right">
-                  <p className="text-xs text-gray-500">{s.port_of_entry}</p>
-                  <p className="text-xs text-orange-600 font-medium">Waiting {Math.floor((new Date() - new Date(s.state_entered_at)) / (1000 * 60 * 60))}h</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {user?.role === 'SFDA_INSPECTOR' && (
-        <ReExportLoadingSection
-          shipments={shipments.filter(s => s.current_state === 'RE_EXPORT_PERMIT_ISSUED')}
-          token={token}
-          onRefresh={fetchShipments}
-        />
-      )}
-
-      {user?.role === 'SFDA_INSPECTOR' && (
-        <DestructionWitnessSection
-          shipments={shipments.filter(s => s.current_state === 'DESTRUCTION_SCHEDULED')}
-          token={token}
-          defaultWitness={user?.full_name}
-          onRefresh={fetchShipments}
-        />
-      )}
-
-      {/* Tabs */}
-      <div className="px-6 pt-4">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex gap-2 border-b border-gray-200">
-            <button onClick={() => setActiveTab('active')}
-              className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === 'active' ? 'border-b-2' : 'border-transparent text-gray-500'}`}
-              style={activeTab === 'active' ? {borderColor: '#2D2B7A', color: '#2D2B7A'} : {}}>
-              Active Pickups ({activeShipments.length})
-            </button>
-            <button onClick={() => setActiveTab('completed')}
-              className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === 'completed' ? 'border-b-2' : 'border-transparent text-gray-500'}`}
-              style={activeTab === 'completed' ? {borderColor: '#2D2B7A', color: '#2D2B7A'} : {}}>
-              Completed ({completedShipments.length})
-            </button>
-            {user?.is_org_admin && (
-              <button onClick={() => setActiveTab('org-admin')}
-                className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === 'org-admin' ? 'border-b-2' : 'border-transparent text-gray-500'}`}
-                style={activeTab === 'org-admin' ? {borderColor: '#10B981', color: '#10B981'} : {}}>
-                👥 My Organisation
-              </button>
+            {user?.role === 'SFDA_INSPECTOR' && (
+              <DestructionWitnessSection
+                shipments={shipments.filter(s => s.current_state === 'DESTRUCTION_SCHEDULED')}
+                token={token}
+                defaultWitness={user?.full_name}
+                onRefresh={fetchShipments}
+              />
             )}
           </div>
-          <button onClick={fetchShipments}
-            className="px-4 py-2 text-white text-sm font-medium rounded-lg hover:opacity-90"
-            style={{background: '#00B4D8'}}>
-            Refresh
-          </button>
+
+          {/* Org admin tab shows OrgAdminPanel instead of the table */}
+          {activeTab === 'org-admin' && (
+            <OrgAdminPanel token={token} />
+          )}
+
+          {/* Table */}
+          {activeTab !== 'org-admin' && (
+            <div style={{margin:'16px 20px 24px'}}>
+              <div style={{marginBottom:12}}>
+                <div style={{fontSize:16,fontWeight:800,color:'#fff'}}>{activeTab === 'active' ? 'Active Pickups' : 'Completed Pickups'}</div>
+                <div style={{fontSize:11,color:'rgba(255,255,255,.3)',marginTop:2}}>{filtered.length} record{filtered.length !== 1 ? 's' : ''}</div>
+              </div>
+
+              {error && <div style={{...S.error,marginBottom:12}}>{error}</div>}
+
+              {loading ? (
+                <div style={{textAlign:'center',padding:'60px 0',color:'rgba(255,255,255,.25)'}}>
+                  <div style={{fontSize:28,marginBottom:10}}>⏳</div>
+                  <div style={{fontSize:14}}>Loading...</div>
+                </div>
+              ) : filtered.length === 0 ? (
+                <div style={{textAlign:'center',padding:'60px 0',color:'rgba(255,255,255,.2)'}}>
+                  <div style={{fontSize:36,marginBottom:12}}>🚚</div>
+                  <div style={{fontSize:16,fontWeight:600,marginBottom:6,color:'rgba(255,255,255,.4)'}}>No shipments in this queue</div>
+                  <div style={{fontSize:12}}>
+                    {activeTab === 'active' ? 'Pickup requests will appear here when a shipment is ready for sample collection' : 'Completed pickup assignments will appear here'}
+                  </div>
+                </div>
+              ) : (
+                <div style={{background:'rgba(255,255,255,.02)',border:'1px solid rgba(0,170,255,.1)',borderRadius:14,overflow:'hidden'}}>
+                  <table style={{width:'100%',borderCollapse:'collapse'}}>
+                    <thead>
+                      <tr style={{background:'rgba(0,170,255,.04)'}}>
+                        {['Faseh Reference', 'Importer', 'Port', 'Lab', 'Status', 'Since', 'Action'].map(h => (
+                          <th key={h} style={th}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filtered.map(s => {
+                        const info = STATE_INFO[s.current_state] || { label: s.current_state.replace(/_/g, ' '), tone: COMPLETED_TONE[s.current_state] || 'grey' };
+                        return (
+                          <tr key={s.id} className="row" style={{borderBottom:'1px solid rgba(255,255,255,.04)'}}>
+                            <td style={td}>
+                              <span style={{fontFamily:S.mono,fontSize:12,fontWeight:700,color:'#38C6FF'}}>{s.faseh_request_number}</span>
+                            </td>
+                            <td style={td}>
+                              <div style={{fontSize:13,fontWeight:600,color:'#fff'}}>{s.importer_name}</div>
+                              <div style={{fontSize:11,color:'rgba(255,255,255,.35)',marginTop:2}}>{s.shipment_country}</div>
+                            </td>
+                            <td style={td}><span style={{fontSize:12,color:'rgba(255,255,255,.45)'}}>{s.port_of_entry}</span></td>
+                            <td style={td}><span style={{fontSize:12,color:'rgba(255,255,255,.45)'}}>{s.lab_name || '—'}</span></td>
+                            <td style={td}>{badge(info.label, info.tone)}</td>
+                            <td style={td}><span style={{fontSize:11,color:'rgba(255,255,255,.35)'}}>{formatDate(s.state_entered_at)}</span></td>
+                            <td style={td}>
+                              {INSPECTOR_STATES.includes(s.current_state) && s.current_state !== 'LAB_RECEIVED' && (
+                                <button onClick={() => setSelectedShipment(s)}
+                                  style={{...smallBtn(s.current_state === 'SAMPLING_REQUESTED' ? 'amber' : 'cyan'),
+                                    animation: s.current_state === 'SAMPLING_REQUESTED' ? 'glow 1.6s infinite' : 'none'}}>
+                                  {s.current_state === 'SAMPLING_REQUESTED' ? '⚡ Act' : 'Update'}
+                                </button>
+                              )}
+                              {s.current_state === 'LAB_RECEIVED' && (
+                                <span style={{fontSize:11,color:'#00C896',fontWeight:600}}>✓ Done</span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
-
-      {/* Table */}
-      {activeTab !== 'org-admin' && <div className="px-6 py-4">
-        {error && <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4 text-red-700 text-sm">{error}</div>}
-        {loading ? (
-          <div className="text-center py-12 text-gray-500">Loading...</div>
-        ) : filtered.length === 0 ? (
-          <div className="text-center py-12 text-gray-400">
-            <p className="text-lg">No shipments in this queue</p>
-            <p className="text-sm mt-1">
-              {activeTab === 'active' ? 'Pickup requests will appear here when a shipment is ready for sample collection' : 'Completed pickup assignments will appear here'}
-            </p>
-          </div>
-        ) : (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            <table className="w-full">
-              <thead>
-                <tr className="bg-gray-50 border-b border-gray-200">
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Faseh Reference</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Importer</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Port</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Lab</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Status</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Since</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {filtered.map(s => {
-                  const info = STATE_INFO[s.current_state] || { label: s.current_state, color: 'bg-gray-100 text-gray-700' };
-                  return (
-                    <tr key={s.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-3">
-                        <span className="font-mono text-sm font-semibold" style={{color: '#2D2B7A'}}>{s.faseh_request_number}</span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <p className="text-sm font-medium text-gray-900">{s.importer_name}</p>
-                        <p className="text-xs text-gray-500">{s.shipment_country}</p>
-                      </td>
-                      <td className="px-4 py-3 text-xs text-gray-600">{s.port_of_entry}</td>
-                      <td className="px-4 py-3 text-xs text-gray-600">{s.lab_name || '—'}</td>
-                      <td className="px-4 py-3">
-                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${info.color}`}>
-                          {info.label}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-xs text-gray-500">{formatDate(s.state_entered_at)}</td>
-                      <td className="px-4 py-3">
-                        {INSPECTOR_STATES.includes(s.current_state) && s.current_state !== 'LAB_RECEIVED' && (
-                          <button onClick={() => setSelectedShipment(s)}
-                            className={`px-3 py-1 text-xs font-medium rounded-lg text-white hover:opacity-90 ${s.current_state === 'SAMPLING_REQUESTED' ? 'animate-pulse' : ''}`}
-                            style={{background: '#2D2B7A'}}>
-                            {s.current_state === 'SAMPLING_REQUESTED' ? '⚡ Act' : 'Update'}
-                          </button>
-                        )}
-                        {s.current_state === 'LAB_RECEIVED' && (
-                          <span className="text-xs text-green-600 font-medium">✓ Done</span>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-            </div>}
-
-      {activeTab === 'org-admin' && (
-        <OrgAdminPanel token={token} />
-      )}
 
       {selectedShipment && (
         <SampleActionModal

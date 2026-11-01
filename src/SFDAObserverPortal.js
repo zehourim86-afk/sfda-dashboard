@@ -8,33 +8,89 @@ import {
   PieChart, Pie, Cell
 } from 'recharts';
 
-const STATE_COLORS = {
-  RECORD_OPENED: 'bg-gray-100 text-gray-700',
-  SAMPLING_REQUESTED: 'bg-orange-100 text-orange-700',
-  INSPECTOR_DISPATCHED: 'bg-orange-100 text-orange-700',
-  SAMPLE_COLLECTED: 'bg-yellow-100 text-yellow-700',
-  IN_TRANSIT_TO_LAB: 'bg-yellow-100 text-yellow-700',
-  LAB_RECEIVED: 'bg-purple-100 text-purple-700',
-  IN_ANALYSIS: 'bg-purple-100 text-purple-700',
-  RESULT_SUBMITTED: 'bg-blue-100 text-blue-700',
-  CONFORMING: 'bg-green-100 text-green-700',
-  NON_CONFORMING: 'bg-red-100 text-red-700',
-  PARTIALLY_CONFORMING: 'bg-orange-100 text-orange-700',
-  FINAL_CLEARANCE: 'bg-green-100 text-green-700',
-  RE_EXPORT_COMPLETED: 'bg-gray-100 text-gray-700',
-  DESTRUCTION_CONFIRMED: 'bg-gray-100 text-gray-700',
-  DECISION_PENDING: 'bg-amber-100 text-amber-800 border border-amber-300',
-  DECISION_OVERDUE: 'bg-red-100 text-red-700 border border-red-300',
-  SFDA_ORDERED_DESTRUCTION: 'bg-red-600 text-white',
-  RE_EXPORT_INITIATED: 'bg-red-100 text-red-700',
-  RE_EXPORT_BOOKING_CONFIRMED: 'bg-amber-100 text-amber-800',
-  RE_EXPORT_PERMIT_ISSUED: 'bg-amber-100 text-amber-800',
-  RE_EXPORT_LOADED: 'bg-amber-100 text-amber-800',
-  DESTRUCTION_REQUESTED: 'bg-red-100 text-red-700',
-  DESTRUCTION_SCHEDULED: 'bg-red-100 text-red-700',
-  DESTRUCTION_IN_PROGRESS: 'bg-red-100 text-red-700',
-  DESTRUCTION_CERTIFICATE_ISSUED: 'bg-amber-100 text-amber-800',
+// ── Dark theme ───────────────────────────────────────────────────
+// Each tone: [text colour, rgb triplet for tinted backgrounds and borders]
+const TONES = {
+  cyan:   ['#38C6FF', '0,170,255'],
+  green:  ['#00C896', '0,200,150'],
+  amber:  ['#F5A623', '245,166,35'],
+  red:    ['#FF5470', '255,84,112'],
+  purple: ['#a78bfa', '124,92,252'],
+  grey:   ['rgba(255,255,255,.6)', '255,255,255'],
 };
+const tint = (tone, alpha) => `rgba(${TONES[tone][1]},${alpha})`;
+
+const STATE_TONE = {
+  RECORD_OPENED: 'grey',
+  SAMPLING_REQUESTED: 'amber',
+  INSPECTOR_DISPATCHED: 'amber',
+  SAMPLE_COLLECTED: 'amber',
+  IN_TRANSIT_TO_LAB: 'amber',
+  LAB_RECEIVED: 'purple',
+  IN_ANALYSIS: 'purple',
+  RESULT_SUBMITTED: 'cyan',
+  CONFORMING: 'green',
+  NON_CONFORMING: 'red',
+  PARTIALLY_CONFORMING: 'amber',
+  FINAL_CLEARANCE: 'green',
+  RE_EXPORT_COMPLETED: 'grey',
+  DESTRUCTION_CONFIRMED: 'grey',
+  DECISION_PENDING: 'amber',
+  DECISION_OVERDUE: 'red',
+  SFDA_ORDERED_DESTRUCTION: 'red',
+  RE_EXPORT_INITIATED: 'red',
+  RE_EXPORT_BOOKING_CONFIRMED: 'amber',
+  RE_EXPORT_PERMIT_ISSUED: 'amber',
+  RE_EXPORT_LOADED: 'amber',
+  DESTRUCTION_REQUESTED: 'red',
+  DESTRUCTION_SCHEDULED: 'red',
+  DESTRUCTION_IN_PROGRESS: 'red',
+  DESTRUCTION_CERTIFICATE_ISSUED: 'amber',
+};
+// States that were solid / outlined badges in the old design stay more prominent
+const STRONG_STATES = ['SFDA_ORDERED_DESTRUCTION', 'DECISION_OVERDUE', 'DECISION_PENDING'];
+
+function badge(state) {
+  const tone = STATE_TONE[state] || 'grey';
+  const color = TONES[tone][0];
+  const strong = STRONG_STATES.includes(state);
+  return (
+    <span style={{display:'inline-flex',alignItems:'center',gap:5,padding:'4px 10px',borderRadius:20,fontSize:11,fontWeight:strong?700:600,whiteSpace:'nowrap',
+      background:tint(tone,strong?.2:.1),color,border:`1px solid ${tint(tone,strong?.5:.3)}`}}>
+      <span style={{width:5,height:5,borderRadius:'50%',background:color,flexShrink:0}}></span>
+      {stateBadgeLabel(state)}
+    </span>
+  );
+}
+
+const S = {
+  card: {background:'rgba(255,255,255,.03)',border:'1px solid rgba(0,170,255,.1)',borderRadius:14,padding:18},
+  cardTitle: {fontSize:13,fontWeight:700,color:'#fff',marginBottom:3},
+  cardSub: {fontSize:11,color:'rgba(255,255,255,.3)',marginBottom:14},
+  backdrop: {position:'fixed',inset:0,background:'rgba(0,0,0,.8)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:100,padding:20,backdropFilter:'blur(6px)'},
+  closeBtn: {width:32,height:32,borderRadius:8,background:'rgba(255,255,255,.06)',border:'1px solid rgba(255,255,255,.1)',color:'rgba(255,255,255,.6)',fontSize:18,cursor:'pointer',fontFamily:'inherit',display:'flex',alignItems:'center',justifyContent:'center'},
+  ipt: {width:'100%',background:'rgba(255,255,255,.05)',border:'1px solid rgba(255,255,255,.1)',borderRadius:8,padding:'8px 12px',fontSize:12,color:'#fff',fontFamily:'inherit',outline:'none',colorScheme:'dark'},
+  lbl: {fontSize:10,fontWeight:700,color:'rgba(255,255,255,.3)',textTransform:'uppercase',letterSpacing:'1px',marginBottom:4,display:'block'},
+  section: {fontSize:10,fontWeight:700,color:'rgba(255,255,255,.3)',textTransform:'uppercase',letterSpacing:'1.5px',marginBottom:10},
+  listRow: {display:'flex',alignItems:'center',justifyContent:'space-between',gap:12,background:'rgba(255,255,255,.03)',border:'1px solid rgba(255,255,255,.05)',borderRadius:9,padding:'9px 12px'},
+  error: {background:'rgba(255,84,112,.08)',border:'1px solid rgba(255,84,112,.2)',borderRadius:8,padding:'10px 14px',fontSize:12,color:'#FF5470'},
+  mono: 'JetBrains Mono,monospace',
+};
+const smallBtn = (tone) => ({background:tint(tone,.12),border:`1px solid ${tint(tone,.25)}`,color:TONES[tone][0],fontSize:11,fontWeight:700,padding:'6px 12px',borderRadius:7,cursor:'pointer',fontFamily:'inherit',whiteSpace:'nowrap',flexShrink:0});
+
+// Recharts styling for the dark background
+const CHART = {
+  grid: 'rgba(255,255,255,.06)',
+  tick: {fontSize:10, fill:'rgba(255,255,255,.4)'},
+  tooltip: {
+    contentStyle: {background:'#0D1940',border:'1px solid rgba(0,170,255,.2)',borderRadius:8,fontSize:12,color:'#fff'},
+    itemStyle: {color:'#fff'},
+    labelStyle: {color:'rgba(255,255,255,.6)'},
+    cursor: {fill:'rgba(0,170,255,.06)'},
+  },
+};
+// stateData keeps its original colours; they are mapped to the dark palette at render time
+const PIE_COLOR = { '#10B981': '#00C896', '#00B4D8': '#38C6FF', '#EF4444': '#FF5470' };
 
 const DESTRUCTION_TO_SCHEDULE = ['DESTRUCTION_REQUESTED', 'SFDA_ORDERED_DESTRUCTION'];
 
@@ -82,35 +138,36 @@ function SfdaActionQueue({ shipments, token, onRefresh }) {
     action: 'SCHEDULE_DESTRUCTION', reference: orderRef, scheduled_at: new Date(scheduledAt).toISOString()
   });
 
+  const hl = {fontWeight:600,color:'rgba(255,255,255,.75)'};
   const row = (s, detail, button) => (
-    <div key={s.id} className="flex items-center justify-between bg-white rounded-lg px-3 py-2 border border-amber-100">
-      <div>
-        <span className="font-mono text-xs font-semibold" style={{color: '#1a3a5c'}}>{s.faseh_request_number}</span>
-        <span className="text-xs text-gray-500 ml-2">{s.importer_name}</span>
-        <p className="text-xs text-gray-500 mt-0.5">{detail}</p>
+    <div key={s.id} style={S.listRow}>
+      <div style={{minWidth:0}}>
+        <span style={{fontFamily:S.mono,fontSize:11,fontWeight:700,color:'#38C6FF'}}>{s.faseh_request_number}</span>
+        <span style={{fontSize:11,color:'rgba(255,255,255,.45)',marginLeft:8}}>{s.importer_name}</span>
+        <div style={{fontSize:11,color:'rgba(255,255,255,.4)',marginTop:3}}>{detail}</div>
       </div>
       {button}
     </div>
   );
-  const actionButton = (s, label, busyLabel, onClick, color = '#1a3a5c') => (
+  const actionButton = (s, label, busyLabel, onClick, tone = 'cyan') => (
     <button onClick={onClick} disabled={actingId === s.id}
-      className="px-3 py-1.5 text-xs font-semibold rounded-lg text-white hover:opacity-90 disabled:opacity-50"
-      style={{background: color}}>
+      style={{...smallBtn(tone),opacity:actingId === s.id ? .5 : 1}}>
       {actingId === s.id ? busyLabel : label}
     </button>
   );
-  const groupTitle = (text) => <p className="text-xs font-semibold text-gray-600 uppercase mt-3 mb-1">{text}</p>;
+  const groupTitle = (text) => <div style={{...S.section,marginTop:14,marginBottom:8}}>{text}</div>;
+  const scheduleReady = actingId !== schedulingId && orderRef.trim() && scheduledAt;
 
   return (
-    <div className="bg-amber-50 border border-amber-300 rounded-xl p-4">
-      <h3 className="text-sm font-semibold text-amber-800">⚖️ SFDA Actions Required</h3>
-      {error && <div className="bg-red-50 border border-red-200 rounded-lg p-2 mt-2 text-red-700 text-xs">{error}</div>}
+    <div style={{background:tint('amber',.05),border:`1px solid ${tint('amber',.25)}`,borderRadius:14,padding:'16px 18px'}}>
+      <div style={{fontSize:13,fontWeight:700,color:'#F5A623'}}>⚖️ SFDA Actions Required</div>
+      {error && <div style={{...S.error,marginTop:10}}>{error}</div>}
 
       {permits.length > 0 && <>
         {groupTitle(`🚢 Re-export permits awaiting issue (${permits.length})`)}
-        <div className="space-y-2">
+        <div style={{display:'flex',flexDirection:'column',gap:6}}>
           {permits.map(s => row(s,
-            <>Booking ref: <span className="font-mono font-semibold text-gray-700">{s.re_export_reference || '—'}</span>{' · '}confirmed {formatDate(s.state_entered_at)}</>,
+            <>Booking ref: <span style={{...hl,fontFamily:S.mono}}>{s.re_export_reference || '—'}</span>{' · '}confirmed {formatDate(s.state_entered_at)}</>,
             actionButton(s, 'Issue Re-export Permit', 'Issuing...', () => act(s, { action: 'RE_EXPORT_PERMIT' }))
           ))}
         </div>
@@ -118,32 +175,31 @@ function SfdaActionQueue({ shipments, token, onRefresh }) {
 
       {toSchedule.length > 0 && <>
         {groupTitle(`🗓 Destructions to schedule (${toSchedule.length})`)}
-        <div className="space-y-2">
+        <div style={{display:'flex',flexDirection:'column',gap:6}}>
           {toSchedule.map(s => (
             <div key={s.id}>
               {row(s,
                 s.current_state === 'SFDA_ORDERED_DESTRUCTION' ? 'Ordered by SFDA after MAH non-response' : 'MAH selected destruction',
-                schedulingId === s.id ? null : actionButton(s, 'Schedule Destruction', 'Scheduling...', () => startScheduling(s), '#DC2626')
+                schedulingId === s.id ? null : actionButton(s, 'Schedule Destruction', 'Scheduling...', () => startScheduling(s), 'red')
               )}
               {schedulingId === s.id && (
-                <div className="bg-white border border-t-0 border-amber-100 rounded-b-lg px-3 py-2 flex flex-wrap items-end gap-2">
+                <div style={{display:'flex',flexWrap:'wrap',alignItems:'flex-end',gap:10,marginTop:4,padding:'12px',background:tint('red',.04),border:`1px solid ${tint('red',.18)}`,borderRadius:9}}>
                   <div>
-                    <label className="block text-xs font-semibold text-gray-600 uppercase">SFDA order reference *</label>
+                    <label style={S.lbl}>SFDA order reference *</label>
                     <input type="text" value={orderRef} onChange={e => setOrderRef(e.target.value)} placeholder="e.g. SFDA-DO-2026-0142"
-                      className="mt-1 border border-gray-300 rounded-lg px-2 py-1 text-xs focus:outline-none" />
+                      style={{...S.ipt,width:200}} />
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-gray-600 uppercase">Destruction date &amp; time *</label>
+                    <label style={S.lbl}>Destruction date &amp; time *</label>
                     <input type="datetime-local" value={scheduledAt} onChange={e => setScheduledAt(e.target.value)}
-                      className="mt-1 border border-gray-300 rounded-lg px-2 py-1 text-xs focus:outline-none" />
+                      style={{...S.ipt,width:210}} />
                   </div>
                   <button onClick={() => submitSchedule(s)} disabled={actingId === s.id || !orderRef.trim() || !scheduledAt}
-                    className="px-3 py-1.5 text-xs font-semibold rounded-lg text-white hover:opacity-90 disabled:opacity-50"
-                    style={{background: '#DC2626'}}>
+                    style={{...smallBtn('red'),padding:'8px 14px',opacity:scheduleReady ? 1 : .5}}>
                     {actingId === s.id ? 'Scheduling...' : 'Confirm Schedule'}
                   </button>
                   <button onClick={() => setSchedulingId(null)}
-                    className="px-3 py-1.5 text-xs border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50">Cancel</button>
+                    style={{...smallBtn('grey'),padding:'8px 14px',color:'rgba(255,255,255,.6)'}}>Cancel</button>
                 </div>
               )}
             </div>
@@ -153,9 +209,9 @@ function SfdaActionQueue({ shipments, token, onRefresh }) {
 
       {certificates.length > 0 && <>
         {groupTitle(`📄 Destruction certificates to issue (${certificates.length})`)}
-        <div className="space-y-2">
+        <div style={{display:'flex',flexDirection:'column',gap:6}}>
           {certificates.map(s => row(s,
-            <>Witnessed by <span className="font-semibold text-gray-700">{s.destruction_witnessed_by || '—'}</span>{' · '}SFDA order <span className="font-mono">{s.destruction_reference || '—'}</span></>,
+            <>Witnessed by <span style={hl}>{s.destruction_witnessed_by || '—'}</span>{' · '}SFDA order <span style={{fontFamily:S.mono}}>{s.destruction_reference || '—'}</span></>,
             actionButton(s, 'Issue Destruction Certificate', 'Issuing...', () => act(s, { action: 'ISSUE_DESTRUCTION_CERT' }))
           ))}
         </div>
@@ -163,10 +219,10 @@ function SfdaActionQueue({ shipments, token, onRefresh }) {
 
       {awaitingAdmin.length > 0 && <>
         {groupTitle(`⏳ Certificates issued — pending DEMARA admin confirmation (${awaitingAdmin.length})`)}
-        <div className="space-y-2">
+        <div style={{display:'flex',flexDirection:'column',gap:6}}>
           {awaitingAdmin.map(s => row(s,
-            <>Certificate issued {formatDate(s.state_entered_at)}{' · '}SFDA order <span className="font-mono">{s.destruction_reference || '—'}</span></>,
-            <span className="text-xs text-amber-700 font-medium">Pending admin</span>
+            <>Certificate issued {formatDate(s.state_entered_at)}{' · '}SFDA order <span style={{fontFamily:S.mono}}>{s.destruction_reference || '—'}</span></>,
+            <span style={{fontSize:11,color:'#F5A623',fontWeight:600,flexShrink:0}}>Pending admin</span>
           ))}
         </div>
       </>}
@@ -298,351 +354,401 @@ export default function SFDAObserverPortal({ user, token, onLogout }) {
     return matchSearch && matchState && matchCountry && matchPort && matchDateFrom && matchDateTo;
   });
 
+  const navItems = [
+    { id: 'overview', icon: '📊', label: 'Overview', count: null, tone: 'cyan' },
+    { id: 'shipments', icon: '📦', label: 'All Shipments', count: total, tone: 'cyan' },
+    { id: 'assistant', icon: '🔍', label: 'Intelligence', count: null, tone: 'purple' },
+  ];
+
+  const kpis = [
+    { label: 'Total Shipments', value: total, color: '#fff', icon: '📦' },
+    { label: 'In Progress', value: inProgress, color: '#38C6FF', icon: '⚡' },
+    { label: 'Non-Conforming', value: nonConforming, color: '#FF5470', icon: '⚠️' },
+    { label: 'Delayed >48h', value: stuckShipments.length, color: '#F5A623', icon: '⏱' },
+  ];
+
+  const metrics = [
+    { label: 'Total Shipments', value: total, color: '#fff', sub: 'All records on platform', icon: '📦' },
+    { label: 'In Progress', value: inProgress, color: '#38C6FF', sub: 'Not yet closed', icon: '⚡' },
+    { label: 'Clearance Rate', value: `${conformityRate}%`, color: '#00C896', sub: `${cleared} of ${total} cleared`, icon: '✅' },
+    { label: 'Non-Conforming', value: nonConforming, color: '#FF5470', sub: 'Incl. re-exported / destroyed', icon: '⚠️' },
+    { label: 'Avg Dwell', value: avgDwellDays, color: '#a78bfa', sub: 'Days in clearance', icon: '⏱' },
+  ];
+
+  const th = {padding:'11px 16px',textAlign:'left',fontSize:10,fontWeight:700,color:'rgba(255,255,255,.3)',textTransform:'uppercase',letterSpacing:'1px',borderBottom:'1px solid rgba(0,170,255,.08)',whiteSpace:'nowrap'};
+  const td = {padding:'13px 16px'};
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div style={{background: 'linear-gradient(135deg, #1a3a5c 0%, #0d2137 100%)'}} className="px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <img src="/demara-logo.png" alt="DEMARA" style={{height: '80px', width: '200px', objectFit: 'contain'}} />
-            <div>
-              <h1 className="text-lg font-bold text-white">DEMARA Platform</h1>
-              <p className="text-xs mt-0.5" style={{color: '#00B4D8'}}>DEMARA Masaar · SFDA Observer</p>
+    <div style={{display:'flex',flexDirection:'column',height:'100vh',background:'#0B1535',fontFamily:'Inter,sans-serif',color:'#fff',overflow:'hidden'}}>
+      <style>{`
+        @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+        *{box-sizing:border-box}
+        ::-webkit-scrollbar{width:4px;height:4px}
+        ::-webkit-scrollbar-track{background:transparent}
+        ::-webkit-scrollbar-thumb{background:rgba(0,170,255,.2);border-radius:2px}
+        input:focus,textarea:focus,select:focus{border-color:rgba(0,170,255,.5)!important;outline:none}
+        input::placeholder,textarea::placeholder{color:rgba(255,255,255,.2)}
+        select option{background:#0D1940;color:#fff}
+        tr.row:hover td{background:rgba(0,170,255,.04)!important}
+        .hov:hover{background:rgba(0,170,255,.07)!important;border-color:rgba(0,170,255,.2)!important}
+      `}</style>
+
+      {/* ── Topbar ── */}
+      <div style={{height:58,background:'#091230',borderBottom:'1px solid rgba(0,170,255,.1)',display:'flex',alignItems:'center',padding:'0 24px',gap:14,flexShrink:0,zIndex:10}}>
+        <img src="/demara-logo.png" alt="DEMARA" style={{height:34,objectFit:'contain'}}/>
+        <div style={{width:1,height:28,background:'rgba(255,255,255,.08)'}}></div>
+        <div>
+          <div style={{fontSize:14,fontWeight:800,color:'#fff',letterSpacing:'-.3px'}}>DEMARA Platform</div>
+          <div style={{fontSize:10,color:'#38C6FF',fontWeight:600,letterSpacing:'.3px'}}>DEMARA Masaar · SFDA Observer</div>
+        </div>
+        <div style={{marginLeft:'auto',display:'flex',alignItems:'center',gap:10}}>
+          <div style={{display:'flex',alignItems:'center',gap:5,fontSize:11,fontWeight:600,color:'#00C896',background:'rgba(0,200,150,.08)',border:'1px solid rgba(0,200,150,.2)',borderRadius:20,padding:'4px 10px'}}>
+            <span style={{width:6,height:6,borderRadius:'50%',background:'#00C896',animation:'pulse 2s infinite',display:'inline-block'}}></span>Live
+          </div>
+          <NotificationBell token={token} />
+          {user && (
+            <div style={{display:'flex',alignItems:'center',gap:9,background:'rgba(255,255,255,.05)',border:'1px solid rgba(255,255,255,.1)',borderRadius:10,padding:'6px 12px'}}>
+              <div style={{width:28,height:28,borderRadius:'50%',background:'linear-gradient(135deg,#38C6FF,#1E3A8A)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:800,color:'#fff',flexShrink:0}}>{user.full_name?.charAt(0) || 'S'}</div>
+              <div><div style={{fontSize:12,fontWeight:700,color:'#fff'}}>{user.full_name}</div><div style={{fontSize:10,color:'#38C6FF',marginTop:1}}>SFDA</div></div>
+            </div>
+          )}
+          <button onClick={onLogout} style={{background:'rgba(255,84,112,.12)',border:'1px solid rgba(255,84,112,.25)',color:'#FF5470',fontSize:11,fontWeight:700,padding:'7px 14px',borderRadius:8,cursor:'pointer',fontFamily:'inherit'}}>Sign Out</button>
+        </div>
+      </div>
+
+      {/* ── Body ── */}
+      <div style={{display:'flex',flex:1,overflow:'hidden'}}>
+
+        {/* ── Sidebar ── */}
+        <div style={{width:220,background:'#0D1940',borderRight:'1px solid rgba(0,170,255,.08)',display:'flex',flexDirection:'column',flexShrink:0,overflowY:'auto'}}>
+          {/* KPI section */}
+          <div style={{padding:'16px 14px',borderBottom:'1px solid rgba(0,170,255,.06)'}}>
+            <div style={{fontSize:9,fontWeight:700,color:'rgba(255,255,255,.2)',textTransform:'uppercase',letterSpacing:'2px',marginBottom:12}}>Overview</div>
+            <div style={{display:'flex',flexDirection:'column',gap:6}}>
+              {kpis.map(k => (
+                <div key={k.label} style={{display:'flex',alignItems:'center',gap:10,padding:'8px 10px',borderRadius:9,background:'rgba(255,255,255,.03)',border:'1px solid rgba(255,255,255,.05)'}}>
+                  <span style={{fontSize:14,flexShrink:0}}>{k.icon}</span>
+                  <span style={{fontSize:11,color:'rgba(255,255,255,.5)',flex:1}}>{k.label}</span>
+                  <span style={{fontSize:16,fontWeight:900,color:k.color,letterSpacing:'-0.5px'}}>{k.value}</span>
+                </div>
+              ))}
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <span className="flex items-center gap-1.5 text-xs text-green-400 font-medium">
-              <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-              Live
-            </span>
-            <NotificationBell token={token} />
-            {user && (
-              <div className="flex items-center gap-2 bg-white bg-opacity-10 rounded-lg px-3 py-1.5">
-                <div className="text-right">
-                  <p className="text-white text-xs font-semibold">{user.full_name}</p>
-                  <p className="text-xs" style={{color: '#00B4D8'}}>SFDA</p>
+
+          {/* Nav */}
+          <div style={{padding:'12px 10px',flex:1}}>
+            <div style={{fontSize:9,fontWeight:700,color:'rgba(255,255,255,.2)',textTransform:'uppercase',letterSpacing:'2px',marginBottom:10,paddingLeft:4}}>Navigation</div>
+            {navItems.map(n => {
+              const on = activeTab === n.id;
+              const color = TONES[n.tone][0];
+              return (
+                <button key={n.id} onClick={() => setActiveTab(n.id)} style={{width:'100%',display:'flex',alignItems:'center',gap:10,padding:'9px 12px',borderRadius:9,cursor:'pointer',marginBottom:3,fontFamily:'inherit',fontSize:12,fontWeight:on?700:500,
+                  background:on?tint(n.tone,.12):'transparent',color:on?color:'rgba(255,255,255,.45)',border:on?`1px solid ${color}33`:'1px solid transparent',transition:'all .15s',textAlign:'left'}}>
+                  <span style={{fontSize:15}}>{n.icon}</span>
+                  <span style={{flex:1}}>{n.label}</span>
+                  {n.count != null && n.count > 0 && (
+                    <span style={{fontSize:10,fontWeight:700,background:on?color:'rgba(255,255,255,.1)',color:on?'#0D1940':'rgba(255,255,255,.5)',padding:'1px 7px',borderRadius:10}}>{n.count}</span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Read-only notice + refresh */}
+          <div style={{padding:'12px 14px',borderTop:'1px solid rgba(0,170,255,.06)',display:'flex',flexDirection:'column',gap:10}}>
+            <div style={{fontSize:10,lineHeight:1.5,color:'rgba(255,255,255,.4)',background:'rgba(0,170,255,.05)',border:'1px solid rgba(0,170,255,.12)',borderRadius:9,padding:'9px 10px'}}>
+              <span style={{color:'#38C6FF',fontWeight:700}}>🔒 Read-only access</span><br/>
+              Full visibility into import clearance operations. The only actions available are re-export permits and supervised destruction steps.
+            </div>
+            <button onClick={fetchShipments} style={{width:'100%',padding:'9px',background:'rgba(0,170,255,.1)',border:'1px solid rgba(0,170,255,.2)',color:'#38C6FF',fontSize:12,fontWeight:700,borderRadius:9,cursor:'pointer',fontFamily:'inherit'}}>↻ Refresh</button>
+          </div>
+        </div>
+
+        {/* ── Main content ── */}
+        <div style={{flex:1,overflowY:'auto',background:'#0B1535'}}>
+
+          {/* Overview Tab */}
+          {activeTab === 'overview' && (
+            <div style={{padding:'20px 24px',display:'flex',flexDirection:'column',gap:14}}>
+              {user?.role === 'SFDA_REVIEWER' && (
+                <SfdaActionQueue shipments={shipments} token={token} onRefresh={fetchShipments} />
+              )}
+
+              {/* Key metrics */}
+              <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:12}}>
+                {metrics.map(m => (
+                  <div key={m.label} style={{...S.card,padding:'16px 18px',position:'relative',overflow:'hidden'}}>
+                    <div style={{position:'absolute',top:0,left:0,right:0,height:2,background:`linear-gradient(90deg,${m.color},transparent)`}}></div>
+                    <div style={{fontSize:20,marginBottom:8}}>{m.icon}</div>
+                    <div style={{fontSize:10,fontWeight:700,color:'rgba(255,255,255,.3)',textTransform:'uppercase',letterSpacing:'1px',marginBottom:6}}>{m.label}</div>
+                    <div style={{fontSize:30,fontWeight:900,color:m.color,lineHeight:1,letterSpacing:'-1px',marginBottom:4}}>{m.value}</div>
+                    <div style={{fontSize:10,color:'rgba(255,255,255,.25)'}}>{m.sub}</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Charts */}
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:14}}>
+                <div style={S.card}>
+                  <div style={S.cardTitle}>Clearance Status Distribution</div>
+                  <div style={S.cardSub}>Cleared vs in progress vs non-conforming</div>
+                  <ResponsiveContainer width="100%" height={180}>
+                    <PieChart>
+                      <Pie data={stateData} cx="50%" cy="50%" outerRadius={70} stroke="#0B1535"
+                        dataKey="value" label={({name, value}) => `${name}: ${value}`}>
+                        {stateData.map((entry, i) => (
+                          <Cell key={i} fill={PIE_COLOR[entry.color] || entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip {...CHART.tooltip} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+                <div style={S.card}>
+                  <div style={S.cardTitle}>Shipments by Port</div>
+                  <div style={S.cardSub}>Entry points across the Kingdom</div>
+                  <ResponsiveContainer width="100%" height={180}>
+                    <BarChart data={portData} margin={{bottom: 20}}>
+                      <CartesianGrid strokeDasharray="3 3" stroke={CHART.grid} />
+                      <XAxis dataKey="name" tick={CHART.tick} angle={-20} textAnchor="end" stroke={CHART.grid} />
+                      <YAxis tick={CHART.tick} allowDecimals={false} stroke={CHART.grid} />
+                      <Tooltip {...CHART.tooltip} />
+                      <Bar dataKey="value" fill="#38C6FF" radius={[4,4,0,0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
                 </div>
               </div>
-            )}
-            <button onClick={onLogout} className="px-3 py-1.5 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600">
-              Sign Out
-            </button>
-          </div>
-        </div>
-      </div>
 
-      {/* Observer notice */}
-      <div className="bg-blue-50 border-b border-blue-200 px-6 py-2">
-        <p className="text-xs text-blue-700 text-center">
-          🔒 Read-only access — This portal provides SFDA with full visibility into import clearance operations. The only actions available are re-export permits and supervised destruction steps.
-        </p>
-      </div>
-
-      {/* Tabs */}
-      <div className="bg-white border-b border-gray-200 px-6">
-        <div className="flex gap-2">
-          <button onClick={() => setActiveTab('overview')}
-            className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'overview' ? 'border-blue-600 text-blue-700' : 'border-transparent text-gray-500'}`}>
-            📊 Overview
-          </button>
-          <button onClick={() => setActiveTab('shipments')}
-            className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'shipments' ? 'border-blue-600 text-blue-700' : 'border-transparent text-gray-500'}`}>
-            📦 All Shipments ({total})
-          </button>
-          <button onClick={() => setActiveTab('assistant')}
-            className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'assistant' ? 'border-blue-600 text-blue-700' : 'border-transparent text-gray-500'}`}>
-            🔍 Intelligence
-          </button>
-        </div>
-      </div>
-
-      {/* Overview Tab */}
-      {activeTab === 'overview' && (
-        <div className="px-6 py-4 space-y-4">
-          {user?.role === 'SFDA_REVIEWER' && (
-            <SfdaActionQueue shipments={shipments} token={token} onRefresh={fetchShipments} />
-          )}
-
-          {/* Key metrics */}
-          <div className="grid grid-cols-5 gap-4">
-            <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
-              <p className="text-3xl font-bold" style={{color: '#1a3a5c'}}>{total}</p>
-              <p className="text-xs text-gray-500 mt-1">Total shipments</p>
-            </div>
-            <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
-              <p className="text-3xl font-bold text-blue-600">{inProgress}</p>
-              <p className="text-xs text-gray-500 mt-1">In progress</p>
-            </div>
-            <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
-              <p className="text-3xl font-bold text-green-600">{conformityRate}%</p>
-              <p className="text-xs text-gray-500 mt-1">Clearance rate</p>
-            </div>
-            <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
-              <p className="text-3xl font-bold text-red-600">{nonConforming}</p>
-              <p className="text-xs text-gray-500 mt-1">Non-conforming</p>
-            </div>
-            <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
-              <p className="text-3xl font-bold text-purple-600">{avgDwellDays}</p>
-              <p className="text-xs text-gray-500 mt-1">Avg dwell (days)</p>
-            </div>
-          </div>
-
-          {/* Charts */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-white rounded-xl border border-gray-200 p-4">
-              <h3 className="text-sm font-semibold text-gray-700 mb-3">Clearance Status Distribution</h3>
-              <ResponsiveContainer width="100%" height={180}>
-                <PieChart>
-                  <Pie data={stateData} cx="50%" cy="50%" outerRadius={70}
-                    dataKey="value" label={({name, value}) => `${name}: ${value}`}>
-                    {stateData.map((entry, i) => (
-                      <Cell key={i} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="bg-white rounded-xl border border-gray-200 p-4">
-              <h3 className="text-sm font-semibold text-gray-700 mb-3">Shipments by Port</h3>
-              <ResponsiveContainer width="100%" height={180}>
-                <BarChart data={portData} margin={{bottom: 20}}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis dataKey="name" tick={{fontSize: 10}} angle={-20} textAnchor="end" />
-                  <YAxis tick={{fontSize: 10}} allowDecimals={false} />
-                  <Tooltip />
-                  <Bar dataKey="value" fill="#1a3a5c" radius={[4,4,0,0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-
-          {/* Stuck shipments alert */}
-          {stuckShipments.length > 0 && (
-            <div className="bg-red-50 border border-red-300 rounded-xl p-4">
-              <h3 className="text-sm font-semibold text-red-700 mb-2">
-                ⚠️ Shipments Delayed — Same State Over 48 Hours ({stuckShipments.length})
-              </h3>
-              <div className="space-y-2">
-                {stuckShipments.map(s => (
-                  <div key={s.id} className="flex items-center justify-between bg-white rounded-lg px-3 py-2 border border-red-100">
-                    <div>
-                      <span className="font-mono text-xs font-semibold" style={{color: '#1a3a5c'}}>{s.faseh_request_number}</span>
-                      <span className="text-xs text-gray-500 ml-2">{s.importer_name}</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${STATE_COLORS[s.current_state] || 'bg-gray-100 text-gray-700'}`}>
-                        {stateBadgeLabel(s.current_state)}
-                      </span>
-                      <span className="text-xs text-red-600 font-bold">
-                        {Math.floor((new Date() - new Date(s.state_entered_at)) / (1000 * 60 * 60))}h stuck
-                      </span>
-                    </div>
+              {/* Stuck shipments alert */}
+              {stuckShipments.length > 0 && (
+                <div style={{background:tint('red',.05),border:`1px solid ${tint('red',.22)}`,borderRadius:14,padding:'16px 18px'}}>
+                  <div style={{fontSize:13,fontWeight:700,color:'#FF5470',marginBottom:12}}>
+                    ⚠️ Shipments Delayed — Same State Over 48 Hours ({stuckShipments.length})
                   </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Non-conformity by country */}
-          {countryNonConformityData.length > 0 && (
-            <div className="bg-white rounded-xl border border-gray-200 p-4">
-              <h3 className="text-sm font-semibold text-gray-700 mb-3">Non-Conformity Rate by Country of Origin</h3>
-              <ResponsiveContainer width="100%" height={180}>
-                <BarChart data={countryNonConformityData} layout="vertical" margin={{left: 40}}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis type="number" tick={{fontSize: 10}} unit="%" domain={[0, 100]} />
-                  <YAxis type="category" dataKey="name" tick={{fontSize: 10}} width={60} />
-                  <Tooltip formatter={(value) => `${value}%`} />
-                  <Bar dataKey="rate" fill="#EF4444" radius={[0,4,4,0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          )}
-
-          {/* Lab performance comparison */}
-          <div className="bg-white rounded-xl border border-gray-200 p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <h3 className="text-sm font-semibold text-gray-700">Lab Network Performance</h3>
-              <span style={{fontSize:'9px',fontWeight:700,letterSpacing:'0.8px',color:'#00C896',
-                background:'rgba(0,200,150,0.1)',border:'1px solid rgba(0,200,150,0.3)',
-                borderRadius:'10px',padding:'2px 8px'}}>
-                LIVE DATA
-              </span>
-            </div>
-            {labPerformanceLoading ? (
-              <p className="text-xs text-gray-400 py-6 text-center">Loading lab performance...</p>
-            ) : labPerformance.length === 0 ? (
-              <p className="text-xs text-gray-400 py-6 text-center">
-                No lab performance data yet — data will appear as shipments are processed
-              </p>
-            ) : (
-              <div className="grid grid-cols-2 gap-4">
-                {labPerformance.map(lab => (
-                  <div key={lab.lab_id} className="bg-gray-50 rounded-lg p-3">
-                    <p className="text-xs font-semibold text-gray-900 mb-2">{lab.lab_name}</p>
-                    {[
-                      ['Assigned', lab.total_assigned, '#1a3a5c'],
-                      ['Completed', lab.completed, '#059669'],
-                      ['Pending', lab.pending, '#D97706'],
-                      ['Avg turnaround', lab.avg_turnaround_hours != null ? `${lab.avg_turnaround_hours}h` : '—', '#1a3a5c'],
-                      ['Conformity', lab.conformity_rate != null ? `${lab.conformity_rate}%` : '—', '#1a3a5c'],
-                    ].map(([label, value, color]) => (
-                      <div key={label} className="flex items-center justify-between mb-1">
-                        <span className="text-xs text-gray-500">{label}</span>
-                        <span className="text-xs font-bold" style={{color}}>{value}</span>
+                  <div style={{display:'flex',flexDirection:'column',gap:6}}>
+                    {stuckShipments.map(s => (
+                      <div key={s.id} style={S.listRow}>
+                        <div>
+                          <span style={{fontFamily:S.mono,fontSize:11,fontWeight:700,color:'#38C6FF'}}>{s.faseh_request_number}</span>
+                          <span style={{fontSize:11,color:'rgba(255,255,255,.45)',marginLeft:8}}>{s.importer_name}</span>
+                        </div>
+                        <div style={{display:'flex',alignItems:'center',gap:12}}>
+                          {badge(s.current_state)}
+                          <span style={{fontSize:11,fontWeight:800,color:'#FF5470',whiteSpace:'nowrap'}}>
+                            {Math.floor((new Date() - new Date(s.state_entered_at)) / (1000 * 60 * 60))}h stuck
+                          </span>
+                        </div>
                       </div>
                     ))}
-                    <div className="w-full bg-gray-200 rounded-full h-1.5 mt-2" title="Completed of assigned">
-                      <div className="h-1.5 rounded-full" style={{
-                        width: `${lab.total_assigned > 0 ? Math.round((lab.completed / lab.total_assigned) * 100) : 0}%`,
-                        background: '#1a3a5c'
-                      }}></div>
-                    </div>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
+                </div>
+              )}
 
-          {/* In progress shipments */}
-          {inProgress > 0 && (
-            <div className="bg-white rounded-xl border border-gray-200 p-4">
-              <h3 className="text-sm font-semibold text-gray-700 mb-3">⚡ Shipments Currently In Progress</h3>
-              <div className="space-y-2">
-                {shipments.filter(s => !['FINAL_CLEARANCE', 'RE_EXPORT_COMPLETED', 'DESTRUCTION_CONFIRMED', 'ARCHIVED'].includes(s.current_state)).map(s => (
-                  <div key={s.id}
-                    onClick={() => { setSelectedShipment(s); setActiveTab('shipments'); }}
-                    className="flex items-center justify-between bg-gray-50 rounded-lg px-4 py-3 cursor-pointer hover:bg-blue-50 transition-colors">
-                    <div>
-                      <span className="font-mono text-sm font-semibold" style={{color: '#1a3a5c'}}>{s.faseh_request_number}</span>
-                      <span className="text-xs text-gray-500 ml-3">{s.importer_name}</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-xs text-gray-500">{s.port_of_entry}</span>
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${STATE_COLORS[s.current_state] || 'bg-gray-100 text-gray-700'}`}>
-                        {stateBadgeLabel(s.current_state)}
-                      </span>
-                    </div>
+              {/* Non-conformity by country */}
+              {countryNonConformityData.length > 0 && (
+                <div style={S.card}>
+                  <div style={S.cardTitle}>Non-Conformity Rate by Country of Origin</div>
+                  <div style={S.cardSub}>Share of each country's shipments that failed</div>
+                  <ResponsiveContainer width="100%" height={180}>
+                    <BarChart data={countryNonConformityData} layout="vertical" margin={{left: 40}}>
+                      <CartesianGrid strokeDasharray="3 3" stroke={CHART.grid} />
+                      <XAxis type="number" tick={CHART.tick} unit="%" domain={[0, 100]} stroke={CHART.grid} />
+                      <YAxis type="category" dataKey="name" tick={CHART.tick} width={60} stroke={CHART.grid} />
+                      <Tooltip {...CHART.tooltip} formatter={(value) => `${value}%`} />
+                      <Bar dataKey="rate" fill="#FF5470" radius={[0,4,4,0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+
+              {/* Lab performance comparison */}
+              <div style={S.card}>
+                <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:14}}>
+                  <div style={{fontSize:13,fontWeight:700,color:'#fff'}}>Lab Network Performance</div>
+                  <span style={{fontSize:'9px',fontWeight:700,letterSpacing:'0.8px',color:'#00C896',
+                    background:'rgba(0,200,150,0.1)',border:'1px solid rgba(0,200,150,0.3)',
+                    borderRadius:'10px',padding:'2px 8px'}}>
+                    LIVE DATA
+                  </span>
+                </div>
+                {labPerformanceLoading ? (
+                  <div style={{fontSize:12,color:'rgba(255,255,255,.3)',padding:'24px 0',textAlign:'center'}}>Loading lab performance...</div>
+                ) : labPerformance.length === 0 ? (
+                  <div style={{fontSize:12,color:'rgba(255,255,255,.3)',padding:'24px 0',textAlign:'center'}}>
+                    No lab performance data yet — data will appear as shipments are processed
                   </div>
-                ))}
+                ) : (
+                  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
+                    {labPerformance.map(lab => (
+                      <div key={lab.lab_id} style={{background:'rgba(255,255,255,.02)',border:'1px solid rgba(255,255,255,.06)',borderRadius:10,padding:'12px 14px'}}>
+                        <div style={{fontSize:12,fontWeight:700,color:'#fff',marginBottom:10}}>{lab.lab_name}</div>
+                        {[
+                          ['Assigned', lab.total_assigned, '#fff'],
+                          ['Completed', lab.completed, '#00C896'],
+                          ['Pending', lab.pending, '#F5A623'],
+                          ['Avg turnaround', lab.avg_turnaround_hours != null ? `${lab.avg_turnaround_hours}h` : '—', '#38C6FF'],
+                          ['Conformity', lab.conformity_rate != null ? `${lab.conformity_rate}%` : '—', '#a78bfa'],
+                        ].map(([label, value, color]) => (
+                          <div key={label} style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:5}}>
+                            <span style={{fontSize:11,color:'rgba(255,255,255,.45)'}}>{label}</span>
+                            <span style={{fontSize:12,fontWeight:700,color}}>{value}</span>
+                          </div>
+                        ))}
+                        <div style={{width:'100%',height:6,background:'rgba(255,255,255,.06)',borderRadius:3,overflow:'hidden',marginTop:8}} title="Completed of assigned">
+                          <div style={{
+                            height:'100%',borderRadius:3,
+                            width: `${lab.total_assigned > 0 ? Math.round((lab.completed / lab.total_assigned) * 100) : 0}%`,
+                            background: '#38C6FF'
+                          }}></div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
+
+              {/* In progress shipments */}
+              {inProgress > 0 && (
+                <div style={S.card}>
+                  <div style={{...S.cardTitle,marginBottom:12}}>⚡ Shipments Currently In Progress</div>
+                  <div style={{display:'flex',flexDirection:'column',gap:6}}>
+                    {shipments.filter(s => !['FINAL_CLEARANCE', 'RE_EXPORT_COMPLETED', 'DESTRUCTION_CONFIRMED', 'ARCHIVED'].includes(s.current_state)).map(s => (
+                      <div key={s.id} className="hov"
+                        onClick={() => { setSelectedShipment(s); setActiveTab('shipments'); }}
+                        style={{...S.listRow,padding:'11px 14px',cursor:'pointer',transition:'all .15s'}}>
+                        <div>
+                          <span style={{fontFamily:S.mono,fontSize:12,fontWeight:700,color:'#38C6FF'}}>{s.faseh_request_number}</span>
+                          <span style={{fontSize:12,color:'rgba(255,255,255,.45)',marginLeft:12}}>{s.importer_name}</span>
+                        </div>
+                        <div style={{display:'flex',alignItems:'center',gap:12}}>
+                          <span style={{fontSize:11,color:'rgba(255,255,255,.35)'}}>{s.port_of_entry}</span>
+                          {badge(s.current_state)}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Intelligence Tab */}
+          {activeTab === 'assistant' && (
+            <div style={{padding:'24px',height:'calc(100vh - 58px)'}}>
+              <SFDAObserverAssistant token={token} />
+            </div>
+          )}
+
+          {/* Shipments Tab */}
+          {activeTab === 'shipments' && (
+            <div style={{margin:'16px 20px 24px'}}>
+              <div style={{marginBottom:12}}>
+                <div style={{fontSize:16,fontWeight:800,color:'#fff'}}>All Shipments</div>
+                <div style={{fontSize:11,color:'rgba(255,255,255,.3)',marginTop:2}}>{filtered.length} of {total} record{total !== 1 ? 's' : ''} · click a row for its timeline</div>
+              </div>
+
+              {/* Filters */}
+              <div style={{...S.card,padding:14,marginBottom:14}}>
+                <div style={{display:'grid',gridTemplateColumns:'2fr 1fr 1fr 1fr',gap:8,marginBottom:8}}>
+                  <input type="text" placeholder="🔍 Search by Faseh number or importer..."
+                    value={search} onChange={e => setSearch(e.target.value)}
+                    style={S.ipt} />
+                  <select value={filterState} onChange={e => setFilterState(e.target.value)}
+                    style={{...S.ipt,cursor:'pointer'}}>
+                    <option value="">All States</option>
+                    <option value="RECORD_OPENED">Record Opened</option>
+                    <option value="SAMPLING_REQUESTED">Sampling Requested</option>
+                    <option value="IN_ANALYSIS">In Analysis</option>
+                    <option value="RESULT_SUBMITTED">Result Submitted</option>
+                    <option value="DECISION_PENDING">Awaiting SFDA Decision</option>
+                    <option value="CONFORMING">Conforming</option>
+                    <option value="NON_CONFORMING">Non-Conforming</option>
+                    <option value="PARTIALLY_CONFORMING">Partially Conforming</option>
+                    <option value="FINAL_CLEARANCE">Final Clearance</option>
+                    <option value="RE_EXPORT_COMPLETED">Re-Export Completed</option>
+                  </select>
+                  <select value={filterCountry} onChange={e => setFilterCountry(e.target.value)}
+                    style={{...S.ipt,cursor:'pointer'}}>
+                    <option value="">All Countries</option>
+                    {[...new Set(shipments.map(s => s.shipment_country))].sort().map(c => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                  <select value={filterPort} onChange={e => setFilterPort(e.target.value)}
+                    style={{...S.ipt,cursor:'pointer'}}>
+                    <option value="">All Ports</option>
+                    {[...new Set(shipments.map(s => s.port_of_entry))].sort().map(p => (
+                      <option key={p} value={p}>{p}</option>
+                    ))}
+                  </select>
+                </div>
+                <div style={{display:'flex',alignItems:'center',gap:8}}>
+                  <span style={{...S.lbl,marginBottom:0}}>Created</span>
+                  <input type="date" value={filterDateFrom} onChange={e => setFilterDateFrom(e.target.value)}
+                    style={{...S.ipt,width:160}} />
+                  <span style={{fontSize:12,color:'rgba(255,255,255,.3)'}}>to</span>
+                  <input type="date" value={filterDateTo} onChange={e => setFilterDateTo(e.target.value)}
+                    style={{...S.ipt,width:160}} />
+                  <button onClick={() => { setFilterState(''); setFilterCountry(''); setFilterPort(''); setFilterDateFrom(''); setFilterDateTo(''); setSearch(''); }}
+                    style={{...smallBtn('grey'),marginLeft:'auto',padding:'8px 14px',color:'rgba(255,255,255,.6)'}}>
+                    Clear Filters
+                  </button>
+                  <button onClick={fetchShipments}
+                    style={{...smallBtn('cyan'),padding:'8px 14px'}}>
+                    ↻ Refresh
+                  </button>
+                </div>
+              </div>
+
+              {loading ? (
+                <div style={{textAlign:'center',padding:'60px 0',color:'rgba(255,255,255,.25)'}}>
+                  <div style={{fontSize:28,marginBottom:10}}>⏳</div>
+                  <div style={{fontSize:14}}>Loading...</div>
+                </div>
+              ) : (
+                <div style={{background:'rgba(255,255,255,.02)',border:'1px solid rgba(0,170,255,.1)',borderRadius:14,overflow:'hidden'}}>
+                  <table style={{width:'100%',borderCollapse:'collapse'}}>
+                    <thead>
+                      <tr style={{background:'rgba(0,170,255,.04)'}}>
+                        {['Faseh Reference', 'Importer', 'Country', 'Port', 'Lab', 'Status', 'Last Update', 'View'].map(h => (
+                          <th key={h} style={th}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filtered.map(s => (
+                        <tr key={s.id} className="row" style={{cursor:'pointer',borderBottom:'1px solid rgba(255,255,255,.04)'}} onClick={() => setTimelineShipmentId(s.id)}>
+                          <td style={td}>
+                            <span style={{fontFamily:S.mono,fontSize:12,fontWeight:700,color:'#38C6FF'}}>{s.faseh_request_number}</span>
+                          </td>
+                          <td style={td}>
+                            <div style={{fontSize:13,fontWeight:600,color:'#fff'}}>{s.importer_name}</div>
+                            <div style={{fontSize:11,color:'rgba(255,255,255,.35)',marginTop:2}}>{s.ghad_cr_number}</div>
+                          </td>
+                          <td style={td}><span style={{fontSize:12,color:'rgba(255,255,255,.55)'}}>{s.shipment_country}</span></td>
+                          <td style={td}><span style={{fontSize:11,color:'rgba(255,255,255,.4)'}}>{s.port_of_entry}</span></td>
+                          <td style={td}><span style={{fontSize:11,color:'rgba(255,255,255,.4)'}}>{s.lab_name || '—'}</span></td>
+                          <td style={td}>{badge(s.current_state)}</td>
+                          <td style={td}><span style={{fontSize:11,color:'rgba(255,255,255,.35)'}}>{formatDate(s.updated_at)}</span></td>
+                          <td style={td}>
+                            <button onClick={() => setSelectedShipment(s)}
+                              style={smallBtn('cyan')}>
+                              View
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  {filtered.length === 0 && (
+                    <div style={{textAlign:'center',padding:'40px 0',fontSize:12,color:'rgba(255,255,255,.3)'}}>No shipments match these filters</div>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </div>
-      )}
-
-      {/* Intelligence Tab */}
-      {activeTab === 'assistant' && (
-        <div style={{padding:'24px',height:'calc(100vh - 200px)'}}>
-          <SFDAObserverAssistant token={token} />
-        </div>
-      )}
-
-      {/* Shipments Tab */}
-      {activeTab === 'shipments' && (
-        <div className="px-6 py-4">
-          <div className="grid grid-cols-2 gap-3 mb-4">
-            <input type="text" placeholder="Search by Faseh number or importer..."
-              value={search} onChange={e => setSearch(e.target.value)}
-              className="border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none" />
-            <select value={filterState} onChange={e => setFilterState(e.target.value)}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none">
-              <option value="">All States</option>
-              <option value="RECORD_OPENED">Record Opened</option>
-              <option value="SAMPLING_REQUESTED">Sampling Requested</option>
-              <option value="IN_ANALYSIS">In Analysis</option>
-              <option value="RESULT_SUBMITTED">Result Submitted</option>
-              <option value="DECISION_PENDING">Awaiting SFDA Decision</option>
-              <option value="CONFORMING">Conforming</option>
-              <option value="NON_CONFORMING">Non-Conforming</option>
-              <option value="PARTIALLY_CONFORMING">Partially Conforming</option>
-              <option value="FINAL_CLEARANCE">Final Clearance</option>
-              <option value="RE_EXPORT_COMPLETED">Re-Export Completed</option>
-            </select>
-            <select value={filterCountry} onChange={e => setFilterCountry(e.target.value)}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none">
-              <option value="">All Countries</option>
-              {[...new Set(shipments.map(s => s.shipment_country))].sort().map(c => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-            </select>
-            <select value={filterPort} onChange={e => setFilterPort(e.target.value)}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none">
-              <option value="">All Ports</option>
-              {[...new Set(shipments.map(s => s.port_of_entry))].sort().map(p => (
-                <option key={p} value={p}>{p}</option>
-              ))}
-            </select>
-          </div>
-          <div className="flex gap-3 mb-4">
-            <input type="date" value={filterDateFrom} onChange={e => setFilterDateFrom(e.target.value)}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none" />
-            <span className="flex items-center text-gray-400 text-sm">to</span>
-            <input type="date" value={filterDateTo} onChange={e => setFilterDateTo(e.target.value)}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none" />
-            <button onClick={() => { setFilterState(''); setFilterCountry(''); setFilterPort(''); setFilterDateFrom(''); setFilterDateTo(''); setSearch(''); }}
-              className="px-4 py-2 border border-gray-300 text-gray-600 text-sm rounded-lg hover:bg-gray-50">
-              Clear Filters
-            </button>
-            <button onClick={fetchShipments}
-              className="px-4 py-2 text-white text-sm font-medium rounded-lg hover:opacity-90"
-              style={{background: '#00B4D8'}}>
-              Refresh
-            </button>
-          </div>
-
-          {loading ? (
-            <div className="text-center py-12 text-gray-500">Loading...</div>
-          ) : (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-              <table className="w-full">
-                <thead>
-                  <tr className="bg-gray-50 border-b border-gray-200">
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Faseh Reference</th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Importer</th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Country</th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Port</th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Lab</th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Status</th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Last Update</th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">View</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {filtered.map(s => (
-                    <tr key={s.id} className="hover:bg-gray-50" style={{cursor:'pointer'}} onClick={() => setTimelineShipmentId(s.id)}>
-                      <td className="px-4 py-3">
-                        <span className="font-mono text-sm font-semibold" style={{color: '#1a3a5c'}}>{s.faseh_request_number}</span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <p className="text-sm font-medium text-gray-900">{s.importer_name}</p>
-                        <p className="text-xs text-gray-500">{s.ghad_cr_number}</p>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-600">{s.shipment_country}</td>
-                      <td className="px-4 py-3 text-xs text-gray-500">{s.port_of_entry}</td>
-                      <td className="px-4 py-3 text-xs text-gray-500">{s.lab_name || '—'}</td>
-                      <td className="px-4 py-3">
-                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${STATE_COLORS[s.current_state] || 'bg-gray-100 text-gray-700'}`}>
-                          {stateBadgeLabel(s.current_state)}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-xs text-gray-500">{formatDate(s.updated_at)}</td>
-                      <td className="px-4 py-3">
-                        <button onClick={() => setSelectedShipment(s)}
-                          className="px-3 py-1 text-xs font-medium rounded-lg text-white hover:opacity-90"
-                          style={{background: '#1a3a5c'}}>
-                          View
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      )}
+      </div>
 
       {/* Shipment detail modal — read only */}
       {selectedShipment && (
@@ -682,21 +788,25 @@ function ShipmentDetailReadOnly({ shipment, token, onClose }) {
   }, [shipment.id]);
 
   if (!detail) return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-xl p-8 text-gray-500">Loading...</div>
+    <div style={S.backdrop}>
+      <div style={{background:'#0D1940',border:'1px solid rgba(0,170,255,.15)',borderRadius:14,padding:'28px 36px',fontSize:13,color:'rgba(255,255,255,.5)'}}>Loading...</div>
     </div>
   );
 
+  const statusTone = detail.current_state === 'FINAL_CLEARANCE' ? 'green' : detail.current_state === 'NON_CONFORMING' ? 'red' : 'cyan';
+  const decisionTone = (d) => d === 'APPROVED' ? 'green' : d === 'REJECTED' ? 'red' : 'grey';
+  const sourceColor = (src) => src === 'EMAIL_PARSER' ? '#38C6FF' : src === 'SYSTEM' ? '#a78bfa' : '#00C896';
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-screen overflow-y-auto">
-        <div className="flex items-center justify-between p-6 border-b">
+    <div style={S.backdrop}>
+      <div style={{background:'#0D1940',border:'1px solid rgba(0,170,255,.2)',borderRadius:18,width:'100%',maxWidth:860,maxHeight:'90vh',overflowY:'auto',boxShadow:'0 32px 80px rgba(0,0,0,.8)'}}>
+        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'20px 24px',borderBottom:'1px solid rgba(0,170,255,.1)',background:'linear-gradient(180deg,rgba(0,170,255,.05),transparent)'}}>
           <div>
-            <h2 className="text-xl font-bold text-gray-900">{detail.faseh_request_number}</h2>
-            <p className="text-sm text-gray-500">{detail.importer_name}</p>
+            <div style={{fontSize:16,fontWeight:800,color:'#fff',fontFamily:S.mono}}>{detail.faseh_request_number}</div>
+            <div style={{fontSize:11,color:'rgba(255,255,255,.4)',marginTop:2}}>{detail.importer_name}</div>
           </div>
-          <div className="flex items-center gap-3">
-            <span className="px-3 py-1 bg-blue-100 text-blue-700 text-xs font-semibold rounded-full">Read Only</span>
+          <div style={{display:'flex',alignItems:'center',gap:10}}>
+            <span style={{fontSize:10,fontWeight:700,letterSpacing:'.8px',color:'#38C6FF',background:'rgba(0,170,255,.1)',border:'1px solid rgba(0,170,255,.3)',borderRadius:20,padding:'3px 10px'}}>READ ONLY</span>
             <button
               onClick={async () => {
                 try {
@@ -714,47 +824,41 @@ function ShipmentDetailReadOnly({ shipment, token, onClose }) {
                   console.error('Export failed');
                 }
               }}
-              className="px-3 py-1.5 text-xs font-medium rounded-lg text-white hover:opacity-90"
-              style={{background: '#1a3a5c'}}>
+              style={{...smallBtn('cyan'),padding:'7px 12px'}}>
               📄 Export Audit Trail
             </button>
-            <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl">×</button>
+            <button onClick={onClose} style={S.closeBtn}>×</button>
           </div>
         </div>
 
-        <div className="p-6 space-y-5">
+        <div style={{padding:'20px 24px',display:'flex',flexDirection:'column',gap:18}}>
           {/* Status */}
-          <div className={`rounded-lg p-4 ${
-            detail.current_state === 'FINAL_CLEARANCE' ? 'bg-green-50 border border-green-200' :
-            detail.current_state === 'NON_CONFORMING' ? 'bg-red-50 border border-red-200' :
-            'bg-blue-50 border border-blue-200'
-          }`}>
-            <span className={`px-3 py-1 rounded-full text-sm font-semibold ${STATE_COLORS[detail.current_state] || 'bg-gray-100 text-gray-700'}`}>
-              {stateBadgeLabel(detail.current_state)}
-            </span>
-            <p className="text-sm text-gray-600 mt-2">Since {formatDate(detail.state_entered_at)}</p>
+          <div style={{display:'flex',alignItems:'center',gap:10,background:tint(statusTone,.06),border:`1px solid ${tint(statusTone,.2)}`,borderRadius:10,padding:'12px 14px'}}>
+            {badge(detail.current_state)}
+            <span style={{fontSize:11,color:'rgba(255,255,255,.4)'}}>Since {formatDate(detail.state_entered_at)}</span>
           </div>
 
           {/* Details */}
-          <div className="grid grid-cols-2 gap-4">
-            <div><p className="text-xs text-gray-500 uppercase font-semibold">Faseh Reference</p>
-              <p className="text-sm font-medium">{detail.faseh_request_number}</p></div>
-            <div><p className="text-xs text-gray-500 uppercase font-semibold">GHAD CR Number</p>
-              <p className="text-sm font-medium">{detail.ghad_cr_number}</p></div>
-            <div><p className="text-xs text-gray-500 uppercase font-semibold">Importer</p>
-              <p className="text-sm font-medium">{detail.importer_name}</p></div>
-            <div><p className="text-xs text-gray-500 uppercase font-semibold">Country</p>
-              <p className="text-sm font-medium">{detail.shipment_country}</p></div>
-            <div><p className="text-xs text-gray-500 uppercase font-semibold">Port of Entry</p>
-              <p className="text-sm font-medium">{detail.port_of_entry}</p></div>
-            <div><p className="text-xs text-gray-500 uppercase font-semibold">QC Lab</p>
-              <p className="text-sm font-medium">{detail.lab_name || '—'}</p></div>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10}}>
+            {[
+              ['Faseh Reference', detail.faseh_request_number, '#38C6FF', true],
+              ['GHAD CR Number', detail.ghad_cr_number, '#fff', false],
+              ['Importer', detail.importer_name, '#fff', false],
+              ['Country', detail.shipment_country, '#fff', false],
+              ['Port of Entry', detail.port_of_entry, '#fff', false],
+              ['QC Lab', detail.lab_name || '—', '#fff', false],
+            ].map(([label, value, color, mono]) => (
+              <div key={label} style={{background:'rgba(255,255,255,.03)',border:'1px solid rgba(255,255,255,.06)',borderRadius:10,padding:'10px 14px'}}>
+                <div style={{...S.lbl,fontSize:9}}>{label}</div>
+                <div style={{fontSize:13,fontWeight:600,color,fontFamily:mono?S.mono:'inherit'}}>{value}</div>
+              </div>
+            ))}
             {detail.total_dwell_minutes && (
-              <div className="col-span-2 bg-green-50 border border-green-200 rounded-lg p-3">
-                <p className="text-xs text-gray-500 uppercase font-semibold">Total Dwell Time</p>
-                <p className="text-lg font-bold text-green-700">
+              <div style={{gridColumn:'1 / -1',background:tint('green',.06),border:`1px solid ${tint('green',.2)}`,borderRadius:10,padding:'10px 14px'}}>
+                <div style={{...S.lbl,fontSize:9}}>Total Dwell Time</div>
+                <div style={{fontSize:18,fontWeight:800,color:'#00C896'}}>
                   {Math.floor(detail.total_dwell_minutes / 1440)} days {Math.floor((detail.total_dwell_minutes % 1440) / 60)} hours
-                </p>
+                </div>
               </div>
             )}
           </div>
@@ -762,21 +866,20 @@ function ShipmentDetailReadOnly({ shipment, token, onClose }) {
           {/* Products */}
           {detail.products && detail.products.length > 0 && (
             <div>
-              <h3 className="text-sm font-semibold text-gray-700 mb-2">Products ({detail.products.length})</h3>
-              <div className="space-y-2">
+              <div style={S.section}>Products ({detail.products.length})</div>
+              <div style={{display:'flex',flexDirection:'column',gap:8}}>
                 {detail.products.map(p => (
-                  <div key={p.id} className="bg-gray-50 rounded-lg p-3">
-                    <div className="flex items-center justify-between">
-                      <p className="font-medium text-gray-900 text-sm">{p.product_name_en}</p>
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
-                        p.current_decision === 'APPROVED' ? 'bg-green-100 text-green-700' :
-                        p.current_decision === 'REJECTED' ? 'bg-red-100 text-red-700' :
-                        'bg-gray-100 text-gray-600'
-                      }`}>{p.current_decision}</span>
+                  <div key={p.id} style={{background:'rgba(255,255,255,.02)',border:'1px solid rgba(255,255,255,.06)',borderRadius:10,padding:'12px 16px'}}>
+                    <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:12}}>
+                      <div style={{fontSize:13,fontWeight:700,color:'#fff'}}>{p.product_name_en}</div>
+                      <span style={{fontSize:11,fontWeight:700,padding:'3px 10px',borderRadius:20,flexShrink:0,
+                        color:TONES[decisionTone(p.current_decision)][0],background:tint(decisionTone(p.current_decision),.1),border:`1px solid ${tint(decisionTone(p.current_decision),.3)}`}}>
+                        {p.current_decision}
+                      </span>
                     </div>
-                    <div className="flex gap-4 mt-1 flex-wrap">
-                      {p.ecos_ma_number && <span className="text-xs text-gray-500">E-Cosma: {p.ecos_ma_number}</span>}
-                      {p.batch_number && <span className="text-xs text-gray-500">Batch: {p.batch_number}</span>}
+                    <div style={{display:'flex',gap:16,marginTop:4,flexWrap:'wrap'}}>
+                      {p.ecos_ma_number && <span style={{fontSize:10,color:'rgba(255,255,255,.35)'}}>E-Cosma: {p.ecos_ma_number}</span>}
+                      {p.batch_number && <span style={{fontSize:10,color:'rgba(255,255,255,.35)'}}>Batch: {p.batch_number}</span>}
                     </div>
                   </div>
                 ))}
@@ -787,18 +890,15 @@ function ShipmentDetailReadOnly({ shipment, token, onClose }) {
           {/* Timeline */}
           {detail.audit_log && detail.audit_log.length > 0 && (
             <div>
-              <h3 className="text-sm font-semibold text-gray-700 mb-2">Complete Audit Trail</h3>
-              <div className="space-y-2 max-h-64 overflow-y-auto">
+              <div style={S.section}>Complete Audit Trail</div>
+              <div style={{display:'flex',flexDirection:'column',gap:5,maxHeight:256,overflowY:'auto'}}>
                 {detail.audit_log.map(log => (
-                  <div key={log.id} className="flex items-start gap-3 p-2 rounded-lg bg-gray-50">
-                    <span className={`mt-0.5 w-2 h-2 rounded-full flex-shrink-0 ${
-                      log.trigger_source === 'EMAIL_PARSER' ? 'bg-blue-500' :
-                      log.trigger_source === 'SYSTEM' ? 'bg-purple-500' : 'bg-green-500'
-                    }`}></span>
+                  <div key={log.id} style={{display:'flex',alignItems:'flex-start',gap:10,padding:'8px 12px',background:'rgba(255,255,255,.02)',borderRadius:8}}>
+                    <span style={{width:6,height:6,borderRadius:'50%',background:sourceColor(log.trigger_source),marginTop:5,flexShrink:0}}></span>
                     <div>
-                      <p className="text-xs font-medium text-gray-900">{log.from_state} → {log.to_state}</p>
-                      <p className="text-xs text-gray-500">{log.trigger_event}</p>
-                      <p className="text-xs text-gray-400">{log.trigger_source} · {formatDate(log.occurred_at)}</p>
+                      <div style={{fontSize:11,fontWeight:600,color:'rgba(255,255,255,.8)'}}>{log.from_state} → {log.to_state}</div>
+                      <div style={{fontSize:11,color:'rgba(255,255,255,.45)',marginTop:1}}>{log.trigger_event}</div>
+                      <div style={{fontSize:10,color:'rgba(255,255,255,.25)',marginTop:1}}>{log.trigger_source} · {formatDate(log.occurred_at)}</div>
                     </div>
                   </div>
                 ))}
@@ -807,6 +907,6 @@ function ShipmentDetailReadOnly({ shipment, token, onClose }) {
           )}
         </div>
       </div>
-          </div>
+    </div>
   );
 }
