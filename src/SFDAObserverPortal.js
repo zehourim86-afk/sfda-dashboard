@@ -398,8 +398,8 @@ export default function SFDAObserverPortal({ user, token, onLogout }) {
         <img src="/demara-logo-transparent.png" alt="DEMARA" style={{height:'52px', width:'auto', display:'block', objectFit:'contain'}} />
         <div style={{width:1,height:28,background:'rgba(255,255,255,.08)'}}></div>
         <div>
-          <div style={{fontSize:14,fontWeight:800,color:'#fff',letterSpacing:'-.3px'}}>DEMARA Platform</div>
-          <div style={{fontSize:10,color:'#38C6FF',fontWeight:600,letterSpacing:'.3px'}}>DEMARA Masaar · SFDA Observer</div>
+          <div style={{fontSize:14,fontWeight:800,color:'#fff',letterSpacing:'-.3px'}}>MASAAR</div>
+          <div style={{fontSize:10,color:'#38C6FF',fontWeight:600,letterSpacing:'.3px'}}>SFDA Observer</div>
         </div>
         <div style={{marginLeft:'auto',display:'flex',alignItems:'center',gap:10}}>
           <div style={{display:'flex',alignItems:'center',gap:5,fontSize:11,fontWeight:600,color:'#00C896',background:'rgba(0,200,150,.08)',border:'1px solid rgba(0,200,150,.2)',borderRadius:20,padding:'4px 10px'}}>
@@ -408,7 +408,7 @@ export default function SFDAObserverPortal({ user, token, onLogout }) {
           <NotificationBell token={token} />
           {user && (
             <div style={{display:'flex',alignItems:'center',gap:9,background:'rgba(255,255,255,.05)',border:'1px solid rgba(255,255,255,.1)',borderRadius:10,padding:'6px 12px'}}>
-              <div style={{width:28,height:28,borderRadius:'50%',background:'linear-gradient(135deg,#38C6FF,#1E3A8A)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:800,color:'#fff',flexShrink:0}}>{user.full_name?.charAt(0) || 'S'}</div>
+              <div style={{width:28,height:28,borderRadius:'50%',background:'linear-gradient(135deg, #38C6FF 0%, #2D2B7A 100%)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:800,color:'#fff',flexShrink:0}}>{user.full_name?.charAt(0) || 'S'}</div>
               <div><div style={{fontSize:12,fontWeight:700,color:'#fff'}}>{user.full_name}</div><div style={{fontSize:10,color:'#38C6FF',marginTop:1}}>SFDA</div></div>
             </div>
           )}
