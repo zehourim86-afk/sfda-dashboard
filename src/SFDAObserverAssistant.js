@@ -55,10 +55,10 @@ export default function SFDAObserverAssistant({ token }) {
   };
 
   return (
-    <div style={{display:'flex',flexDirection:'column',height:'100%',fontFamily:'Inter,sans-serif',background:'#0D1940',borderRadius:'14px',border:'1px solid rgba(0,170,255,0.12)',overflow:'hidden'}}>
+    <div style={{display:'flex',flexDirection:'column',height:'100%',fontFamily:'Inter,sans-serif',background:'#252266',borderRadius:'14px',border:'1px solid rgba(0,170,255,0.12)',overflow:'hidden'}}>
 
       {/* Header */}
-      <div style={{padding:'14px 18px',background:'linear-gradient(135deg, #091230 0%, #0F1E4D 100%)',display:'flex',alignItems:'center',gap:'10px'}}>
+      <div style={{padding:'14px 18px',background:'linear-gradient(135deg, #1E1A5E 0%, #252266 100%)',display:'flex',alignItems:'center',gap:'10px'}}>
         <div style={{width:'36px',height:'36px',borderRadius:'10px',background:'rgba(56,198,255,0.2)',border:'1px solid rgba(56,198,255,0.3)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'18px',flexShrink:0}}>🔍</div>
         <div>
           <div style={{fontSize:'14px',fontWeight:700,color:'#FFFFFF'}}>Masaar Intelligence</div>
@@ -82,7 +82,7 @@ export default function SFDAObserverAssistant({ token }) {
 
       {/* Quick questions */}
       {messages.length === 1 && (
-        <div style={{padding:'12px 16px',borderBottom:'1px solid rgba(255,255,255,0.06)',background:'#0B1535'}}>
+        <div style={{padding:'12px 16px',borderBottom:'1px solid rgba(255,255,255,0.06)',background:'#2D2B7A'}}>
           <div style={{fontSize:'10px',fontWeight:700,color:'rgba(255,255,255,0.45)',textTransform:'uppercase',letterSpacing:'0.8px',marginBottom:'8px'}}>Intelligence Queries</div>
           <div style={{display:'flex',flexWrap:'wrap',gap:'6px'}}>
             {OBSERVER_QUESTIONS.map((q,i) => (
@@ -102,14 +102,14 @@ export default function SFDAObserverAssistant({ token }) {
         {messages.map((msg,i) => (
           <div key={i} style={{display:'flex',justifyContent:msg.role==='user'?'flex-end':'flex-start',gap:'8px',alignItems:'flex-start'}}>
             {msg.role === 'assistant' && (
-              <div style={{width:'28px',height:'28px',borderRadius:'8px',background:'linear-gradient(135deg,#1E3A8A,#091230)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'13px',flexShrink:0,marginTop:'2px'}}>🔍</div>
+              <div style={{width:'28px',height:'28px',borderRadius:'8px',background:'linear-gradient(135deg,#1E3A8A,#1E1A5E)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'13px',flexShrink:0,marginTop:'2px'}}>🔍</div>
             )}
             <div style={{
               maxWidth:'82%',padding:'10px 14px',
               borderRadius:msg.role==='user'?'14px 14px 4px 14px':'14px 14px 14px 4px',
               background:msg.role==='user'?'#38C6FF':'rgba(255,255,255,0.05)',
               border:msg.role==='user'?'none':'1px solid rgba(255,255,255,0.08)',
-              color:msg.role==='user'?'#0D1940':'rgba(255,255,255,0.88)',
+              color:msg.role==='user'?'#252266':'rgba(255,255,255,0.88)',
               fontSize:'13px',lineHeight:1.6,
               whiteSpace:'pre-wrap'
             }}>
@@ -123,13 +123,13 @@ export default function SFDAObserverAssistant({ token }) {
               ) : msg.content}
             </div>
             {msg.role === 'user' && (
-              <div style={{width:'28px',height:'28px',borderRadius:'50%',background:'#38C6FF',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'11px',fontWeight:700,color:'#0D1940',flexShrink:0,marginTop:'2px'}}>S</div>
+              <div style={{width:'28px',height:'28px',borderRadius:'50%',background:'#38C6FF',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'11px',fontWeight:700,color:'#252266',flexShrink:0,marginTop:'2px'}}>S</div>
             )}
           </div>
         ))}
         {loading && (
           <div style={{display:'flex',gap:'8px',alignItems:'flex-start'}}>
-            <div style={{width:'28px',height:'28px',borderRadius:'8px',background:'linear-gradient(135deg,#1E3A8A,#091230)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'13px',flexShrink:0}}>🔍</div>
+            <div style={{width:'28px',height:'28px',borderRadius:'8px',background:'linear-gradient(135deg,#1E3A8A,#1E1A5E)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'13px',flexShrink:0}}>🔍</div>
             <div style={{padding:'10px 14px',borderRadius:'14px 14px 14px 4px',background:'rgba(255,255,255,0.05)',border:'1px solid rgba(255,255,255,0.08)',display:'flex',gap:'4px',alignItems:'center'}}>
               {[0,1,2].map(i => (
                 <div key={i} style={{width:'6px',height:'6px',borderRadius:'50%',background:'#38C6FF',animation:`bounce 1.2s ease-in-out ${i*0.2}s infinite`}}></div>
@@ -141,7 +141,7 @@ export default function SFDAObserverAssistant({ token }) {
       </div>
 
       {/* Input */}
-      <div style={{padding:'12px 16px',borderTop:'1px solid rgba(255,255,255,0.08)',background:'#0B1535'}}>
+      <div style={{padding:'12px 16px',borderTop:'1px solid rgba(255,255,255,0.08)',background:'#2D2B7A'}}>
         <div style={{display:'flex',gap:'8px',alignItems:'flex-end'}}>
           <textarea
             value={input}

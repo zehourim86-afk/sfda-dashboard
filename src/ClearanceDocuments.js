@@ -62,7 +62,7 @@ export default function ClearanceDocuments({ shipmentId, token, onClose }) {
       zIndex:1000,padding:'20px',fontFamily:'Inter,sans-serif'
     }}>
       <div style={{
-        background:'#0D1940',borderRadius:'16px',
+        background:'#252266',borderRadius:'16px',
         width:'100%',maxWidth:'760px',
         maxHeight:'90vh',overflow:'hidden',
         display:'flex',flexDirection:'column',
@@ -72,7 +72,7 @@ export default function ClearanceDocuments({ shipmentId, token, onClose }) {
         {/* Header */}
         <div style={{
           padding:'18px 24px',
-          background:'linear-gradient(135deg, #0F1E4D 0%, #091230 100%)',
+          background:'linear-gradient(135deg, #252266 0%, #1E1A5E 100%)',
           display:'flex',alignItems:'center',gap:'12px',
           flexShrink:0
         }}>
@@ -170,7 +170,7 @@ export default function ClearanceDocuments({ shipmentId, token, onClose }) {
 
                   return (
                     <div key={doc.document_type} style={{
-                      background:'rgba(255,255,255,0.03)',
+                      background:'rgba(255,255,255,0.05)',
                       border:`1px solid ${isReviewed ? 'rgba(0,200,150,0.2)' : 'rgba(255,255,255,0.08)'}`,
                       borderRadius:'10px',overflow:'hidden'
                     }}>
@@ -232,7 +232,7 @@ export default function ClearanceDocuments({ shipmentId, token, onClose }) {
 
                       {/* Review notes input */}
                       {reviewing === doc.document_type && (
-                        <div style={{padding:'12px 16px',borderTop:'1px solid rgba(255,255,255,0.06)',background:'#0B1535'}}>
+                        <div style={{padding:'12px 16px',borderTop:'1px solid rgba(255,255,255,0.06)',background:'#2D2B7A'}}>
                           <div style={{fontSize:'11px',fontWeight:600,color:'#FFFFFF',marginBottom:'6px'}}>
                             Add a note (optional) before marking as reviewed:
                           </div>
@@ -244,7 +244,7 @@ export default function ClearanceDocuments({ shipmentId, token, onClose }) {
                             style={{
                               width:'100%',border:'1px solid rgba(255,255,255,0.15)',
                               borderRadius:'8px',padding:'8px 12px',
-                              fontSize:'12px',color:'#FFFFFF',background:'#0D1940',
+                              fontSize:'12px',color:'#FFFFFF',background:'#252266',
                               fontFamily:'Inter,sans-serif',outline:'none',resize:'none'
                             }}
                           />
@@ -253,7 +253,7 @@ export default function ClearanceDocuments({ shipmentId, token, onClose }) {
                               style={{
                                 padding:'6px 14px',borderRadius:'6px',fontSize:'12px',fontWeight:700,
                                 cursor:'pointer',border:'none',
-                                background:'#38C6FF',color:'#0D1940'
+                                background:'#38C6FF',color:'#252266'
                               }}>
                               ✓ Confirm Review
                             </button>
@@ -271,7 +271,7 @@ export default function ClearanceDocuments({ shipmentId, token, onClose }) {
 
                       {/* AI Validation results */}
                       {isExpanded && validation && (
-                        <div style={{borderTop:'1px solid rgba(255,255,255,0.06)',padding:'16px',background:'#0B1535'}}>
+                        <div style={{borderTop:'1px solid rgba(255,255,255,0.06)',padding:'16px',background:'#2D2B7A'}}>
 
                           {/* Summary */}
                           <div style={{
@@ -293,7 +293,7 @@ export default function ClearanceDocuments({ shipmentId, token, onClose }) {
                                   const checkColor = check.status === 'PASS' ? '#00C896' : check.status === 'WARN' ? '#F5A623' : check.status === 'FAIL' ? '#FF5470' : '#808285';
                                   const checkIcon = check.status === 'PASS' ? '✓' : check.status === 'WARN' ? '⚠' : check.status === 'FAIL' ? '✕' : '○';
                                   return (
-                                    <div key={i} style={{display:'flex',alignItems:'flex-start',gap:'8px',padding:'6px 10px',background:'#0D1940',borderRadius:'6px',border:'1px solid rgba(255,255,255,0.06)'}}>
+                                    <div key={i} style={{display:'flex',alignItems:'flex-start',gap:'8px',padding:'6px 10px',background:'#252266',borderRadius:'6px',border:'1px solid rgba(255,255,255,0.06)'}}>
                                       <span style={{color:checkColor,fontWeight:700,flexShrink:0}}>{checkIcon}</span>
                                       <div>
                                         <span style={{fontSize:'11px',fontWeight:600,color:'#FFFFFF'}}>{check.item}</span>

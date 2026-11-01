@@ -29,7 +29,7 @@ const SOURCE_CONFIG = {
 const SIGNIFICANCE_CONFIG = {
   critical: { bg: 'rgba(255,84,112,0.06)', border: 'rgba(255,84,112,0.2)', dot: '#FF5470' },
   important: { bg: 'rgba(245,166,35,0.06)', border: 'rgba(245,166,35,0.2)', dot: '#F5A623' },
-  normal: { bg: 'rgba(255,255,255,0.03)', border: 'rgba(255,255,255,0.08)', dot: '#38C6FF' },
+  normal: { bg: 'rgba(255,255,255,0.05)', border: 'rgba(255,255,255,0.08)', dot: '#38C6FF' },
 };
 
 export default function ShipmentTimeline({ shipmentId, token, onClose }) {
@@ -65,7 +65,7 @@ export default function ShipmentTimeline({ shipmentId, token, onClose }) {
       zIndex:1000, padding:'20px', fontFamily:'Inter,sans-serif'
     }}>
       <div style={{
-        background:'#0D1940', borderRadius:'16px',
+        background:'#252266', borderRadius:'16px',
         width:'100%', maxWidth:'720px',
         maxHeight:'90vh', overflow:'hidden',
         display:'flex', flexDirection:'column',
@@ -75,7 +75,7 @@ export default function ShipmentTimeline({ shipmentId, token, onClose }) {
         {/* Header */}
         <div style={{
           padding:'18px 24px',
-          background:'linear-gradient(135deg, #0F1E4D 0%, #091230 100%)',
+          background:'linear-gradient(135deg, #252266 0%, #1E1A5E 100%)',
           display:'flex', alignItems:'center', gap:'12px',
           flexShrink:0
         }}>
@@ -180,7 +180,7 @@ export default function ShipmentTimeline({ shipmentId, token, onClose }) {
                         {/* Dot */}
                         <div style={{
                           width:'30px', height:'30px', borderRadius:'50%',
-                          background: isLast ? 'rgba(56,198,255,0.15)' : '#0D1940',
+                          background: isLast ? 'rgba(56,198,255,0.15)' : '#252266',
                           border:`2px solid ${isLast ? '#38C6FF' : sig.dot}`,
                           display:'flex', alignItems:'center', justifyContent:'center',
                           flexShrink:0, zIndex:1,

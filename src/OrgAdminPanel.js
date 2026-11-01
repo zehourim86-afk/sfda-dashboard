@@ -52,7 +52,7 @@ export default function OrgAdminPanel({ token }) {
 
   return (
     <div style={{padding:'16px 24px',fontFamily:'Inter,sans-serif',color:'#fff'}}>
-      <div style={{background:'rgba(255,255,255,.02)',border:'1px solid rgba(0,170,255,.1)',borderRadius:14,overflow:'hidden'}}>
+      <div style={{background:'rgba(255,255,255,0.04)',border:'1px solid rgba(0,170,255,.1)',borderRadius:14,overflow:'hidden'}}>
         <div style={{padding:'14px 18px',borderBottom:'1px solid rgba(0,170,255,.08)',display:'flex',alignItems:'center',justifyContent:'space-between',gap:12}}>
           <div>
             <div style={{fontSize:14,fontWeight:800,color:'#fff'}}>Organisation Users — {orgData.organisation_name}</div>

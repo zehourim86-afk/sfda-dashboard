@@ -64,7 +64,7 @@ function badge(state) {
 }
 
 const S = {
-  card: {background:'rgba(255,255,255,.03)',border:'1px solid rgba(0,170,255,.1)',borderRadius:14,padding:18},
+  card: {background:'rgba(255,255,255,0.05)',border:'1px solid rgba(0,170,255,.1)',borderRadius:14,padding:18},
   cardTitle: {fontSize:13,fontWeight:700,color:'#fff',marginBottom:3},
   cardSub: {fontSize:11,color:'rgba(255,255,255,.3)',marginBottom:14},
   backdrop: {position:'fixed',inset:0,background:'rgba(0,0,0,.8)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:100,padding:20,backdropFilter:'blur(6px)'},
@@ -72,7 +72,7 @@ const S = {
   ipt: {width:'100%',background:'rgba(255,255,255,.05)',border:'1px solid rgba(255,255,255,.1)',borderRadius:8,padding:'8px 12px',fontSize:12,color:'#fff',fontFamily:'inherit',outline:'none',colorScheme:'dark'},
   lbl: {fontSize:10,fontWeight:700,color:'rgba(255,255,255,.3)',textTransform:'uppercase',letterSpacing:'1px',marginBottom:4,display:'block'},
   section: {fontSize:10,fontWeight:700,color:'rgba(255,255,255,.3)',textTransform:'uppercase',letterSpacing:'1.5px',marginBottom:10},
-  listRow: {display:'flex',alignItems:'center',justifyContent:'space-between',gap:12,background:'rgba(255,255,255,.03)',border:'1px solid rgba(255,255,255,.05)',borderRadius:9,padding:'9px 12px'},
+  listRow: {display:'flex',alignItems:'center',justifyContent:'space-between',gap:12,background:'rgba(255,255,255,0.05)',border:'1px solid rgba(255,255,255,.05)',borderRadius:9,padding:'9px 12px'},
   error: {background:'rgba(255,84,112,.08)',border:'1px solid rgba(255,84,112,.2)',borderRadius:8,padding:'10px 14px',fontSize:12,color:'#FF5470'},
   mono: 'JetBrains Mono,monospace',
 };
@@ -83,7 +83,7 @@ const CHART = {
   grid: 'rgba(255,255,255,.06)',
   tick: {fontSize:10, fill:'rgba(255,255,255,.4)'},
   tooltip: {
-    contentStyle: {background:'#0D1940',border:'1px solid rgba(0,170,255,.2)',borderRadius:8,fontSize:12,color:'#fff'},
+    contentStyle: {background:'#252266',border:'1px solid rgba(0,170,255,.2)',borderRadius:8,fontSize:12,color:'#fff'},
     itemStyle: {color:'#fff'},
     labelStyle: {color:'rgba(255,255,255,.6)'},
     cursor: {fill:'rgba(0,170,255,.06)'},
@@ -379,7 +379,7 @@ export default function SFDAObserverPortal({ user, token, onLogout }) {
   const td = {padding:'13px 16px'};
 
   return (
-    <div style={{display:'flex',flexDirection:'column',height:'100vh',background:'#0B1535',fontFamily:'Inter,sans-serif',color:'#fff',overflow:'hidden'}}>
+    <div style={{display:'flex',flexDirection:'column',height:'100vh',background:'#2D2B7A',fontFamily:'Inter,sans-serif',color:'#fff',overflow:'hidden'}}>
       <style>{`
         @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
         *{box-sizing:border-box}
@@ -388,14 +388,14 @@ export default function SFDAObserverPortal({ user, token, onLogout }) {
         ::-webkit-scrollbar-thumb{background:rgba(0,170,255,.2);border-radius:2px}
         input:focus,textarea:focus,select:focus{border-color:rgba(0,170,255,.5)!important;outline:none}
         input::placeholder,textarea::placeholder{color:rgba(255,255,255,.2)}
-        select option{background:#0D1940;color:#fff}
+        select option{background:#252266;color:#fff}
         tr.row:hover td{background:rgba(0,170,255,.04)!important}
         .hov:hover{background:rgba(0,170,255,.07)!important;border-color:rgba(0,170,255,.2)!important}
       `}</style>
 
       {/* ── Topbar ── */}
-      <div style={{height:58,background:'#091230',borderBottom:'1px solid rgba(0,170,255,.1)',display:'flex',alignItems:'center',padding:'0 24px',gap:14,flexShrink:0,zIndex:10}}>
-        <div style={{width:78,height:44,borderRadius:8,overflow:'hidden',position:'relative',flexShrink:0,background:'#2E2C70',boxShadow:'0 0 0 1px rgba(56,198,255,.15)'}}><img src="/demara-logo.png" alt="DEMARA" style={{position:'absolute',width:'300%',height:'300%',left:'-100%',top:'-100%'}}/></div>
+      <div style={{height:58,background:'#1E1A5E',borderBottom:'1px solid rgba(0,170,255,.1)',display:'flex',alignItems:'center',padding:'0 24px',gap:14,flexShrink:0,zIndex:10}}>
+        <img src="/logo_1.png" alt="DEMARA" style={{height:'38px', width:'auto'}} />
         <div style={{width:1,height:28,background:'rgba(255,255,255,.08)'}}></div>
         <div>
           <div style={{fontSize:14,fontWeight:800,color:'#fff',letterSpacing:'-.3px'}}>DEMARA Platform</div>
@@ -420,13 +420,13 @@ export default function SFDAObserverPortal({ user, token, onLogout }) {
       <div style={{display:'flex',flex:1,overflow:'hidden'}}>
 
         {/* ── Sidebar ── */}
-        <div style={{width:220,background:'#0D1940',borderRight:'1px solid rgba(0,170,255,.08)',display:'flex',flexDirection:'column',flexShrink:0,overflowY:'auto'}}>
+        <div style={{width:220,background:'#252266',borderRight:'1px solid rgba(0,170,255,.08)',display:'flex',flexDirection:'column',flexShrink:0,overflowY:'auto'}}>
           {/* KPI section */}
           <div style={{padding:'16px 14px',borderBottom:'1px solid rgba(0,170,255,.06)'}}>
             <div style={{fontSize:9,fontWeight:700,color:'rgba(255,255,255,.4)',textTransform:'uppercase',letterSpacing:'2px',marginBottom:12}}>Overview</div>
             <div style={{display:'flex',flexDirection:'column',gap:6}}>
               {kpis.map(k => (
-                <div key={k.label} style={{display:'flex',alignItems:'center',gap:10,padding:'8px 10px',borderRadius:9,background:'rgba(255,255,255,.03)',border:'1px solid rgba(255,255,255,.05)'}}>
+                <div key={k.label} style={{display:'flex',alignItems:'center',gap:10,padding:'8px 10px',borderRadius:9,background:'rgba(255,255,255,0.05)',border:'1px solid rgba(255,255,255,.05)'}}>
                   <span style={{fontSize:14,flexShrink:0}}>{k.icon}</span>
                   <span style={{fontSize:11,color:'rgba(255,255,255,.5)',flex:1}}>{k.label}</span>
                   <span style={{fontSize:16,fontWeight:900,color:k.color,letterSpacing:'-0.5px'}}>{k.value}</span>
@@ -447,7 +447,7 @@ export default function SFDAObserverPortal({ user, token, onLogout }) {
                   <span style={{fontSize:15}}>{n.icon}</span>
                   <span style={{flex:1}}>{n.label}</span>
                   {n.count != null && n.count > 0 && (
-                    <span style={{fontSize:10,fontWeight:700,background:on?color:'rgba(255,255,255,.1)',color:on?'#0D1940':'rgba(255,255,255,.5)',padding:'1px 7px',borderRadius:10}}>{n.count}</span>
+                    <span style={{fontSize:10,fontWeight:700,background:on?color:'rgba(255,255,255,.1)',color:on?'#252266':'rgba(255,255,255,.5)',padding:'1px 7px',borderRadius:10}}>{n.count}</span>
                   )}
                 </button>
               );
@@ -465,7 +465,7 @@ export default function SFDAObserverPortal({ user, token, onLogout }) {
         </div>
 
         {/* ── Main content ── */}
-        <div key={activeTab} style={{flex:1,overflowY:'auto',background:'#0B1535'}}>
+        <div key={activeTab} style={{flex:1,overflowY:'auto',background:'#2D2B7A'}}>
 
           {/* Overview Tab */}
           {activeTab === 'overview' && (
@@ -494,7 +494,7 @@ export default function SFDAObserverPortal({ user, token, onLogout }) {
                   <div style={S.cardSub}>Cleared vs in progress vs non-conforming</div>
                   <ResponsiveContainer width="100%" height={220}>
                     <PieChart>
-                      <Pie data={stateData} cx="50%" cy="50%" outerRadius={64} stroke="#0B1535"
+                      <Pie data={stateData} cx="50%" cy="50%" outerRadius={64} stroke="#2D2B7A"
                         dataKey="value" label={({name, value}) => `${name}: ${value}`}>
                         {stateData.map((entry, i) => (
                           <Cell key={i} fill={PIE_COLOR[entry.color] || entry.color} />
@@ -580,7 +580,7 @@ export default function SFDAObserverPortal({ user, token, onLogout }) {
                 ) : (
                   <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
                     {labPerformance.map(lab => (
-                      <div key={lab.lab_id} style={{background:'rgba(255,255,255,.02)',border:'1px solid rgba(255,255,255,.06)',borderRadius:10,padding:'12px 14px'}}>
+                      <div key={lab.lab_id} style={{background:'rgba(255,255,255,0.04)',border:'1px solid rgba(255,255,255,.06)',borderRadius:10,padding:'12px 14px'}}>
                         <div style={{fontSize:12,fontWeight:700,color:'#fff',marginBottom:10}}>{lab.lab_name}</div>
                         {[
                           ['Assigned', lab.total_assigned, '#fff'],
@@ -706,7 +706,7 @@ export default function SFDAObserverPortal({ user, token, onLogout }) {
                   <div style={{fontSize:14}}>Loading...</div>
                 </div>
               ) : (
-                <div style={{background:'rgba(255,255,255,.02)',border:'1px solid rgba(0,170,255,.1)',borderRadius:14,overflow:'hidden'}}>
+                <div style={{background:'rgba(255,255,255,0.04)',border:'1px solid rgba(0,170,255,.1)',borderRadius:14,overflow:'hidden'}}>
                   <table style={{width:'100%',borderCollapse:'collapse'}}>
                     <thead>
                       <tr style={{background:'rgba(0,170,255,.04)'}}>
@@ -789,7 +789,7 @@ function ShipmentDetailReadOnly({ shipment, token, onClose }) {
 
   if (!detail) return (
     <div style={S.backdrop}>
-      <div style={{background:'#0D1940',border:'1px solid rgba(0,170,255,.15)',borderRadius:14,padding:'28px 36px',fontSize:13,color:'rgba(255,255,255,.5)'}}>Loading...</div>
+      <div style={{background:'#252266',border:'1px solid rgba(0,170,255,.15)',borderRadius:14,padding:'28px 36px',fontSize:13,color:'rgba(255,255,255,.5)'}}>Loading...</div>
     </div>
   );
 
@@ -799,7 +799,7 @@ function ShipmentDetailReadOnly({ shipment, token, onClose }) {
 
   return (
     <div style={S.backdrop}>
-      <div style={{background:'#0D1940',border:'1px solid rgba(0,170,255,.2)',borderRadius:18,width:'100%',maxWidth:860,maxHeight:'90vh',overflowY:'auto',boxShadow:'0 32px 80px rgba(0,0,0,.8)'}}>
+      <div style={{background:'#252266',border:'1px solid rgba(0,170,255,.2)',borderRadius:18,width:'100%',maxWidth:860,maxHeight:'90vh',overflowY:'auto',boxShadow:'0 32px 80px rgba(0,0,0,.8)'}}>
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'20px 24px',borderBottom:'1px solid rgba(0,170,255,.1)',background:'linear-gradient(180deg,rgba(0,170,255,.05),transparent)'}}>
           <div>
             <div style={{fontSize:16,fontWeight:800,color:'#fff',fontFamily:S.mono}}>{detail.faseh_request_number}</div>
@@ -848,7 +848,7 @@ function ShipmentDetailReadOnly({ shipment, token, onClose }) {
               ['Port of Entry', detail.port_of_entry, '#fff', false],
               ['QC Lab', detail.lab_name || '—', '#fff', false],
             ].map(([label, value, color, mono]) => (
-              <div key={label} style={{background:'rgba(255,255,255,.03)',border:'1px solid rgba(255,255,255,.06)',borderRadius:10,padding:'10px 14px'}}>
+              <div key={label} style={{background:'rgba(255,255,255,0.05)',border:'1px solid rgba(255,255,255,.06)',borderRadius:10,padding:'10px 14px'}}>
                 <div style={{...S.lbl,fontSize:9}}>{label}</div>
                 <div style={{fontSize:13,fontWeight:600,color,fontFamily:mono?S.mono:'inherit'}}>{value}</div>
               </div>
@@ -869,7 +869,7 @@ function ShipmentDetailReadOnly({ shipment, token, onClose }) {
               <div style={S.section}>Products ({detail.products.length})</div>
               <div style={{display:'flex',flexDirection:'column',gap:8}}>
                 {detail.products.map(p => (
-                  <div key={p.id} style={{background:'rgba(255,255,255,.02)',border:'1px solid rgba(255,255,255,.06)',borderRadius:10,padding:'12px 16px'}}>
+                  <div key={p.id} style={{background:'rgba(255,255,255,0.04)',border:'1px solid rgba(255,255,255,.06)',borderRadius:10,padding:'12px 16px'}}>
                     <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:12}}>
                       <div style={{fontSize:13,fontWeight:700,color:'#fff'}}>{p.product_name_en}</div>
                       <span style={{fontSize:11,fontWeight:700,padding:'3px 10px',borderRadius:20,flexShrink:0,
@@ -893,7 +893,7 @@ function ShipmentDetailReadOnly({ shipment, token, onClose }) {
               <div style={S.section}>Complete Audit Trail</div>
               <div style={{display:'flex',flexDirection:'column',gap:5,maxHeight:256,overflowY:'auto'}}>
                 {detail.audit_log.map(log => (
-                  <div key={log.id} style={{display:'flex',alignItems:'flex-start',gap:10,padding:'8px 12px',background:'rgba(255,255,255,.02)',borderRadius:8}}>
+                  <div key={log.id} style={{display:'flex',alignItems:'flex-start',gap:10,padding:'8px 12px',background:'rgba(255,255,255,0.04)',borderRadius:8}}>
                     <span style={{width:6,height:6,borderRadius:'50%',background:sourceColor(log.trigger_source),marginTop:5,flexShrink:0}}></span>
                     <div>
                       <div style={{fontSize:11,fontWeight:600,color:'rgba(255,255,255,.8)'}}>{log.from_state} → {log.to_state}</div>

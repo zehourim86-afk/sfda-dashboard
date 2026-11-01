@@ -95,16 +95,16 @@ export default function NotificationBell({ token }) {
         <span style={{fontSize:17,lineHeight:1}}>🔔</span>
         {unreadCount > 0 && (
           <span style={{position:'absolute',top:-6,right:-6,minWidth:18,height:18,padding:'0 4px',borderRadius:9,background:'#FF5470',color:'#fff',
-            fontSize:10,fontWeight:800,display:'flex',alignItems:'center',justifyContent:'center',border:'2px solid #091230'}}>
+            fontSize:10,fontWeight:800,display:'flex',alignItems:'center',justifyContent:'center',border:'2px solid #1E1A5E'}}>
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}
       </button>
 
       {open && (
-        <div style={{position:'absolute',right:0,marginTop:8,width:320,background:'#0D1940',border:'1px solid rgba(56,198,255,0.12)',borderRadius:12,
+        <div style={{position:'absolute',right:0,marginTop:8,width:320,background:'#252266',border:'1px solid rgba(56,198,255,0.2)',borderRadius:12,
           boxShadow:'0 20px 60px rgba(0,0,0,.6)',zIndex:50,overflow:'hidden'}}>
-          <div style={{padding:'12px 16px',background:'#091230',borderBottom:'1px solid rgba(56,198,255,0.12)',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+          <div style={{padding:'12px 16px',background:'#1E1A5E',borderBottom:'1px solid rgba(56,198,255,0.2)',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
             <div style={{fontSize:13,fontWeight:700,color:'#fff'}}>Notifications</div>
             <span style={{fontSize:11,color:'#38C6FF'}}>{notifications.length} recent</span>
           </div>
@@ -142,7 +142,7 @@ export default function NotificationBell({ token }) {
             </div>
           )}
 
-          <div style={{padding:'8px 16px',borderTop:'1px solid rgba(56,198,255,0.12)',textAlign:'center'}}>
+          <div style={{padding:'8px 16px',borderTop:'1px solid rgba(56,198,255,0.2)',textAlign:'center'}}>
             <button onClick={() => setOpen(false)} className="nb-close"
               style={{background:'none',border:'none',fontSize:12,color:'rgba(255,255,255,0.45)',cursor:'pointer',fontFamily:'inherit',transition:'color .15s'}}>
               Close

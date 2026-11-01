@@ -127,23 +127,23 @@ function normaliseResult(data) {
 
 // ─── Styles (match LabPortal.js) ───────────────────────────────
 
-const BORDER = 'rgba(56,198,255,0.12)';
+const BORDER = 'rgba(56,198,255,0.2)';
 const ACCENT = '#38C6FF';
 
 const s = {
-  page: { minHeight: '100vh', background: '#0B1535', fontFamily: 'Inter, sans-serif', color: '#fff', padding: '40px 16px' },
+  page: { minHeight: '100vh', background: '#2D2B7A', fontFamily: 'Inter, sans-serif', color: '#fff', padding: '40px 16px' },
   wrap: { maxWidth: 760, margin: '0 auto' },
-  card: { background: '#0D1940', border: `1px solid ${BORDER}`, borderRadius: 18, padding: 28, marginBottom: 20 },
+  card: { background: '#252266', border: `1px solid ${BORDER}`, borderRadius: 18, padding: 28, marginBottom: 20 },
   eyebrow: { fontSize: 11, fontWeight: 700, letterSpacing: '.12em', textTransform: 'uppercase', color: ACCENT, marginBottom: 8 },
   title: { fontSize: 22, fontWeight: 700, margin: 0 },
   subtitle: { fontSize: 13, color: 'rgba(255,255,255,.5)', marginTop: 6, lineHeight: 1.5 },
   label: { display: 'block', fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,.5)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 6 },
   input: { width: '100%', boxSizing: 'border-box', background: 'rgba(255,255,255,.05)', border: '1px solid rgba(255,255,255,.1)', borderRadius: 8, padding: '10px 12px', fontSize: 13, color: '#fff', fontFamily: 'inherit', outline: 'none' },
   field: { marginBottom: 16 },
-  primaryBtn: { background: ACCENT, color: '#0B1535', border: 'none', borderRadius: 10, padding: '12px 22px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' },
+  primaryBtn: { background: ACCENT, color: '#2D2B7A', border: 'none', borderRadius: 10, padding: '12px 22px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' },
   ghostBtn: { background: 'rgba(255,255,255,.06)', color: 'rgba(255,255,255,.7)', border: '1px solid rgba(255,255,255,.1)', borderRadius: 10, padding: '12px 22px', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' },
   sectionTitle: { fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,.6)', textTransform: 'uppercase', letterSpacing: '.08em', margin: '24px 0 12px' },
-  row: { display: 'flex', gap: 10, alignItems: 'flex-start', padding: '10px 14px', background: 'rgba(255,255,255,.02)', border: '1px solid rgba(255,255,255,.05)', borderRadius: 8, marginBottom: 8, fontSize: 13 },
+  row: { display: 'flex', gap: 10, alignItems: 'flex-start', padding: '10px 14px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,.05)', borderRadius: 8, marginBottom: 8, fontSize: 13 },
   error: { background: 'rgba(255,84,112,.08)', border: '1px solid rgba(255,84,112,.2)', borderRadius: 8, padding: '10px 14px', fontSize: 12, color: '#FF5470', marginBottom: 16 },
 };
 
@@ -215,8 +215,8 @@ export default function PreShipmentCheck({ token, onProceed }) {
                 onChange={e => setForm({ ...form, product_category: e.target.value })}
                 style={{ ...s.input, cursor: 'pointer' }}
               >
-                <option value="" style={{ background: '#0D1940' }}>Select SFDA category…</option>
-                {CATEGORIES.map(c => <option key={c} value={c} style={{ background: '#0D1940' }}>{c}</option>)}
+                <option value="" style={{ background: '#252266' }}>Select SFDA category…</option>
+                {CATEGORIES.map(c => <option key={c} value={c} style={{ background: '#252266' }}>{c}</option>)}
               </select>
             </div>
 

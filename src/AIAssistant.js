@@ -64,14 +64,14 @@ export default function AIAssistant({ token, shipmentId }) {
   return (
     <div style={{
       display:'flex', flexDirection:'column', height:'100%',
-      fontFamily:'Inter,sans-serif', background:'#0D1940',
+      fontFamily:'Inter,sans-serif', background:'#252266',
       borderRadius:'14px', border:'1px solid rgba(0,170,255,0.12)',
       overflow:'hidden'
     }}>
       {/* Header */}
       <div style={{
         padding:'14px 18px',
-        background:'linear-gradient(135deg, #0F1E4D 0%, #091230 100%)',
+        background:'linear-gradient(135deg, #252266 0%, #1E1A5E 100%)',
         display:'flex', alignItems:'center', gap:'10px'
       }}>
         <div style={{
@@ -96,7 +96,7 @@ export default function AIAssistant({ token, shipmentId }) {
 
       {/* Quick questions */}
       {messages.length === 1 && (
-        <div style={{padding:'12px 16px', borderBottom:'1px solid rgba(255,255,255,0.06)', background:'#0B1535'}}>
+        <div style={{padding:'12px 16px', borderBottom:'1px solid rgba(255,255,255,0.06)', background:'#2D2B7A'}}>
           <div style={{fontSize:'10px', fontWeight:700, color:'rgba(255,255,255,0.4)', textTransform:'uppercase', letterSpacing:'0.8px', marginBottom:'8px'}}>
             Quick Questions
           </div>
@@ -130,7 +130,7 @@ export default function AIAssistant({ token, shipmentId }) {
             {msg.role === 'assistant' && (
               <div style={{
                 width:'28px', height:'28px', borderRadius:'8px',
-                background:'linear-gradient(135deg, #1E3A8A, #091230)',
+                background:'linear-gradient(135deg, #1E3A8A, #1E1A5E)',
                 display:'flex', alignItems:'center', justifyContent:'center',
                 fontSize:'13px', flexShrink:0, marginTop:'2px'
               }}>🤖</div>
@@ -141,7 +141,7 @@ export default function AIAssistant({ token, shipmentId }) {
               borderRadius: msg.role === 'user' ? '14px 14px 4px 14px' : '14px 14px 14px 4px',
               background: msg.role === 'user' ? '#38C6FF' : 'rgba(255,255,255,0.05)',
               border: msg.role === 'user' ? 'none' : '1px solid rgba(255,255,255,0.08)',
-              color: msg.role === 'user' ? '#0D1940' : 'rgba(255,255,255,0.88)',
+              color: msg.role === 'user' ? '#252266' : 'rgba(255,255,255,0.88)',
               fontSize:'13px', lineHeight:1.6,
               whiteSpace:'pre-wrap',
               fontFamily:'inherit'
@@ -167,7 +167,7 @@ export default function AIAssistant({ token, shipmentId }) {
                 width:'28px', height:'28px', borderRadius:'50%',
                 background:'#38C6FF',
                 display:'flex', alignItems:'center', justifyContent:'center',
-                fontSize:'11px', fontWeight:700, color:'#0D1940',
+                fontSize:'11px', fontWeight:700, color:'#252266',
                 flexShrink:0, marginTop:'2px'
               }}>M</div>
             )}
@@ -178,7 +178,7 @@ export default function AIAssistant({ token, shipmentId }) {
           <div style={{display:'flex', gap:'8px', alignItems:'flex-start'}}>
             <div style={{
               width:'28px', height:'28px', borderRadius:'8px',
-              background:'linear-gradient(135deg, #1E3A8A, #091230)',
+              background:'linear-gradient(135deg, #1E3A8A, #1E1A5E)',
               display:'flex', alignItems:'center', justifyContent:'center',
               fontSize:'13px', flexShrink:0
             }}>🤖</div>
@@ -213,7 +213,7 @@ export default function AIAssistant({ token, shipmentId }) {
       <div style={{
         padding:'12px 16px',
         borderTop:'1px solid rgba(255,255,255,0.08)',
-        background:'#0B1535'
+        background:'#2D2B7A'
       }}>
         <div style={{display:'flex', gap:'8px', alignItems:'flex-end'}}>
           <textarea

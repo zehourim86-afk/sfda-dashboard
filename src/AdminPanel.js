@@ -13,7 +13,7 @@ const DARK_CSS = `
   ::-webkit-scrollbar-thumb{background:rgba(0,170,255,.2);border-radius:2px}
   input:focus,textarea:focus,select:focus{border-color:rgba(0,170,255,.5)!important;outline:none}
   input::placeholder,textarea::placeholder{color:rgba(255,255,255,.25)}
-  select option{background:#0D1940;color:#fff}
+  select option{background:#252266;color:#fff}
   .dv>*+*{border-top:1px solid rgba(255,255,255,.05)}
   .hv-bg{transition:background .15s}
   .hv-bg:hover{background:rgba(0,170,255,.06)!important}
@@ -28,7 +28,7 @@ const COLORS = ['#38C6FF', '#a78bfa', '#00C896', '#F5A623', '#FF5470', '#22D3EE'
 
 function StatCard({ label, value, color, sub }) {
   return (
-    <div style={{background:'rgba(255,255,255,.03)',borderRadius:12,borderColor:'rgba(0,170,255,.1)',borderWidth:1,padding:16}}>
+    <div style={{background:'rgba(255,255,255,0.05)',borderRadius:12,borderColor:'rgba(0,170,255,.1)',borderWidth:1,padding:16}}>
       <p style={{fontSize:12,color:'rgba(255,255,255,.5)',textTransform:'uppercase',letterSpacing:'.6px',fontWeight:600}}>{label}</p>
       <p style={{fontSize:30,fontWeight:700,marginTop:4,color: color || '#FFFFFF'}} >{value}</p>
       {sub && <p style={{fontSize:12,color:'rgba(255,255,255,.35)',marginTop:4}}>{sub}</p>}
@@ -69,7 +69,7 @@ function EscalationAlerts({ token }) {
           </h3>
           <div style={{display:'flex',flexDirection:'column',gap:8}}>
             {escalations.mah_inactivity_escalations.map(s => (
-              <div key={s.id} style={{display:'flex',alignItems:'center',justifyContent:'space-between',background:'rgba(255,255,255,.03)',borderRadius:8,borderColor:'rgba(245,166,35,.15)',borderWidth:1,paddingLeft:12,paddingRight:12,paddingTop:8,paddingBottom:8}}>
+              <div key={s.id} style={{display:'flex',alignItems:'center',justifyContent:'space-between',background:'rgba(255,255,255,0.05)',borderRadius:8,borderColor:'rgba(245,166,35,.15)',borderWidth:1,paddingLeft:12,paddingRight:12,paddingTop:8,paddingBottom:8}}>
                 <div>
                   <span style={{fontFamily:'JetBrains Mono,monospace',fontSize:12,fontWeight:600,color: '#38C6FF'}} >{s.faseh_request_number}</span>
                   <span style={{fontSize:12,color:'rgba(255,255,255,.5)',marginLeft:8}}>{s.importer_name}</span>
@@ -91,7 +91,7 @@ function EscalationAlerts({ token }) {
           </h3>
           <div style={{display:'flex',flexDirection:'column',gap:8}}>
             {escalations.lab_analysis_escalations.map(s => (
-              <div key={s.id} style={{display:'flex',alignItems:'center',justifyContent:'space-between',background:'rgba(255,255,255,.03)',borderRadius:8,borderColor:'rgba(124,92,252,.15)',borderWidth:1,paddingLeft:12,paddingRight:12,paddingTop:8,paddingBottom:8}}>
+              <div key={s.id} style={{display:'flex',alignItems:'center',justifyContent:'space-between',background:'rgba(255,255,255,0.05)',borderRadius:8,borderColor:'rgba(124,92,252,.15)',borderWidth:1,paddingLeft:12,paddingRight:12,paddingTop:8,paddingBottom:8}}>
                 <div>
                   <span style={{fontFamily:'JetBrains Mono,monospace',fontSize:12,fontWeight:600,color: '#38C6FF'}} >{s.faseh_request_number}</span>
                   <span style={{fontSize:12,color:'rgba(255,255,255,.5)',marginLeft:8}}>{s.importer_name}</span>
@@ -113,7 +113,7 @@ function EscalationAlerts({ token }) {
           </h3>
           <div style={{display:'flex',flexDirection:'column',gap:8}}>
             {escalations.lab_escalations.map(s => (
-              <div key={s.id} style={{display:'flex',alignItems:'center',justifyContent:'space-between',background:'rgba(255,255,255,.03)',borderRadius:8,borderColor:'rgba(245,166,35,.15)',borderWidth:1,paddingLeft:12,paddingRight:12,paddingTop:8,paddingBottom:8}}>
+              <div key={s.id} style={{display:'flex',alignItems:'center',justifyContent:'space-between',background:'rgba(255,255,255,0.05)',borderRadius:8,borderColor:'rgba(245,166,35,.15)',borderWidth:1,paddingLeft:12,paddingRight:12,paddingTop:8,paddingBottom:8}}>
                 <div>
                   <span style={{fontFamily:'JetBrains Mono,monospace',fontSize:12,fontWeight:600,color: '#38C6FF'}} >{s.faseh_request_number}</span>
                   <span style={{fontSize:12,color:'rgba(255,255,255,.5)',marginLeft:8}}>{s.importer_name}</span>
@@ -136,7 +136,7 @@ function EscalationAlerts({ token }) {
           </h3>
           <div style={{display:'flex',flexDirection:'column',gap:8}}>
             {escalations.clearance_escalations.map(s => (
-              <div key={s.id} style={{display:'flex',alignItems:'center',justifyContent:'space-between',background:'rgba(255,255,255,.03)',borderRadius:8,borderColor:'rgba(255,84,112,.15)',borderWidth:1,paddingLeft:12,paddingRight:12,paddingTop:8,paddingBottom:8}}>
+              <div key={s.id} style={{display:'flex',alignItems:'center',justifyContent:'space-between',background:'rgba(255,255,255,0.05)',borderRadius:8,borderColor:'rgba(255,84,112,.15)',borderWidth:1,paddingLeft:12,paddingRight:12,paddingTop:8,paddingBottom:8}}>
                 <div>
                   <span style={{fontFamily:'JetBrains Mono,monospace',fontSize:12,fontWeight:600,color: '#38C6FF'}} >{s.faseh_request_number}</span>
                   <span style={{fontSize:12,color:'rgba(255,255,255,.5)',marginLeft:8}}>{s.importer_name}</span>
@@ -183,7 +183,7 @@ function ExpiringLabsAlert({ token }) {
       </h3>
       <div style={{display:'flex',flexDirection:'column',gap:8}}>
         {expiringLabs.map(lab => (
-          <div key={lab.id} style={{display:'flex',alignItems:'center',justifyContent:'space-between',background:'rgba(255,255,255,.03)',borderRadius:8,borderColor:'rgba(245,166,35,.15)',borderWidth:1,paddingLeft:12,paddingRight:12,paddingTop:8,paddingBottom:8}}>
+          <div key={lab.id} style={{display:'flex',alignItems:'center',justifyContent:'space-between',background:'rgba(255,255,255,0.05)',borderRadius:8,borderColor:'rgba(245,166,35,.15)',borderWidth:1,paddingLeft:12,paddingRight:12,paddingTop:8,paddingBottom:8}}>
             <div>
               <p style={{fontSize:14,fontWeight:500,color:'#fff'}}>{lab.name_en}</p>
               <p style={{fontSize:12,color:'rgba(255,255,255,.5)'}}>SFDA: {lab.sfda_appointment_number}</p>
@@ -242,7 +242,7 @@ function DestructionConfirmQueue({ shipments, token }) {
       {error && <div style={{background:'rgba(255,84,112,.06)',borderColor:'rgba(255,84,112,.25)',borderRadius:8,color:'#FF5470',fontSize:12,borderWidth:1,padding:8,marginBottom:8}}>{error}</div>}
       <div style={{display:'flex',flexDirection:'column',gap:8}}>
         {pending.map(s => (
-          <div key={s.id} style={{display:'flex',alignItems:'center',justifyContent:'space-between',background:'rgba(255,255,255,.03)',borderRadius:8,borderColor:'rgba(245,166,35,.15)',borderWidth:1,paddingLeft:12,paddingRight:12,paddingTop:8,paddingBottom:8}}>
+          <div key={s.id} style={{display:'flex',alignItems:'center',justifyContent:'space-between',background:'rgba(255,255,255,0.05)',borderRadius:8,borderColor:'rgba(245,166,35,.15)',borderWidth:1,paddingLeft:12,paddingRight:12,paddingTop:8,paddingBottom:8}}>
             <div>
               <span style={{fontFamily:'JetBrains Mono,monospace',fontSize:12,fontWeight:600,color: '#38C6FF'}} >{s.faseh_request_number}</span>
               <span style={{fontSize:12,color:'rgba(255,255,255,.5)',marginLeft:8}}>{s.importer_name}</span>
@@ -318,19 +318,19 @@ function OverviewSection({ token }) {
 
       {/* Charts */}
       <div style={{display:'grid',gridTemplateColumns:'repeat(2,minmax(0,1fr))',gap:16}}>
-        <div style={{background:'rgba(255,255,255,.03)',borderRadius:12,borderColor:'rgba(0,170,255,.1)',borderWidth:1,padding:16}}>
+        <div style={{background:'rgba(255,255,255,0.05)',borderRadius:12,borderColor:'rgba(0,170,255,.1)',borderWidth:1,padding:16}}>
           <h3 style={{fontSize:14,fontWeight:600,color:'rgba(255,255,255,.8)',marginBottom:12}}>Shipments by State</h3>
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={stateData} margin={{bottom: 40}}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
               <XAxis dataKey="name" tick={{fontSize: 8, fill: 'rgba(255,255,255,0.45)'}} angle={-30} textAnchor="end" />
               <YAxis tick={{fontSize: 10, fill: 'rgba(255,255,255,0.45)'}} allowDecimals={false} />
-              <Tooltip contentStyle={{background:'#0D1940',border:'1px solid rgba(0,170,255,.2)',borderRadius:8,color:'#fff'}} itemStyle={{color:'#fff'}} labelStyle={{color:'rgba(255,255,255,.6)'}} cursor={{fill:'rgba(0,170,255,.06)'}} />
+              <Tooltip contentStyle={{background:'#252266',border:'1px solid rgba(0,170,255,.2)',borderRadius:8,color:'#fff'}} itemStyle={{color:'#fff'}} labelStyle={{color:'rgba(255,255,255,.6)'}} cursor={{fill:'rgba(0,170,255,.06)'}} />
               <Bar dataKey="value" fill="#38C6FF" radius={[4,4,0,0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
-        <div style={{background:'rgba(255,255,255,.03)',borderRadius:12,borderColor:'rgba(0,170,255,.1)',borderWidth:1,padding:16}}>
+        <div style={{background:'rgba(255,255,255,0.05)',borderRadius:12,borderColor:'rgba(0,170,255,.1)',borderWidth:1,padding:16}}>
           <h3 style={{fontSize:14,fontWeight:600,color:'rgba(255,255,255,.8)',marginBottom:12}}>Shipments by Port</h3>
           <ResponsiveContainer width="100%" height={200}>
             <PieChart>
@@ -338,7 +338,7 @@ function OverviewSection({ token }) {
                 dataKey="value" label={({name, value}) => `${name}: ${value}`}>
                 {portData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
               </Pie>
-              <Tooltip contentStyle={{background:'#0D1940',border:'1px solid rgba(0,170,255,.2)',borderRadius:8,color:'#fff'}} itemStyle={{color:'#fff'}} labelStyle={{color:'rgba(255,255,255,.6)'}} cursor={{fill:'rgba(0,170,255,.06)'}} />
+              <Tooltip contentStyle={{background:'#252266',border:'1px solid rgba(0,170,255,.2)',borderRadius:8,color:'#fff'}} itemStyle={{color:'#fff'}} labelStyle={{color:'rgba(255,255,255,.6)'}} cursor={{fill:'rgba(0,170,255,.06)'}} />
             </PieChart>
           </ResponsiveContainer>
         </div>
@@ -358,11 +358,11 @@ function OverviewSection({ token }) {
 
       {/* Recent activity */}
       {stats?.recent_activity?.length > 0 && (
-        <div style={{background:'rgba(255,255,255,.03)',borderRadius:12,borderColor:'rgba(0,170,255,.1)',borderWidth:1,padding:16}}>
+        <div style={{background:'rgba(255,255,255,0.05)',borderRadius:12,borderColor:'rgba(0,170,255,.1)',borderWidth:1,padding:16}}>
           <h3 style={{fontSize:14,fontWeight:600,color:'rgba(255,255,255,.8)',marginBottom:12}}>Recent Activity</h3>
           <div style={{display:'flex',flexDirection:'column',gap:8}}>
             {stats.recent_activity.map((a, i) => (
-              <div key={i} style={{display:'flex',alignItems:'center',gap:12,background:'rgba(255,255,255,.03)',borderRadius:8,padding:8}}>
+              <div key={i} style={{display:'flex',alignItems:'center',gap:12,background:'rgba(255,255,255,0.05)',borderRadius:8,padding:8}}>
                 <span style={{width:8,height:8,borderRadius:9999,background:'#38C6FF',flexShrink:0}}></span>
                 <span style={{fontFamily:'JetBrains Mono,monospace',fontSize:12,color:'#38C6FF',fontWeight:600}}>{a.faseh_request_number}</span>
                 <span style={{fontSize:12,color:'rgba(255,255,255,.65)'}}>{a.importer_name}</span>
@@ -467,10 +467,10 @@ function ShipmentsSection({ token }) {
       {loading ? (
         <div style={{textAlign:'center',color:'rgba(255,255,255,.5)',paddingTop:48,paddingBottom:48}}>Loading...</div>
       ) : (
-        <div style={{background:'rgba(255,255,255,.03)',borderRadius:12,borderColor:'rgba(0,170,255,.1)',overflow:'hidden',borderWidth:1}}>
+        <div style={{background:'rgba(255,255,255,0.05)',borderRadius:12,borderColor:'rgba(0,170,255,.1)',overflow:'hidden',borderWidth:1}}>
           <table style={{width:'100%'}}>
             <thead>
-              <tr style={{background:'rgba(255,255,255,.03)',borderColor:'rgba(0,170,255,.1)',borderBottomWidth:1}}>
+              <tr style={{background:'rgba(255,255,255,0.05)',borderColor:'rgba(0,170,255,.1)',borderBottomWidth:1}}>
                 <th style={{textAlign:'left',fontSize:12,fontWeight:600,color:'rgba(255,255,255,.5)',textTransform:'uppercase',letterSpacing:'.6px',paddingLeft:16,paddingRight:16,paddingTop:12,paddingBottom:12}}>Faseh Reference</th>
                 <th style={{textAlign:'left',fontSize:12,fontWeight:600,color:'rgba(255,255,255,.5)',textTransform:'uppercase',letterSpacing:'.6px',paddingLeft:16,paddingRight:16,paddingTop:12,paddingBottom:12}}>Importer</th>
                 <th style={{textAlign:'left',fontSize:12,fontWeight:600,color:'rgba(255,255,255,.5)',textTransform:'uppercase',letterSpacing:'.6px',paddingLeft:16,paddingRight:16,paddingTop:12,paddingBottom:12}}>Country</th>
@@ -522,7 +522,7 @@ function ShipmentsSection({ token }) {
 
       {resetShipment && (
         <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,.8)',backdropFilter:'blur(6px)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:100,padding:16}}>
-          <div style={{background:'#0D1940',borderRadius:12,boxShadow:'0 32px 80px rgba(0,0,0,.8)',border:'1px solid rgba(0,170,255,.18)',width:'100%',maxWidth:448,padding:24}}>
+          <div style={{background:'#252266',borderRadius:12,boxShadow:'0 32px 80px rgba(0,0,0,.8)',border:'1px solid rgba(0,170,255,.18)',width:'100%',maxWidth:448,padding:24}}>
             <h2 style={{fontSize:18,fontWeight:700,color:'#fff',marginBottom:8}}>↩ Reset Decision</h2>
             <p style={{fontSize:14,color:'rgba(255,255,255,.5)',marginBottom:4}}>{resetShipment.faseh_request_number}</p>
             <p style={{fontSize:12,color:'#F5A623',marginBottom:16}}>This will reset the shipment from <strong>{resetShipment.current_state}</strong> to RESULT_SUBMITTED. The corrected SFDA decision email can then be processed.</p>
@@ -605,7 +605,7 @@ function EmailParserSection({ token }) {
   return (
     <div style={{display:'flex',flexDirection:'column',gap:16}}>
       {/* Test email parser */}
-      <div style={{background:'rgba(255,255,255,.03)',borderRadius:12,borderColor:'rgba(0,170,255,.1)',borderWidth:1,padding:16}}>
+      <div style={{background:'rgba(255,255,255,0.05)',borderRadius:12,borderColor:'rgba(0,170,255,.1)',borderWidth:1,padding:16}}>
         <h3 style={{fontSize:14,fontWeight:600,color:'rgba(255,255,255,.8)',marginBottom:12}}>🤖 Test Email Parser — Simulate SFDA Email</h3>
         <div style={{display:'flex',gap:8,marginBottom:12}}>
           <button onClick={() => setTestEmail(SAMPLE_QC)}
@@ -645,8 +645,8 @@ function EmailParserSection({ token }) {
       </div>
 
       {/* Parser logs */}
-      <div style={{background:'rgba(255,255,255,.03)',borderRadius:12,borderColor:'rgba(0,170,255,.1)',overflow:'hidden',borderWidth:1}}>
-        <div style={{borderColor:'rgba(0,170,255,.1)',background:'rgba(255,255,255,.03)',borderBottomWidth:1,paddingLeft:16,paddingRight:16,paddingTop:12,paddingBottom:12}}>
+      <div style={{background:'rgba(255,255,255,0.05)',borderRadius:12,borderColor:'rgba(0,170,255,.1)',overflow:'hidden',borderWidth:1}}>
+        <div style={{borderColor:'rgba(0,170,255,.1)',background:'rgba(255,255,255,0.05)',borderBottomWidth:1,paddingLeft:16,paddingRight:16,paddingTop:12,paddingBottom:12}}>
           <h3 style={{fontSize:14,fontWeight:600,color:'rgba(255,255,255,.8)'}}>Email Parser Log</h3>
         </div>
         {loading ? (
@@ -656,7 +656,7 @@ function EmailParserSection({ token }) {
         ) : (
           <table style={{width:'100%'}}>
             <thead>
-              <tr style={{background:'rgba(255,255,255,.03)',borderColor:'rgba(0,170,255,.1)',borderBottomWidth:1}}>
+              <tr style={{background:'rgba(255,255,255,0.05)',borderColor:'rgba(0,170,255,.1)',borderBottomWidth:1}}>
                 <th style={{textAlign:'left',fontSize:12,fontWeight:600,color:'rgba(255,255,255,.5)',textTransform:'uppercase',letterSpacing:'.6px',paddingLeft:16,paddingRight:16,paddingTop:12,paddingBottom:12}}>Received</th>
                 <th style={{textAlign:'left',fontSize:12,fontWeight:600,color:'rgba(255,255,255,.5)',textTransform:'uppercase',letterSpacing:'.6px',paddingLeft:16,paddingRight:16,paddingTop:12,paddingBottom:12}}>From</th>
                 <th style={{textAlign:'left',fontSize:12,fontWeight:600,color:'rgba(255,255,255,.5)',textTransform:'uppercase',letterSpacing:'.6px',paddingLeft:16,paddingRight:16,paddingTop:12,paddingBottom:12}}>Faseh Ref</th>
@@ -737,10 +737,10 @@ function UsersSection({ token }) {
       {loading ? (
         <div style={{textAlign:'center',color:'rgba(255,255,255,.5)',paddingTop:48,paddingBottom:48}}>Loading...</div>
       ) : (
-        <div style={{background:'rgba(255,255,255,.03)',borderRadius:12,borderColor:'rgba(0,170,255,.1)',overflow:'hidden',borderWidth:1}}>
+        <div style={{background:'rgba(255,255,255,0.05)',borderRadius:12,borderColor:'rgba(0,170,255,.1)',overflow:'hidden',borderWidth:1}}>
           <table style={{width:'100%'}}>
             <thead>
-              <tr style={{background:'rgba(255,255,255,.03)',borderColor:'rgba(0,170,255,.1)',borderBottomWidth:1}}>
+              <tr style={{background:'rgba(255,255,255,0.05)',borderColor:'rgba(0,170,255,.1)',borderBottomWidth:1}}>
                 <th style={{textAlign:'left',fontSize:12,fontWeight:600,color:'rgba(255,255,255,.5)',textTransform:'uppercase',letterSpacing:'.6px',paddingLeft:16,paddingRight:16,paddingTop:12,paddingBottom:12}}>Name</th>
                 <th style={{textAlign:'left',fontSize:12,fontWeight:600,color:'rgba(255,255,255,.5)',textTransform:'uppercase',letterSpacing:'.6px',paddingLeft:16,paddingRight:16,paddingTop:12,paddingBottom:12}}>Email</th>
                 <th style={{textAlign:'left',fontSize:12,fontWeight:600,color:'rgba(255,255,255,.5)',textTransform:'uppercase',letterSpacing:'.6px',paddingLeft:16,paddingRight:16,paddingTop:12,paddingBottom:12}}>Role</th>
@@ -801,8 +801,8 @@ function OrganisationsSection({ token }) {
   const others = orgs.filter(o => !['LAB', 'CLEARANCE_COMPANY'].includes(o.org_type));
 
   const OrgTable = ({ title, data }) => (
-    <div style={{background:'rgba(255,255,255,.03)',borderRadius:12,borderColor:'rgba(0,170,255,.1)',overflow:'hidden',borderWidth:1}}>
-      <div style={{borderColor:'rgba(0,170,255,.1)',background:'rgba(255,255,255,.03)',borderBottomWidth:1,paddingLeft:16,paddingRight:16,paddingTop:12,paddingBottom:12}}>
+    <div style={{background:'rgba(255,255,255,0.05)',borderRadius:12,borderColor:'rgba(0,170,255,.1)',overflow:'hidden',borderWidth:1}}>
+      <div style={{borderColor:'rgba(0,170,255,.1)',background:'rgba(255,255,255,0.05)',borderBottomWidth:1,paddingLeft:16,paddingRight:16,paddingTop:12,paddingBottom:12}}>
         <h3 style={{fontSize:14,fontWeight:600,color:'rgba(255,255,255,.8)'}}>{title} ({data.length})</h3>
       </div>
       <table style={{width:'100%'}}>
@@ -898,7 +898,7 @@ function MetricsSection({ token }) {
       </div>
 
       {/* Throughput projection */}
-      <div style={{background:'rgba(255,255,255,.03)',borderRadius:12,borderColor:'rgba(0,170,255,.1)',borderWidth:1,padding:16}}>
+      <div style={{background:'rgba(255,255,255,0.05)',borderRadius:12,borderColor:'rgba(0,170,255,.1)',borderWidth:1,padding:16}}>
         <h3 style={{fontSize:14,fontWeight:600,color:'rgba(255,255,255,.8)',marginBottom:4}}>Shipment Throughput Projection</h3>
         <p style={{fontSize:12,color:'rgba(255,255,255,.35)',marginBottom:12}}>Estimated monthly shipments — Manual process vs DEMARA platform</p>
         <ResponsiveContainer width="100%" height={200}>
@@ -906,7 +906,7 @@ function MetricsSection({ token }) {
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
             <XAxis dataKey="month" tick={{fontSize: 10, fill: 'rgba(255,255,255,0.45)'}} />
             <YAxis tick={{fontSize: 10, fill: 'rgba(255,255,255,0.45)'}} />
-            <Tooltip contentStyle={{background:'#0D1940',border:'1px solid rgba(0,170,255,.2)',borderRadius:8,color:'#fff'}} itemStyle={{color:'#fff'}} labelStyle={{color:'rgba(255,255,255,.6)'}} cursor={{fill:'rgba(0,170,255,.06)'}} />
+            <Tooltip contentStyle={{background:'#252266',border:'1px solid rgba(0,170,255,.2)',borderRadius:8,color:'#fff'}} itemStyle={{color:'#fff'}} labelStyle={{color:'rgba(255,255,255,.6)'}} cursor={{fill:'rgba(0,170,255,.06)'}} />
             <Line type="monotone" dataKey="manual" stroke="#FF5470" strokeWidth={2} name="Manual Process" strokeDasharray="5 5" />
             <Line type="monotone" dataKey="demara" stroke="#00C896" strokeWidth={2} name="With DEMARA" />
           </LineChart>
@@ -919,14 +919,14 @@ function MetricsSection({ token }) {
 
       {/* Shipments by country */}
       {countryData.length > 0 && (
-        <div style={{background:'rgba(255,255,255,.03)',borderRadius:12,borderColor:'rgba(0,170,255,.1)',borderWidth:1,padding:16}}>
+        <div style={{background:'rgba(255,255,255,0.05)',borderRadius:12,borderColor:'rgba(0,170,255,.1)',borderWidth:1,padding:16}}>
           <h3 style={{fontSize:14,fontWeight:600,color:'rgba(255,255,255,.8)',marginBottom:12}}>Shipments by Origin Country</h3>
           <ResponsiveContainer width="100%" height={150}>
             <BarChart data={countryData}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
               <XAxis dataKey="name" tick={{fontSize: 10, fill: 'rgba(255,255,255,0.45)'}} />
               <YAxis tick={{fontSize: 10, fill: 'rgba(255,255,255,0.45)'}} allowDecimals={false} />
-              <Tooltip contentStyle={{background:'#0D1940',border:'1px solid rgba(0,170,255,.2)',borderRadius:8,color:'#fff'}} itemStyle={{color:'#fff'}} labelStyle={{color:'rgba(255,255,255,.6)'}} cursor={{fill:'rgba(0,170,255,.06)'}} />
+              <Tooltip contentStyle={{background:'#252266',border:'1px solid rgba(0,170,255,.2)',borderRadius:8,color:'#fff'}} itemStyle={{color:'#fff'}} labelStyle={{color:'rgba(255,255,255,.6)'}} cursor={{fill:'rgba(0,170,255,.06)'}} />
               <Bar dataKey="value" fill="#38C6FF" radius={[4,4,0,0]} />
             </BarChart>
           </ResponsiveContainer>
@@ -934,7 +934,7 @@ function MetricsSection({ token }) {
       )}
 
       {/* Value proposition */}
-      <div style={{background:'rgba(255,255,255,.03)',borderRadius:12,borderColor:'rgba(0,170,255,.1)',borderWidth:1,padding:16}}>
+      <div style={{background:'rgba(255,255,255,0.05)',borderRadius:12,borderColor:'rgba(0,170,255,.1)',borderWidth:1,padding:16}}>
         <h3 style={{fontSize:14,fontWeight:600,color:'rgba(255,255,255,.8)',marginBottom:12}}>Platform Value — Per Shipment</h3>
         <div style={{display:'grid',gridTemplateColumns:'repeat(3,minmax(0,1fr))',gap:16}}>
           <div style={{background:'rgba(255,84,112,.06)',borderRadius:8,textAlign:'center',padding:12}}>
@@ -998,7 +998,7 @@ function ClearancePerformanceSection({ token }) {
 
   return (
     <div style={{display:'flex',flexDirection:'column',gap:16}}>
-      <div style={{background:'rgba(255,255,255,.03)',borderRadius:12,borderColor:'rgba(0,170,255,.1)',borderWidth:1,padding:16}}>
+      <div style={{background:'rgba(255,255,255,0.05)',borderRadius:12,borderColor:'rgba(0,170,255,.1)',borderWidth:1,padding:16}}>
         <h3 style={{fontSize:14,fontWeight:600,color:'rgba(255,255,255,.8)',marginBottom:4}}>Clearance Company Performance</h3>
         <p style={{fontSize:12,color:'rgba(255,255,255,.35)',marginBottom:16}}>Time from SFDA approval notification to final clearance completion</p>
 
@@ -1028,7 +1028,7 @@ function ClearancePerformanceSection({ token }) {
                   </div>
 
                   <div style={{display:'grid',gridTemplateColumns:'repeat(4,minmax(0,1fr))',gap:16,marginBottom:12}}>
-                    <div style={{textAlign:'center',background:'rgba(255,255,255,.03)',borderRadius:8,padding:8}}>
+                    <div style={{textAlign:'center',background:'rgba(255,255,255,0.05)',borderRadius:8,padding:8}}>
                       <p style={{fontSize:18,fontWeight:700,color:'rgba(255,255,255,.8)'}}>
                         {company.avg_completion_hours ? `${Math.round(company.avg_completion_hours)}h` : '—'}
                       </p>
@@ -1146,7 +1146,7 @@ function SFDADashboard({ token }) {
   return (
     <div style={{display:'flex',flexDirection:'column',gap:24}}>
       {/* Header */}
-      <div style={{background:'linear-gradient(135deg,#0F1E4D,#091230)',borderColor:'rgba(0,170,255,.15)',borderRadius:12,color:'#fff',borderWidth:1,padding:24}}>
+      <div style={{background:'linear-gradient(135deg,#252266,#1E1A5E)',borderColor:'rgba(0,170,255,.15)',borderRadius:12,color:'#fff',borderWidth:1,padding:24}}>
         <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:8}}>
           <span style={{fontSize:30}}>🏛️</span>
           <div>
@@ -1161,19 +1161,19 @@ function SFDADashboard({ token }) {
 
       {/* Key metrics */}
       <div style={{display:'grid',gridTemplateColumns:'repeat(4,minmax(0,1fr))',gap:16}}>
-        <div style={{background:'rgba(255,255,255,.03)',borderRadius:12,borderColor:'rgba(0,170,255,.1)',textAlign:'center',borderWidth:1,padding:16}}>
+        <div style={{background:'rgba(255,255,255,0.05)',borderRadius:12,borderColor:'rgba(0,170,255,.1)',textAlign:'center',borderWidth:1,padding:16}}>
           <p style={{fontSize:30,fontWeight:700,color: '#38C6FF'}} >{total}</p>
           <p style={{fontSize:12,color:'rgba(255,255,255,.5)',marginTop:4}}>Total shipments tracked</p>
         </div>
-        <div style={{background:'rgba(255,255,255,.03)',borderRadius:12,borderColor:'rgba(0,170,255,.1)',textAlign:'center',borderWidth:1,padding:16}}>
+        <div style={{background:'rgba(255,255,255,0.05)',borderRadius:12,borderColor:'rgba(0,170,255,.1)',textAlign:'center',borderWidth:1,padding:16}}>
           <p style={{fontSize:30,fontWeight:700,color:'#00C896'}}>{cleared}</p>
           <p style={{fontSize:12,color:'rgba(255,255,255,.5)',marginTop:4}}>Successfully cleared</p>
         </div>
-        <div style={{background:'rgba(255,255,255,.03)',borderRadius:12,borderColor:'rgba(0,170,255,.1)',textAlign:'center',borderWidth:1,padding:16}}>
+        <div style={{background:'rgba(255,255,255,0.05)',borderRadius:12,borderColor:'rgba(0,170,255,.1)',textAlign:'center',borderWidth:1,padding:16}}>
           <p style={{fontSize:30,fontWeight:700,color:'#38C6FF'}}>{conformingRate}%</p>
           <p style={{fontSize:12,color:'rgba(255,255,255,.5)',marginTop:4}}>Conformity rate</p>
         </div>
-        <div style={{background:'rgba(255,255,255,.03)',borderRadius:12,borderColor:'rgba(0,170,255,.1)',textAlign:'center',borderWidth:1,padding:16}}>
+        <div style={{background:'rgba(255,255,255,0.05)',borderRadius:12,borderColor:'rgba(0,170,255,.1)',textAlign:'center',borderWidth:1,padding:16}}>
           <p style={{fontSize:30,fontWeight:700,color:'#a78bfa'}}>{avgDwellDays}</p>
           <p style={{fontSize:12,color:'rgba(255,255,255,.5)',marginTop:4}}>Avg clearance time (days)</p>
         </div>
@@ -1182,7 +1182,7 @@ function SFDADashboard({ token }) {
       {/* Charts row */}
       <div style={{display:'grid',gridTemplateColumns:'repeat(3,minmax(0,1fr))',gap:16}}>
         {/* Shipment status */}
-        <div style={{background:'rgba(255,255,255,.03)',borderRadius:12,borderColor:'rgba(0,170,255,.1)',borderWidth:1,padding:16}}>
+        <div style={{background:'rgba(255,255,255,0.05)',borderRadius:12,borderColor:'rgba(0,170,255,.1)',borderWidth:1,padding:16}}>
           <h3 style={{fontSize:14,fontWeight:600,color:'rgba(255,255,255,.8)',marginBottom:12}}>Clearance Status</h3>
           <ResponsiveContainer width="100%" height={160}>
             <PieChart>
@@ -1192,34 +1192,34 @@ function SFDADashboard({ token }) {
                   <Cell key={i} fill={entry.color} />
                 ))}
               </Pie>
-              <Tooltip contentStyle={{background:'#0D1940',border:'1px solid rgba(0,170,255,.2)',borderRadius:8,color:'#fff'}} itemStyle={{color:'#fff'}} labelStyle={{color:'rgba(255,255,255,.6)'}} cursor={{fill:'rgba(0,170,255,.06)'}} />
+              <Tooltip contentStyle={{background:'#252266',border:'1px solid rgba(0,170,255,.2)',borderRadius:8,color:'#fff'}} itemStyle={{color:'#fff'}} labelStyle={{color:'rgba(255,255,255,.6)'}} cursor={{fill:'rgba(0,170,255,.06)'}} />
             </PieChart>
           </ResponsiveContainer>
         </div>
 
         {/* Port activity */}
-        <div style={{background:'rgba(255,255,255,.03)',borderRadius:12,borderColor:'rgba(0,170,255,.1)',borderWidth:1,padding:16}}>
+        <div style={{background:'rgba(255,255,255,0.05)',borderRadius:12,borderColor:'rgba(0,170,255,.1)',borderWidth:1,padding:16}}>
           <h3 style={{fontSize:14,fontWeight:600,color:'rgba(255,255,255,.8)',marginBottom:12}}>Port Activity</h3>
           <ResponsiveContainer width="100%" height={160}>
             <BarChart data={portData} margin={{bottom: 20}}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
               <XAxis dataKey="name" tick={{fontSize: 9, fill: 'rgba(255,255,255,0.45)'}} angle={-20} textAnchor="end" />
               <YAxis tick={{fontSize: 10, fill: 'rgba(255,255,255,0.45)'}} allowDecimals={false} />
-              <Tooltip contentStyle={{background:'#0D1940',border:'1px solid rgba(0,170,255,.2)',borderRadius:8,color:'#fff'}} itemStyle={{color:'#fff'}} labelStyle={{color:'rgba(255,255,255,.6)'}} cursor={{fill:'rgba(0,170,255,.06)'}} />
+              <Tooltip contentStyle={{background:'#252266',border:'1px solid rgba(0,170,255,.2)',borderRadius:8,color:'#fff'}} itemStyle={{color:'#fff'}} labelStyle={{color:'rgba(255,255,255,.6)'}} cursor={{fill:'rgba(0,170,255,.06)'}} />
               <Bar dataKey="value" fill="#38C6FF" radius={[4,4,0,0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
 
         {/* Country of origin */}
-        <div style={{background:'rgba(255,255,255,.03)',borderRadius:12,borderColor:'rgba(0,170,255,.1)',borderWidth:1,padding:16}}>
+        <div style={{background:'rgba(255,255,255,0.05)',borderRadius:12,borderColor:'rgba(0,170,255,.1)',borderWidth:1,padding:16}}>
           <h3 style={{fontSize:14,fontWeight:600,color:'rgba(255,255,255,.8)',marginBottom:12}}>Top Import Countries</h3>
           <ResponsiveContainer width="100%" height={160}>
             <BarChart data={countryData} layout="vertical" margin={{left: 20}}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
               <XAxis type="number" tick={{fontSize: 10, fill: 'rgba(255,255,255,0.45)'}} allowDecimals={false} />
               <YAxis type="category" dataKey="name" tick={{fontSize: 10, fill: 'rgba(255,255,255,0.45)'}} width={60} />
-              <Tooltip contentStyle={{background:'#0D1940',border:'1px solid rgba(0,170,255,.2)',borderRadius:8,color:'#fff'}} itemStyle={{color:'#fff'}} labelStyle={{color:'rgba(255,255,255,.6)'}} cursor={{fill:'rgba(0,170,255,.06)'}} />
+              <Tooltip contentStyle={{background:'#252266',border:'1px solid rgba(0,170,255,.2)',borderRadius:8,color:'#fff'}} itemStyle={{color:'#fff'}} labelStyle={{color:'rgba(255,255,255,.6)'}} cursor={{fill:'rgba(0,170,255,.06)'}} />
               <Bar dataKey="value" fill="#38C6FF" radius={[0,4,4,0]} />
             </BarChart>
           </ResponsiveContainer>
@@ -1227,7 +1227,7 @@ function SFDADashboard({ token }) {
       </div>
 
       {/* Lab network */}
-      <div style={{background:'rgba(255,255,255,.03)',borderRadius:12,borderColor:'rgba(0,170,255,.1)',borderWidth:1,padding:16}}>
+      <div style={{background:'rgba(255,255,255,0.05)',borderRadius:12,borderColor:'rgba(0,170,255,.1)',borderWidth:1,padding:16}}>
         <h3 style={{fontSize:14,fontWeight:600,color:'rgba(255,255,255,.8)',marginBottom:12}}>Certified QC Lab Network</h3>
         <div style={{display:'grid',gridTemplateColumns:'repeat(4,minmax(0,1fr))',gap:12}}>
           {[
@@ -1236,7 +1236,7 @@ function SFDADashboard({ token }) {
             { name: 'KKIA Pharmaceutical Lab', turnaround: '24h', tests: 412, status: 'Active' },
             { name: 'Saudi Drug Analysis Lab', turnaround: '72h', tests: 56, status: 'Active' },
           ].map((lab, i) => (
-            <div key={i} style={{background:'rgba(255,255,255,.03)',borderRadius:8,padding:12}}>
+            <div key={i} style={{background:'rgba(255,255,255,0.05)',borderRadius:8,padding:12}}>
               <p style={{fontSize:12,fontWeight:600,color:'#fff',marginBottom:4}}>{lab.name}</p>
               <div style={{display:'flex',alignItems:'center',gap:4,marginBottom:4}}>
                 <span style={{width:8,height:8,background:'#00C896',borderRadius:9999}}></span>
@@ -1250,7 +1250,7 @@ function SFDADashboard({ token }) {
       </div>
 
       {/* Value proposition */}
-      <div style={{background:'rgba(255,255,255,.03)',borderRadius:12,borderColor:'rgba(0,170,255,.1)',borderWidth:1,padding:16}}>
+      <div style={{background:'rgba(255,255,255,0.05)',borderRadius:12,borderColor:'rgba(0,170,255,.1)',borderWidth:1,padding:16}}>
         <h3 style={{fontSize:14,fontWeight:600,color:'rgba(255,255,255,.8)',marginBottom:12}}>Platform Impact — Before vs After DEMARA</h3>
         <div style={{display:'grid',gridTemplateColumns:'repeat(3,minmax(0,1fr))',gap:16}}>
           <div style={{background:'rgba(255,84,112,.06)',borderRadius:8,textAlign:'center',padding:16}}>
@@ -1303,12 +1303,12 @@ export default function AdminPanel({ user, token, onLogout }) {
     fontWeight:on ? 700 : 500,background:on ? 'rgba(0,170,255,.12)' : 'transparent',color:on ? '#38C6FF' : 'rgba(255,255,255,.5)',border:on ? '1px solid rgba(56,198,255,.3)' : '1px solid transparent'});
 
   return (
-    <div style={{display:'flex',flexDirection:'column',height:'100vh',background:'#0B1535',fontFamily:'Inter,sans-serif',color:'#fff',overflow:'hidden'}}>
+    <div style={{display:'flex',flexDirection:'column',height:'100vh',background:'#2D2B7A',fontFamily:'Inter,sans-serif',color:'#fff',overflow:'hidden'}}>
       <style>{DARK_CSS}</style>
 
       {/* ── Topbar ── */}
-      <div style={{height:58,background:'#091230',borderBottom:'1px solid rgba(0,170,255,.1)',display:'flex',alignItems:'center',padding:'0 24px',gap:14,flexShrink:0,zIndex:10}}>
-        <div style={{width:78,height:44,borderRadius:8,overflow:'hidden',position:'relative',flexShrink:0,background:'#2E2C70',boxShadow:'0 0 0 1px rgba(56,198,255,.15)'}}><img src="/demara-logo.png" alt="DEMARA" style={{position:'absolute',width:'300%',height:'300%',left:'-100%',top:'-100%'}}/></div>
+      <div style={{height:58,background:'#1E1A5E',borderBottom:'1px solid rgba(0,170,255,.1)',display:'flex',alignItems:'center',padding:'0 24px',gap:14,flexShrink:0,zIndex:10}}>
+        <img src="/logo_1.png" alt="DEMARA" style={{height:'38px', width:'auto'}} />
         <div style={{width:1,height:28,background:'rgba(255,255,255,.08)'}}></div>
         <div>
           <div style={{fontSize:14,fontWeight:800,color:'#fff',letterSpacing:'-.3px'}}>DEMARA Platform</div>
@@ -1335,7 +1335,7 @@ export default function AdminPanel({ user, token, onLogout }) {
       <div style={{display:'flex',flex:1,overflow:'hidden'}}>
 
         {/* ── Sidebar ── */}
-        <div style={{width:220,background:'#0D1940',borderRight:'1px solid rgba(0,170,255,.08)',display:'flex',flexDirection:'column',flexShrink:0,overflowY:'auto'}}>
+        <div style={{width:220,background:'#252266',borderRight:'1px solid rgba(0,170,255,.08)',display:'flex',flexDirection:'column',flexShrink:0,overflowY:'auto'}}>
           <div style={{padding:'16px 10px',flex:1}}>
             <div style={{fontSize:9,fontWeight:700,color:'rgba(255,255,255,.4)',textTransform:'uppercase',letterSpacing:'2px',marginBottom:10,paddingLeft:4}}>Administration</div>
             {NAV_ITEMS.map(item => (
@@ -1353,7 +1353,7 @@ export default function AdminPanel({ user, token, onLogout }) {
         </div>
 
         {/* ── Main content ── */}
-        <div key={activeSection} style={{flex:1,overflowY:'auto',background:'#0B1535',padding:'20px 24px'}}>
+        <div key={activeSection} style={{flex:1,overflowY:'auto',background:'#2D2B7A',padding:'20px 24px'}}>
           <div style={{marginBottom:16}}>
             <div style={{fontSize:18,fontWeight:800,color:'#fff'}}>
             {NAV_ITEMS.find(n => n.id === activeSection)?.icon} {NAV_ITEMS.find(n => n.id === activeSection)?.label}

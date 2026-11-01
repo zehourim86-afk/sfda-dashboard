@@ -53,7 +53,7 @@ const S = {
   ipt: {width:'100%',background:'rgba(255,255,255,.05)',border:'1px solid rgba(255,255,255,.1)',borderRadius:8,padding:'8px 12px',fontSize:12,color:'#fff',fontFamily:'inherit',outline:'none'},
   lbl: {fontSize:10,fontWeight:700,color:'rgba(255,255,255,.3)',textTransform:'uppercase',letterSpacing:'1px',marginBottom:4,display:'block'},
   hint: {fontSize:10,color:'rgba(255,255,255,.3)',marginTop:4},
-  listRow: {display:'flex',alignItems:'center',justifyContent:'space-between',gap:12,background:'rgba(255,255,255,.03)',border:'1px solid rgba(255,255,255,.05)',borderRadius:9,padding:'9px 12px'},
+  listRow: {display:'flex',alignItems:'center',justifyContent:'space-between',gap:12,background:'rgba(255,255,255,0.05)',border:'1px solid rgba(255,255,255,.05)',borderRadius:9,padding:'9px 12px'},
   error: {background:'rgba(255,84,112,.08)',border:'1px solid rgba(255,84,112,.2)',borderRadius:8,padding:'10px 14px',fontSize:12,color:'#FF5470'},
   mono: 'JetBrains Mono,monospace',
 };
@@ -116,10 +116,10 @@ function getSamplingRecommendation(s) {
 }
 
 const panel = {
-  wrap: { background: '#0D1940', border: '1px solid rgba(56,198,255,0.12)', borderRadius: 14, padding: 20, fontFamily: 'Inter, sans-serif', color: '#fff' },
+  wrap: { background: '#252266', border: '1px solid rgba(56,198,255,0.2)', borderRadius: 14, padding: 20, fontFamily: 'Inter, sans-serif', color: '#fff' },
   eyebrow: { fontSize: 11, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: '#38C6FF', marginBottom: 12 },
   reason: { display: 'flex', gap: 8, alignItems: 'flex-start', fontSize: 12, color: 'rgba(255,255,255,0.65)', lineHeight: 1.5, marginBottom: 6 },
-  primary: { flex: 1, background: '#38C6FF', color: '#0B1535', border: 'none', borderRadius: 8, padding: '10px 14px', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' },
+  primary: { flex: 1, background: '#38C6FF', color: '#2D2B7A', border: 'none', borderRadius: 8, padding: '10px 14px', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' },
   ghost: { flex: 1, background: 'rgba(255,255,255,.06)', color: 'rgba(255,255,255,.75)', border: '1px solid rgba(255,255,255,.12)', borderRadius: 8, padding: '10px 14px', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' },
   input: { width: '100%', boxSizing: 'border-box', background: 'rgba(255,255,255,.05)', border: '1px solid rgba(255,255,255,.12)', borderRadius: 8, padding: '8px 12px', fontSize: 12, color: '#fff', fontFamily: 'inherit', outline: 'none', resize: 'vertical' },
   error: { background: 'rgba(255,84,112,.08)', border: '1px solid rgba(255,84,112,.2)', borderRadius: 8, padding: '8px 12px', fontSize: 12, color: '#FF5470', marginTop: 12 },
@@ -348,7 +348,7 @@ function SampleActionModal({ shipment, token, isInspector, onClose, onRefresh })
 
   return (
     <div style={S.backdrop}>
-      <div style={{background:'#0D1940',border:'1px solid rgba(0,170,255,.15)',borderRadius:18,width:'100%',maxWidth:560,maxHeight:'92vh',overflowY:'auto',boxShadow:'0 32px 80px rgba(0,0,0,.8)'}}>
+      <div style={{background:'#252266',border:'1px solid rgba(0,170,255,.15)',borderRadius:18,width:'100%',maxWidth:560,maxHeight:'92vh',overflowY:'auto',boxShadow:'0 32px 80px rgba(0,0,0,.8)'}}>
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'18px 22px',borderBottom:'1px solid rgba(0,170,255,.1)',background:'linear-gradient(180deg,rgba(0,170,255,.05),transparent)'}}>
           <div>
             <div style={{fontSize:15,fontWeight:800,color:'#fff',fontFamily:S.mono}}>{shipment.faseh_request_number}</div>
@@ -434,7 +434,7 @@ function SampleActionModal({ shipment, token, isInspector, onClose, onRefresh })
 
           {stateInfo?.action && (
             <button onClick={performTransition} disabled={acting}
-              style={{width:'100%',padding:13,background:'linear-gradient(135deg,#38C6FF,#0088DD)',color:'#0D1940',fontSize:13,fontWeight:800,borderRadius:10,border:'none',
+              style={{width:'100%',padding:13,background:'linear-gradient(135deg,#38C6FF,#0088DD)',color:'#252266',fontSize:13,fontWeight:800,borderRadius:10,border:'none',
                 cursor:acting?'default':'pointer',opacity:acting?.6:1,fontFamily:'inherit',boxShadow:'0 4px 20px rgba(0,170,255,.3)'}}>
               {acting ? 'Processing...' : stateInfo.action}
             </button>
@@ -570,7 +570,7 @@ function DestructionWitnessSection({ shipments, token, defaultWitness, onRefresh
       <div style={alertTitle('red')}>🔥 Scheduled Destructions — Witness Required ({shipments.length})</div>
       <div style={{display:'flex',flexDirection:'column',gap:6}}>
         {shipments.map(s => (
-          <div key={s.id} style={{background:'rgba(255,255,255,.03)',border:'1px solid rgba(255,255,255,.05)',borderRadius:9,padding:'9px 12px'}}>
+          <div key={s.id} style={{background:'rgba(255,255,255,0.05)',border:'1px solid rgba(255,255,255,.05)',borderRadius:9,padding:'9px 12px'}}>
             <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:12}}>
               <div>
                 <span style={{fontFamily:S.mono,fontSize:11,fontWeight:700,color:'#38C6FF'}}>{s.faseh_request_number}</span>
@@ -683,7 +683,7 @@ export default function InspectorApp({ user: initialUser, token, onLogout }) {
   const isInspectorUser = user?.role === 'SFDA_INSPECTOR';
 
   return (
-    <div style={{display:'flex',flexDirection:'column',height:'100vh',background:'#0B1535',fontFamily:'Inter,sans-serif',color:'#fff',overflow:'hidden'}}>
+    <div style={{display:'flex',flexDirection:'column',height:'100vh',background:'#2D2B7A',fontFamily:'Inter,sans-serif',color:'#fff',overflow:'hidden'}}>
       <style>{`
         @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
         @keyframes glow{0%,100%{opacity:1}50%{opacity:.6}}
@@ -697,8 +697,8 @@ export default function InspectorApp({ user: initialUser, token, onLogout }) {
       `}</style>
 
       {/* ── Topbar ── */}
-      <div style={{height:58,background:'#091230',borderBottom:'1px solid rgba(0,170,255,.1)',display:'flex',alignItems:'center',padding:'0 24px',gap:14,flexShrink:0,zIndex:10}}>
-        <div style={{width:78,height:44,borderRadius:8,overflow:'hidden',position:'relative',flexShrink:0,background:'#2E2C70',boxShadow:'0 0 0 1px rgba(56,198,255,.15)'}}><img src="/demara-logo.png" alt="DEMARA" style={{position:'absolute',width:'300%',height:'300%',left:'-100%',top:'-100%'}}/></div>
+      <div style={{height:58,background:'#1E1A5E',borderBottom:'1px solid rgba(0,170,255,.1)',display:'flex',alignItems:'center',padding:'0 24px',gap:14,flexShrink:0,zIndex:10}}>
+        <img src="/logo_1.png" alt="DEMARA" style={{height:'38px', width:'auto'}} />
         <div style={{width:1,height:28,background:'rgba(255,255,255,.08)'}}></div>
         <div>
           <div style={{fontSize:14,fontWeight:800,color:'#fff',letterSpacing:'-.3px'}}>DEMARA Platform</div>
@@ -723,13 +723,13 @@ export default function InspectorApp({ user: initialUser, token, onLogout }) {
       <div style={{display:'flex',flex:1,overflow:'hidden'}}>
 
         {/* ── Sidebar ── */}
-        <div style={{width:220,background:'#0D1940',borderRight:'1px solid rgba(0,170,255,.08)',display:'flex',flexDirection:'column',flexShrink:0,overflowY:'auto'}}>
+        <div style={{width:220,background:'#252266',borderRight:'1px solid rgba(0,170,255,.08)',display:'flex',flexDirection:'column',flexShrink:0,overflowY:'auto'}}>
           {/* KPI section */}
           <div style={{padding:'16px 14px',borderBottom:'1px solid rgba(0,170,255,.06)'}}>
             <div style={{fontSize:9,fontWeight:700,color:'rgba(255,255,255,.4)',textTransform:'uppercase',letterSpacing:'2px',marginBottom:12}}>Overview</div>
             <div style={{display:'flex',flexDirection:'column',gap:6}}>
               {kpis.map(k => (
-                <div key={k.label} style={{display:'flex',alignItems:'center',gap:10,padding:'8px 10px',borderRadius:9,background:'rgba(255,255,255,.03)',border:'1px solid rgba(255,255,255,.05)'}}>
+                <div key={k.label} style={{display:'flex',alignItems:'center',gap:10,padding:'8px 10px',borderRadius:9,background:'rgba(255,255,255,0.05)',border:'1px solid rgba(255,255,255,.05)'}}>
                   <span style={{fontSize:14,flexShrink:0}}>{k.icon}</span>
                   <span style={{fontSize:11,color:'rgba(255,255,255,.5)',flex:1}}>{k.label}</span>
                   <span style={{fontSize:16,fontWeight:900,color:k.color,letterSpacing:'-0.5px'}}>{k.value}</span>
@@ -750,7 +750,7 @@ export default function InspectorApp({ user: initialUser, token, onLogout }) {
                   <span style={{fontSize:15}}>{n.icon}</span>
                   <span style={{flex:1}}>{n.label}</span>
                   {n.count != null && n.count > 0 && (
-                    <span style={{fontSize:10,fontWeight:700,background:on?color:'rgba(255,255,255,.1)',color:on?'#0D1940':'rgba(255,255,255,.5)',padding:'1px 7px',borderRadius:10}}>{n.count}</span>
+                    <span style={{fontSize:10,fontWeight:700,background:on?color:'rgba(255,255,255,.1)',color:on?'#252266':'rgba(255,255,255,.5)',padding:'1px 7px',borderRadius:10}}>{n.count}</span>
                   )}
                 </button>
               );
@@ -764,7 +764,7 @@ export default function InspectorApp({ user: initialUser, token, onLogout }) {
         </div>
 
         {/* ── Main content ── */}
-        <div key={activeTab} style={{flex:1,overflowY:'auto',background:'#0B1535'}}>
+        <div key={activeTab} style={{flex:1,overflowY:'auto',background:'#2D2B7A'}}>
 
           {/* Work queues: pending pickups, plus re-export loading and destruction witness for inspectors */}
           <div style={{display:'flex',flexDirection:'column',gap:12,padding:'16px 20px 0'}}>
@@ -835,7 +835,7 @@ export default function InspectorApp({ user: initialUser, token, onLogout }) {
                   </div>
                 </div>
               ) : (
-                <div style={{background:'rgba(255,255,255,.02)',border:'1px solid rgba(0,170,255,.1)',borderRadius:14,overflow:'hidden'}}>
+                <div style={{background:'rgba(255,255,255,0.04)',border:'1px solid rgba(0,170,255,.1)',borderRadius:14,overflow:'hidden'}}>
                   <table style={{width:'100%',borderCollapse:'collapse'}}>
                     <thead>
                       <tr style={{background:'rgba(0,170,255,.04)'}}>

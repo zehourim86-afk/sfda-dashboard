@@ -103,7 +103,7 @@ const CONFIDENCE_LEVELS = [
 
 // Read-only view of the MAH's document confirmation and AI score
 function SubmissionConfidencePanel({ confirmedAt, score }) {
-  const panel = { background: '#0D1940', border: '1px solid rgba(56,198,255,0.15)', borderRadius: '8px', padding: '12px 14px' };
+  const panel = { background: '#252266', border: '1px solid rgba(56,198,255,0.15)', borderRadius: '8px', padding: '12px 14px' };
 
   if (!confirmedAt) {
     return (
@@ -299,7 +299,7 @@ function ShipmentActionModal({ shipment, token, onClose, onRefresh }) {
 
   return (
     <div style={S.backdrop}>
-      <div style={{background:'#0D1940',border:'1px solid rgba(0,170,255,.15)',borderRadius:18,width:'100%',maxWidth:680,maxHeight:'92vh',overflowY:'auto',boxShadow:'0 32px 80px rgba(0,0,0,.8)'}}>
+      <div style={{background:'#252266',border:'1px solid rgba(0,170,255,.15)',borderRadius:18,width:'100%',maxWidth:680,maxHeight:'92vh',overflowY:'auto',boxShadow:'0 32px 80px rgba(0,0,0,.8)'}}>
         {/* Header */}
         <div style={S.modalHead}>
           <div>
@@ -334,15 +334,15 @@ function ShipmentActionModal({ shipment, token, onClose, onRefresh }) {
           <SubmissionConfidencePanel confirmedAt={confirmation.at} score={confirmation.score} />
 
           {/* Clearance checklist with timestamps and references */}
-          <div style={{background:'rgba(255,255,255,.02)',border:'1px solid rgba(255,255,255,.06)',borderRadius:12,padding:14}}>
+          <div style={{background:'rgba(255,255,255,0.04)',border:'1px solid rgba(255,255,255,.06)',borderRadius:12,padding:14}}>
             <div style={S.section}>Clearance Checklist</div>
             <div style={{display:'flex',flexDirection:'column',gap:6}}>
               {checklist.map((item, i) => (
                 <div key={i} style={{display:'flex',alignItems:'flex-start',gap:10,padding:'9px 12px',borderRadius:9,
-                  background:item.done?'rgba(0,200,150,.06)':'rgba(255,255,255,.02)',
+                  background:item.done?'rgba(0,200,150,.06)':'rgba(255,255,255,0.04)',
                   border:`1px solid ${item.done?'rgba(0,200,150,.18)':'rgba(255,255,255,.06)'}`}}>
                   <span style={{width:22,height:22,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:800,flexShrink:0,
-                    background:item.done?'#00C896':'rgba(255,255,255,.08)',color:item.done?'#0D1940':'rgba(255,255,255,.35)'}}>
+                    background:item.done?'#00C896':'rgba(255,255,255,.08)',color:item.done?'#252266':'rgba(255,255,255,.35)'}}>
                     {item.done ? '✓' : i + 1}
                   </span>
                   <div style={{flex:1}}>
@@ -385,7 +385,7 @@ function ShipmentActionModal({ shipment, token, onClose, onRefresh }) {
               <button
                 onClick={() => performAction(nextAction.action, nextAction.requiresRef)}
                 disabled={acting}
-                style={{width:'100%',padding:13,background:TONES[actionTone][0],color:'#0D1940',fontSize:13,fontWeight:800,borderRadius:10,border:'none',
+                style={{width:'100%',padding:13,background:TONES[actionTone][0],color:'#252266',fontSize:13,fontWeight:800,borderRadius:10,border:'none',
                   cursor:acting?'default':'pointer',opacity:acting?.6:1,fontFamily:'inherit',boxShadow:`0 4px 20px ${tint(actionTone,.3)}`}}>
                 {acting ? 'Processing...' : nextAction.label}
               </button>
@@ -579,7 +579,7 @@ const [documentsShipmentId, setDocumentsShipmentId] = useState(null);
   const td = {padding:'13px 16px'};
 
   return (
-    <div style={{display:'flex',flexDirection:'column',height:'100vh',background:'#0B1535',fontFamily:'Inter,sans-serif',color:'#fff',overflow:'hidden'}}>
+    <div style={{display:'flex',flexDirection:'column',height:'100vh',background:'#2D2B7A',fontFamily:'Inter,sans-serif',color:'#fff',overflow:'hidden'}}>
       <style>{`
         @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
         @keyframes glow{0%,100%{opacity:1}50%{opacity:.6}}
@@ -593,8 +593,8 @@ const [documentsShipmentId, setDocumentsShipmentId] = useState(null);
       `}</style>
 
       {/* ── Topbar ── */}
-      <div style={{height:58,background:'#091230',borderBottom:'1px solid rgba(0,170,255,.1)',display:'flex',alignItems:'center',padding:'0 24px',gap:14,flexShrink:0,zIndex:10}}>
-        <div style={{width:78,height:44,borderRadius:8,overflow:'hidden',position:'relative',flexShrink:0,background:'#2E2C70',boxShadow:'0 0 0 1px rgba(56,198,255,.15)'}}><img src="/demara-logo.png" alt="DEMARA" style={{position:'absolute',width:'300%',height:'300%',left:'-100%',top:'-100%'}}/></div>
+      <div style={{height:58,background:'#1E1A5E',borderBottom:'1px solid rgba(0,170,255,.1)',display:'flex',alignItems:'center',padding:'0 24px',gap:14,flexShrink:0,zIndex:10}}>
+        <img src="/logo_1.png" alt="DEMARA" style={{height:'38px', width:'auto'}} />
         <div style={{width:1,height:28,background:'rgba(255,255,255,.08)'}}></div>
         <div>
           <div style={{fontSize:14,fontWeight:800,color:'#fff',letterSpacing:'-.3px'}}>DEMARA Platform</div>
@@ -619,13 +619,13 @@ const [documentsShipmentId, setDocumentsShipmentId] = useState(null);
       <div style={{display:'flex',flex:1,overflow:'hidden'}}>
 
         {/* ── Sidebar ── */}
-        <div style={{width:220,background:'#0D1940',borderRight:'1px solid rgba(0,170,255,.08)',display:'flex',flexDirection:'column',flexShrink:0,overflowY:'auto'}}>
+        <div style={{width:220,background:'#252266',borderRight:'1px solid rgba(0,170,255,.08)',display:'flex',flexDirection:'column',flexShrink:0,overflowY:'auto'}}>
           {/* KPI section */}
           <div style={{padding:'16px 14px',borderBottom:'1px solid rgba(0,170,255,.06)'}}>
             <div style={{fontSize:9,fontWeight:700,color:'rgba(255,255,255,.4)',textTransform:'uppercase',letterSpacing:'2px',marginBottom:12}}>Overview</div>
             <div style={{display:'flex',flexDirection:'column',gap:6}}>
               {kpis.map(k => (
-                <div key={k.label} style={{display:'flex',alignItems:'center',gap:10,padding:'8px 10px',borderRadius:9,background:'rgba(255,255,255,.03)',border:'1px solid rgba(255,255,255,.05)'}}>
+                <div key={k.label} style={{display:'flex',alignItems:'center',gap:10,padding:'8px 10px',borderRadius:9,background:'rgba(255,255,255,0.05)',border:'1px solid rgba(255,255,255,.05)'}}>
                   <span style={{fontSize:14,flexShrink:0}}>{k.icon}</span>
                   <span style={{fontSize:11,color:'rgba(255,255,255,.5)',flex:1}}>{k.label}</span>
                   <span style={{fontSize:16,fontWeight:900,color:k.color,letterSpacing:'-0.5px'}}>{k.value}</span>
@@ -646,7 +646,7 @@ const [documentsShipmentId, setDocumentsShipmentId] = useState(null);
                   <span style={{fontSize:15}}>{n.icon}</span>
                   <span style={{flex:1}}>{n.label}</span>
                   {n.count != null && n.count > 0 && (
-                    <span style={{fontSize:10,fontWeight:700,background:on?color:'rgba(255,255,255,.1)',color:on?'#0D1940':'rgba(255,255,255,.5)',padding:'1px 7px',borderRadius:10}}>{n.count}</span>
+                    <span style={{fontSize:10,fontWeight:700,background:on?color:'rgba(255,255,255,.1)',color:on?'#252266':'rgba(255,255,255,.5)',padding:'1px 7px',borderRadius:10}}>{n.count}</span>
                   )}
                 </button>
               );
@@ -660,7 +660,7 @@ const [documentsShipmentId, setDocumentsShipmentId] = useState(null);
         </div>
 
         {/* ── Main content ── */}
-        <div key={activeTab} style={{flex:1,overflowY:'auto',background:'#0B1535'}}>
+        <div key={activeTab} style={{flex:1,overflowY:'auto',background:'#2D2B7A'}}>
 
           {/* Org admin tab shows OrgAdminPanel instead of the table */}
           {activeTab === 'org-admin' && (
@@ -699,7 +699,7 @@ const [documentsShipmentId, setDocumentsShipmentId] = useState(null);
                   </div>
                 </div>
               ) : (
-                <div style={{background:'rgba(255,255,255,.02)',border:'1px solid rgba(0,170,255,.1)',borderRadius:14,overflow:'hidden'}}>
+                <div style={{background:'rgba(255,255,255,0.04)',border:'1px solid rgba(0,170,255,.1)',borderRadius:14,overflow:'hidden'}}>
                   <table style={{width:'100%',borderCollapse:'collapse'}}>
                     <thead>
                       <tr style={{background:'rgba(0,170,255,.04)'}}>
@@ -769,7 +769,7 @@ const [documentsShipmentId, setDocumentsShipmentId] = useState(null);
       {/* ── Decline modal ── */}
       {decliningShipment && (
         <div style={S.backdrop}>
-          <div style={{background:'#0D1940',border:'1px solid rgba(0,170,255,.15)',borderRadius:16,width:'100%',maxWidth:420,boxShadow:'0 24px 80px rgba(0,0,0,.8)'}}>
+          <div style={{background:'#252266',border:'1px solid rgba(0,170,255,.15)',borderRadius:16,width:'100%',maxWidth:420,boxShadow:'0 24px 80px rgba(0,0,0,.8)'}}>
             <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'18px 22px',borderBottom:'1px solid rgba(0,170,255,.1)'}}>
               <div>
                 <div style={{fontSize:15,fontWeight:800,color:'#fff'}}>Decline Assignment</div>

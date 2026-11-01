@@ -543,7 +543,7 @@
 
 /* ── Table ── */
 .m-table-wrap {
-  background: rgba(255,255,255,0.03) !important;
+  background: rgba(255,255,255,0.05) !important;
   border: 1px solid rgba(68,200,245,0.1) !important;
   border-radius: 14px !important;
   overflow: hidden !important;
@@ -581,7 +581,7 @@
   color: rgba(255,255,255,0.3) !important;
   text-transform: uppercase !important;
   letter-spacing: 1px !important;
-  background: rgba(255,255,255,0.02) !important;
+  background: rgba(255,255,255,0.04) !important;
   border-bottom: 1px solid rgba(68,200,245,0.08) !important;
   white-space: nowrap !important;
 }

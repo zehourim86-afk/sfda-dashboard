@@ -12,7 +12,7 @@ const DARK_CSS = `
   ::-webkit-scrollbar-thumb{background:rgba(0,170,255,.2);border-radius:2px}
   input:focus,textarea:focus,select:focus{border-color:rgba(0,170,255,.5)!important;outline:none}
   input::placeholder,textarea::placeholder{color:rgba(255,255,255,.25)}
-  select option{background:#0D1940;color:#fff}
+  select option{background:#252266;color:#fff}
   .dv>*+*{border-top:1px solid rgba(255,255,255,.05)}
   .hv-bg{transition:background .15s}
   .hv-bg:hover{background:rgba(0,170,255,.06)!important}
@@ -74,7 +74,7 @@ function TraceModal({ trace, onClose }) {
   if (!trace) return null;
   return (
     <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,.8)',backdropFilter:'blur(6px)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:100,padding:16}}>
-      <div style={{background:'#0D1940',borderRadius:12,boxShadow:'0 32px 80px rgba(0,0,0,.8)',border:'1px solid rgba(0,170,255,.18)',width:'100%',maxWidth:768,maxHeight:'92vh',overflowY:'auto'}}>
+      <div style={{background:'#252266',borderRadius:12,boxShadow:'0 32px 80px rgba(0,0,0,.8)',border:'1px solid rgba(0,170,255,.18)',width:'100%',maxWidth:768,maxHeight:'92vh',overflowY:'auto'}}>
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',borderColor:'rgba(255,255,255,.08)',borderBottomWidth:1,padding:24}}>
           <div>
             <h2 style={{fontSize:20,fontWeight:700,color:'#fff'}}>{trace.trace_number}</h2>
@@ -112,7 +112,7 @@ function TraceModal({ trace, onClose }) {
               <h3 style={{fontSize:14,fontWeight:600,color:'rgba(255,255,255,.8)',marginBottom:12}}>Products</h3>
               <div style={{display:'flex',flexDirection:'column',gap:8}}>
                 {trace.line_items.map((item) => (
-                  <div key={item.id} style={{background:'rgba(255,255,255,.03)',borderRadius:8,padding:12}}>
+                  <div key={item.id} style={{background:'rgba(255,255,255,0.05)',borderRadius:8,padding:12}}>
                     <p style={{fontWeight:500,color:'#fff',fontSize:14}}>{item.product_name_en}</p>
                     <div style={{display:'flex',gap:16,marginTop:4}}>
                       <span style={{fontSize:12,color:'rgba(255,255,255,.5)'}}>Batch: {item.batch_number}</span>
@@ -235,12 +235,12 @@ export default function Dashboard({ user, token, onLogout }) {
   ];
 
   return (
-    <div style={{display:'flex',flexDirection:'column',height:'100vh',background:'#0B1535',fontFamily:'Inter,sans-serif',color:'#fff',overflow:'hidden'}}>
+    <div style={{display:'flex',flexDirection:'column',height:'100vh',background:'#2D2B7A',fontFamily:'Inter,sans-serif',color:'#fff',overflow:'hidden'}}>
       <style>{DARK_CSS}</style>
 
       {/* ── Topbar ── */}
-      <div style={{height:58,background:'#091230',borderBottom:'1px solid rgba(0,170,255,.1)',display:'flex',alignItems:'center',padding:'0 24px',gap:14,flexShrink:0,zIndex:10}}>
-        <div style={{width:78,height:44,borderRadius:8,overflow:'hidden',position:'relative',flexShrink:0,background:'#2E2C70',boxShadow:'0 0 0 1px rgba(56,198,255,.15)'}}><img src="/demara-logo.png" alt="DEMARA" style={{position:'absolute',width:'300%',height:'300%',left:'-100%',top:'-100%'}}/></div>
+      <div style={{height:58,background:'#1E1A5E',borderBottom:'1px solid rgba(0,170,255,.1)',display:'flex',alignItems:'center',padding:'0 24px',gap:14,flexShrink:0,zIndex:10}}>
+        <img src="/logo_1.png" alt="DEMARA" style={{height:'38px', width:'auto'}} />
         <div style={{width:1,height:28,background:'rgba(255,255,255,.08)'}}></div>
         <div>
           <div style={{fontSize:14,fontWeight:800,color:'#fff',letterSpacing:'-.3px'}}>Drug Import Traceability Platform</div>
@@ -268,12 +268,12 @@ export default function Dashboard({ user, token, onLogout }) {
       <div style={{display:'flex',flex:1,overflow:'hidden'}}>
 
         {/* ── Sidebar ── */}
-        <div style={{width:220,background:'#0D1940',borderRight:'1px solid rgba(0,170,255,.08)',display:'flex',flexDirection:'column',flexShrink:0,overflowY:'auto'}}>
+        <div style={{width:220,background:'#252266',borderRight:'1px solid rgba(0,170,255,.08)',display:'flex',flexDirection:'column',flexShrink:0,overflowY:'auto'}}>
           <div style={{padding:'16px 14px',borderBottom:'1px solid rgba(0,170,255,.06)'}}>
             <div style={{fontSize:9,fontWeight:700,color:'rgba(255,255,255,.4)',textTransform:'uppercase',letterSpacing:'2px',marginBottom:12}}>Overview</div>
             <div style={{display:'flex',flexDirection:'column',gap:6}}>
               {kpis.map(k => (
-                <div key={k.label} style={{display:'flex',alignItems:'center',gap:10,padding:'8px 10px',borderRadius:9,background:'rgba(255,255,255,.03)',border:'1px solid rgba(255,255,255,.05)'}}>
+                <div key={k.label} style={{display:'flex',alignItems:'center',gap:10,padding:'8px 10px',borderRadius:9,background:'rgba(255,255,255,0.05)',border:'1px solid rgba(255,255,255,.05)'}}>
                   <span style={{fontSize:14,flexShrink:0}}>{k.icon}</span>
                   <span style={{fontSize:11,color:'rgba(255,255,255,.5)',flex:1}}>{k.label}</span>
                   <span style={{fontSize:16,fontWeight:900,color:k.color,letterSpacing:'-0.5px'}}>{k.value}</span>
@@ -302,24 +302,24 @@ export default function Dashboard({ user, token, onLogout }) {
         </div>
 
         {/* ── Main content ── */}
-        <div key={activeTab} style={{flex:1,overflowY:'auto',background:'#0B1535'}}>
+        <div key={activeTab} style={{flex:1,overflowY:'auto',background:'#2D2B7A'}}>
       {activeTab === 'dashboard' && (
         <div style={{display:'flex',flexDirection:'column',gap:24,padding:24}}>
           {/* KPI cards */}
           <div style={{display:'grid',gridTemplateColumns:'repeat(4,minmax(0,1fr))',gap:16}}>
-            <div style={{background:'rgba(255,255,255,.03)',borderRadius:12,borderColor:'rgba(0,170,255,.1)',borderWidth:1,padding:16}}>
+            <div style={{background:'rgba(255,255,255,0.05)',borderRadius:12,borderColor:'rgba(0,170,255,.1)',borderWidth:1,padding:16}}>
               <p style={{fontSize:12,color:'rgba(255,255,255,.5)',textTransform:'uppercase',letterSpacing:'.6px',fontWeight:600}}>Total Shipments</p>
               <p style={{fontSize:30,fontWeight:700,color:'#fff',marginTop:4}}>{traces.length}</p>
             </div>
-            <div style={{background:'rgba(255,255,255,.03)',borderRadius:12,borderColor:'rgba(0,170,255,.1)',borderWidth:1,padding:16}}>
+            <div style={{background:'rgba(255,255,255,0.05)',borderRadius:12,borderColor:'rgba(0,170,255,.1)',borderWidth:1,padding:16}}>
               <p style={{fontSize:12,color:'rgba(255,255,255,.5)',textTransform:'uppercase',letterSpacing:'.6px',fontWeight:600}}>Active</p>
               <p style={{fontSize:30,fontWeight:700,color:'#38C6FF',marginTop:4}}>{activeCount}</p>
             </div>
-            <div style={{background:'rgba(255,255,255,.03)',borderRadius:12,borderColor:'rgba(0,170,255,.1)',borderWidth:1,padding:16}}>
+            <div style={{background:'rgba(255,255,255,0.05)',borderRadius:12,borderColor:'rgba(0,170,255,.1)',borderWidth:1,padding:16}}>
               <p style={{fontSize:12,color:'rgba(255,255,255,.5)',textTransform:'uppercase',letterSpacing:'.6px',fontWeight:600}}>Released</p>
               <p style={{fontSize:30,fontWeight:700,color:'#00C896',marginTop:4}}>{releasedCount}</p>
             </div>
-            <div style={{background:'rgba(255,255,255,.03)',borderRadius:12,borderColor:'rgba(0,170,255,.1)',borderWidth:1,padding:16}}>
+            <div style={{background:'rgba(255,255,255,0.05)',borderRadius:12,borderColor:'rgba(0,170,255,.1)',borderWidth:1,padding:16}}>
               <p style={{fontSize:12,color:'rgba(255,255,255,.5)',textTransform:'uppercase',letterSpacing:'.6px',fontWeight:600}}>SLA Compliance</p>
               <p style={{fontSize:30,fontWeight:700,color:'#a78bfa',marginTop:4}}>{slaCompliance}%</p>
             </div>
@@ -328,21 +328,21 @@ export default function Dashboard({ user, token, onLogout }) {
           {/* Charts row 1 */}
           <div style={{display:'grid',gridTemplateColumns:'repeat(2,minmax(0,1fr))',gap:16}}>
             {/* Shipments by state */}
-            <div style={{background:'rgba(255,255,255,.03)',borderRadius:12,borderColor:'rgba(0,170,255,.1)',borderWidth:1,padding:16}}>
+            <div style={{background:'rgba(255,255,255,0.05)',borderRadius:12,borderColor:'rgba(0,170,255,.1)',borderWidth:1,padding:16}}>
               <h3 style={{fontSize:14,fontWeight:600,color:'rgba(255,255,255,.8)',marginBottom:16}}>Shipments by State</h3>
               <ResponsiveContainer width="100%" height={200}>
                 <BarChart data={stateData} margin={{ top: 0, right: 0, left: -20, bottom: 40 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
                   <XAxis dataKey="state" tick={{fontSize: 9, fill: 'rgba(255,255,255,0.45)'}} angle={-45} textAnchor="end" />
                   <YAxis tick={{fontSize: 10, fill: 'rgba(255,255,255,0.45)'}} allowDecimals={false} />
-                  <Tooltip contentStyle={{background:'#0D1940',border:'1px solid rgba(0,170,255,.2)',borderRadius:8,color:'#fff'}} itemStyle={{color:'#fff'}} labelStyle={{color:'rgba(255,255,255,.6)'}} cursor={{fill:'rgba(0,170,255,.06)'}} />
+                  <Tooltip contentStyle={{background:'#252266',border:'1px solid rgba(0,170,255,.2)',borderRadius:8,color:'#fff'}} itemStyle={{color:'#fff'}} labelStyle={{color:'rgba(255,255,255,.6)'}} cursor={{fill:'rgba(0,170,255,.06)'}} />
                   <Bar dataKey="count" fill="#38C6FF" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
 
             {/* Shipments by port */}
-            <div style={{background:'rgba(255,255,255,.03)',borderRadius:12,borderColor:'rgba(0,170,255,.1)',borderWidth:1,padding:16}}>
+            <div style={{background:'rgba(255,255,255,0.05)',borderRadius:12,borderColor:'rgba(0,170,255,.1)',borderWidth:1,padding:16}}>
               <h3 style={{fontSize:14,fontWeight:600,color:'rgba(255,255,255,.8)',marginBottom:16}}>Shipments by Port</h3>
               <ResponsiveContainer width="100%" height={200}>
                 <PieChart>
@@ -359,7 +359,7 @@ export default function Dashboard({ user, token, onLogout }) {
                       <Cell key={index} fill={CHART_COLORS[index % CHART_COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip contentStyle={{background:'#0D1940',border:'1px solid rgba(0,170,255,.2)',borderRadius:8,color:'#fff'}} itemStyle={{color:'#fff'}} labelStyle={{color:'rgba(255,255,255,.6)'}} cursor={{fill:'rgba(0,170,255,.06)'}} />
+                  <Tooltip contentStyle={{background:'#252266',border:'1px solid rgba(0,170,255,.2)',borderRadius:8,color:'#fff'}} itemStyle={{color:'#fff'}} labelStyle={{color:'rgba(255,255,255,.6)'}} cursor={{fill:'rgba(0,170,255,.06)'}} />
                 </PieChart>
               </ResponsiveContainer>
             </div>
@@ -368,21 +368,21 @@ export default function Dashboard({ user, token, onLogout }) {
           {/* Charts row 2 */}
           <div style={{display:'grid',gridTemplateColumns:'repeat(2,minmax(0,1fr))',gap:16}}>
             {/* Shipments by country */}
-            <div style={{background:'rgba(255,255,255,.03)',borderRadius:12,borderColor:'rgba(0,170,255,.1)',borderWidth:1,padding:16}}>
+            <div style={{background:'rgba(255,255,255,0.05)',borderRadius:12,borderColor:'rgba(0,170,255,.1)',borderWidth:1,padding:16}}>
               <h3 style={{fontSize:14,fontWeight:600,color:'rgba(255,255,255,.8)',marginBottom:16}}>Shipments by Country</h3>
               <ResponsiveContainer width="100%" height={200}>
                 <BarChart data={countryData} margin={{ top: 0, right: 0, left: -20, bottom: 20 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
                   <XAxis dataKey="country" tick={{fontSize: 10, fill: 'rgba(255,255,255,0.45)'}} />
                   <YAxis tick={{fontSize: 10, fill: 'rgba(255,255,255,0.45)'}} allowDecimals={false} />
-                  <Tooltip contentStyle={{background:'#0D1940',border:'1px solid rgba(0,170,255,.2)',borderRadius:8,color:'#fff'}} itemStyle={{color:'#fff'}} labelStyle={{color:'rgba(255,255,255,.6)'}} cursor={{fill:'rgba(0,170,255,.06)'}} />
+                  <Tooltip contentStyle={{background:'#252266',border:'1px solid rgba(0,170,255,.2)',borderRadius:8,color:'#fff'}} itemStyle={{color:'#fff'}} labelStyle={{color:'rgba(255,255,255,.6)'}} cursor={{fill:'rgba(0,170,255,.06)'}} />
                   <Bar dataKey="count" fill="#00C896" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
 
             {/* Pass/Fail ratio */}
-            <div style={{background:'rgba(255,255,255,.03)',borderRadius:12,borderColor:'rgba(0,170,255,.1)',borderWidth:1,padding:16}}>
+            <div style={{background:'rgba(255,255,255,0.05)',borderRadius:12,borderColor:'rgba(0,170,255,.1)',borderWidth:1,padding:16}}>
               <h3 style={{fontSize:14,fontWeight:600,color:'rgba(255,255,255,.8)',marginBottom:16}}>Decision Summary</h3>
               <ResponsiveContainer width="100%" height={200}>
                 <PieChart>
@@ -403,7 +403,7 @@ export default function Dashboard({ user, token, onLogout }) {
                     <Cell fill="#38C6FF" />
                     <Cell fill="#FF5470" />
                   </Pie>
-                  <Tooltip contentStyle={{background:'#0D1940',border:'1px solid rgba(0,170,255,.2)',borderRadius:8,color:'#fff'}} itemStyle={{color:'#fff'}} labelStyle={{color:'rgba(255,255,255,.6)'}} cursor={{fill:'rgba(0,170,255,.06)'}} />
+                  <Tooltip contentStyle={{background:'#252266',border:'1px solid rgba(0,170,255,.2)',borderRadius:8,color:'#fff'}} itemStyle={{color:'#fff'}} labelStyle={{color:'rgba(255,255,255,.6)'}} cursor={{fill:'rgba(0,170,255,.06)'}} />
                 </PieChart>
               </ResponsiveContainer>
             </div>
@@ -414,7 +414,7 @@ export default function Dashboard({ user, token, onLogout }) {
       {activeTab === 'shipments' && (
         <div style={{padding:24}}>
           {/* Stats bar */}
-          <div style={{background:'rgba(255,255,255,.03)',borderColor:'rgba(0,170,255,.1)',borderRadius:12,borderWidth:1,padding:16,marginBottom:16}}>
+          <div style={{background:'rgba(255,255,255,0.05)',borderColor:'rgba(0,170,255,.1)',borderRadius:12,borderWidth:1,padding:16,marginBottom:16}}>
             <div style={{display:'flex',gap:24}}>
               <div style={{textAlign:'center'}}>
                 <p style={{fontSize:24,fontWeight:700,color:'#fff'}}>{traces.length}</p>
@@ -472,10 +472,10 @@ export default function Dashboard({ user, token, onLogout }) {
           ) : traces.length === 0 ? (
             <div style={{textAlign:'center',color:'rgba(255,255,255,.5)',paddingTop:48,paddingBottom:48}}>No shipments found.</div>
           ) : (
-            <div style={{background:'rgba(255,255,255,.03)',borderRadius:12,borderColor:'rgba(0,170,255,.1)',overflow:'hidden',borderWidth:1}}>
+            <div style={{background:'rgba(255,255,255,0.05)',borderRadius:12,borderColor:'rgba(0,170,255,.1)',overflow:'hidden',borderWidth:1}}>
               <table style={{width:'100%'}}>
                 <thead>
-                  <tr style={{background:'rgba(255,255,255,.03)',borderColor:'rgba(0,170,255,.1)',borderBottomWidth:1}}>
+                  <tr style={{background:'rgba(255,255,255,0.05)',borderColor:'rgba(0,170,255,.1)',borderBottomWidth:1}}>
                     <th style={{textAlign:'left',fontSize:12,fontWeight:600,color:'rgba(255,255,255,.5)',textTransform:'uppercase',letterSpacing:'.6px',paddingLeft:16,paddingRight:16,paddingTop:12,paddingBottom:12}}>Trace No.</th>
                     <th style={{textAlign:'left',fontSize:12,fontWeight:600,color:'rgba(255,255,255,.5)',textTransform:'uppercase',letterSpacing:'.6px',paddingLeft:16,paddingRight:16,paddingTop:12,paddingBottom:12}}>Importer</th>
                     <th style={{textAlign:'left',fontSize:12,fontWeight:600,color:'rgba(255,255,255,.5)',textTransform:'uppercase',letterSpacing:'.6px',paddingLeft:16,paddingRight:16,paddingTop:12,paddingBottom:12}}>Port</th>

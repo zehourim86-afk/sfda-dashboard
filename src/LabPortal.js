@@ -71,13 +71,13 @@ function getTests(name) {
 // ── Shared styles ────────────────────────────────────────────────
 const C = {
   // Layout
-  page:     'display:flex;flex-direction:column;min-height:100vh;background:#0B1535;font-family:Inter,sans-serif;color:#fff',
+  page:     'display:flex;flex-direction:column;min-height:100vh;background:#2D2B7A;font-family:Inter,sans-serif;color:#fff',
   body:     'display:flex;flex:1;overflow:hidden',
-  sidebar:  'width:220px;background:#0D1940;border-right:1px solid rgba(0,170,255,.08);display:flex;flex-direction:column;flex-shrink:0;height:calc(100vh - 58px)',
-  content:  'flex:1;overflow-y:auto;background:#0B1535',
+  sidebar:  'width:220px;background:#252266;border-right:1px solid rgba(0,170,255,.08);display:flex;flex-direction:column;flex-shrink:0;height:calc(100vh - 58px)',
+  content:  'flex:1;overflow-y:auto;background:#2D2B7A',
   // Cards
-  card:     'background:rgba(255,255,255,.03);border:1px solid rgba(0,170,255,.1);border-radius:14px;padding:18px',
-  cardHover:'background:rgba(255,255,255,.03);border:1px solid rgba(0,170,255,.1);border-radius:14px;padding:18px;transition:all .2s;cursor:pointer',
+  card:     'background:rgba(255,255,255,0.05);border:1px solid rgba(0,170,255,.1);border-radius:14px;padding:18px',
+  cardHover:'background:rgba(255,255,255,0.05);border:1px solid rgba(0,170,255,.1);border-radius:14px;padding:18px;transition:all .2s;cursor:pointer',
 };
 
 function badge(state) {
@@ -133,7 +133,7 @@ function DetailModal({shipment,token,onClose}) {
   const dc={APPROVED:'#00C896',REJECTED:'#FF5470',CONDITIONALLY_APPROVED:'#F5A623'};
   return (
     <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,.8)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:100,padding:20,backdropFilter:'blur(6px)'}}>
-      <div style={{background:'#0D1940',border:'1px solid rgba(0,170,255,.2)',borderRadius:18,width:'100%',maxWidth:860,maxHeight:'90vh',overflowY:'auto',boxShadow:'0 32px 80px rgba(0,0,0,.8)'}}>
+      <div style={{background:'#252266',border:'1px solid rgba(0,170,255,.2)',borderRadius:18,width:'100%',maxWidth:860,maxHeight:'90vh',overflowY:'auto',boxShadow:'0 32px 80px rgba(0,0,0,.8)'}}>
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'20px 24px',borderBottom:'1px solid rgba(0,170,255,.1)'}}>
           <div>
             <div style={{fontSize:16,fontWeight:800,color:'#fff'}}>📋 {shipment.faseh_request_number}</div>
@@ -147,7 +147,7 @@ function DetailModal({shipment,token,onClose}) {
               <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:18}}>{badge(detail.current_state)}<span style={{fontSize:11,color:'rgba(255,255,255,.3)'}}>Updated {formatDate(detail.updated_at)}</span></div>
               <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10,marginBottom:18}}>
                 {[['Faseh Reference',detail.faseh_request_number,'#38C6FF'],['GHAD CR',detail.ghad_cr_number||'—','#fff'],['Importer',detail.importer_name,'#fff'],['Country',detail.shipment_country,'#fff'],['Port of Entry',detail.port_of_entry||'—','#fff'],['Lab',detail.lab_name||'—','#fff']].map(([l,v,c],i)=>(
-                  <div key={i} style={{background:'rgba(255,255,255,.03)',border:'1px solid rgba(255,255,255,.06)',borderRadius:10,padding:'10px 14px'}}>
+                  <div key={i} style={{background:'rgba(255,255,255,0.05)',border:'1px solid rgba(255,255,255,.06)',borderRadius:10,padding:'10px 14px'}}>
                     <div style={{fontSize:9,fontWeight:700,color:'rgba(255,255,255,.3)',textTransform:'uppercase',letterSpacing:'1px',marginBottom:4}}>{l}</div>
                     <div style={{fontSize:13,fontWeight:600,color:c,fontFamily:l==='Faseh Reference'?'JetBrains Mono,monospace':'inherit'}}>{v}</div>
                   </div>
@@ -157,7 +157,7 @@ function DetailModal({shipment,token,onClose}) {
                 <div style={{marginBottom:18}}>
                   <div style={{fontSize:10,fontWeight:700,color:'rgba(255,255,255,.3)',textTransform:'uppercase',letterSpacing:'1.5px',marginBottom:10}}>Product Analysis Results</div>
                   {detail.products.map((p,i)=>(
-                    <div key={i} style={{background:'rgba(255,255,255,.02)',border:'1px solid rgba(255,255,255,.06)',borderRadius:10,padding:'12px 16px',marginBottom:8,display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
+                    <div key={i} style={{background:'rgba(255,255,255,0.04)',border:'1px solid rgba(255,255,255,.06)',borderRadius:10,padding:'12px 16px',marginBottom:8,display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
                       <div>
                         <div style={{fontSize:13,fontWeight:700,color:'#fff'}}>{p.product_name_en}</div>
                         {p.ecos_ma_number&&<div style={{fontSize:10,color:'rgba(255,255,255,.3)',marginTop:2}}>E-Cosma: {p.ecos_ma_number}</div>}
@@ -175,7 +175,7 @@ function DetailModal({shipment,token,onClose}) {
                   <div style={{fontSize:10,fontWeight:700,color:'rgba(255,255,255,.3)',textTransform:'uppercase',letterSpacing:'1.5px',marginBottom:10}}>Audit Trail</div>
                   <div style={{display:'flex',flexDirection:'column',gap:5,maxHeight:180,overflowY:'auto'}}>
                     {detail.audit_log.slice().reverse().map((log,i)=>(
-                      <div key={i} style={{display:'flex',gap:10,alignItems:'flex-start',padding:'8px 12px',background:'rgba(255,255,255,.02)',borderRadius:8}}>
+                      <div key={i} style={{display:'flex',gap:10,alignItems:'flex-start',padding:'8px 12px',background:'rgba(255,255,255,0.04)',borderRadius:8}}>
                         <div style={{width:6,height:6,borderRadius:'50%',background:'#38C6FF',marginTop:4,flexShrink:0}}></div>
                         <div style={{flex:1,fontSize:11,color:'rgba(255,255,255,.65)'}}>{log.trigger_event||`${log.from_state} → ${log.to_state}`}</div>
                         <div style={{fontSize:10,color:'rgba(255,255,255,.25)',flexShrink:0}}>{formatDate(log.occurred_at)}</div>
@@ -253,7 +253,7 @@ function ResultModal({shipment,token,onClose,onRefresh}) {
 
   return (
     <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,.8)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:100,padding:20,backdropFilter:'blur(6px)'}}>
-      <div style={{background:'#0D1940',border:'1px solid rgba(0,170,255,.15)',borderRadius:18,width:'100%',maxWidth:680,maxHeight:'92vh',overflowY:'auto',boxShadow:'0 32px 80px rgba(0,0,0,.8)'}}>
+      <div style={{background:'#252266',border:'1px solid rgba(0,170,255,.15)',borderRadius:18,width:'100%',maxWidth:680,maxHeight:'92vh',overflowY:'auto',boxShadow:'0 32px 80px rgba(0,0,0,.8)'}}>
         {/* Header */}
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'18px 22px',borderBottom:'1px solid rgba(0,170,255,.1)',background:'linear-gradient(180deg,rgba(0,170,255,.05),transparent)'}}>
           <div>
@@ -343,14 +343,14 @@ function ResultModal({shipment,token,onClose,onRefresh}) {
                         const tests=getTests(p.product_name_en);
                         const open=showTests[i];
                         return(
-                          <div key={i} style={{background:'rgba(255,255,255,.02)',border:'1px solid rgba(255,255,255,.06)',borderRadius:10,marginBottom:8,overflow:'hidden'}}>
+                          <div key={i} style={{background:'rgba(255,255,255,0.04)',border:'1px solid rgba(255,255,255,.06)',borderRadius:10,marginBottom:8,overflow:'hidden'}}>
                             <div onClick={()=>setShowTests(prev=>({...prev,[i]:!open}))} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'10px 14px',cursor:'pointer'}}>
                               <div style={{fontSize:12,fontWeight:600,color:'#fff'}}>{p.product_name_en}</div>
                               <div style={{display:'flex',alignItems:'center',gap:8}}><span style={{fontSize:10,color:'rgba(255,255,255,.3)'}}>{tests.length} tests</span><span style={{color:'#38C6FF',fontSize:11}}>{open?'▲':'▼'}</span></div>
                             </div>
                             {open&&(
                               <table style={{width:'100%',borderCollapse:'collapse',borderTop:'1px solid rgba(255,255,255,.06)'}}>
-                                <thead><tr><th style={{padding:'7px 14px',textAlign:'left',fontSize:9,fontWeight:700,color:'rgba(255,255,255,.3)',textTransform:'uppercase',letterSpacing:'1px',background:'rgba(255,255,255,.02)'}}>Test</th><th style={{padding:'7px 14px',textAlign:'left',fontSize:9,fontWeight:700,color:'rgba(255,255,255,.3)',textTransform:'uppercase',letterSpacing:'1px',background:'rgba(255,255,255,.02)'}}>Unit</th><th style={{padding:'7px 14px',textAlign:'left',fontSize:9,fontWeight:700,color:'rgba(255,255,255,.3)',textTransform:'uppercase',letterSpacing:'1px',background:'rgba(255,255,255,.02)'}}>SFDA Limit</th></tr></thead>
+                                <thead><tr><th style={{padding:'7px 14px',textAlign:'left',fontSize:9,fontWeight:700,color:'rgba(255,255,255,.3)',textTransform:'uppercase',letterSpacing:'1px',background:'rgba(255,255,255,0.04)'}}>Test</th><th style={{padding:'7px 14px',textAlign:'left',fontSize:9,fontWeight:700,color:'rgba(255,255,255,.3)',textTransform:'uppercase',letterSpacing:'1px',background:'rgba(255,255,255,0.04)'}}>Unit</th><th style={{padding:'7px 14px',textAlign:'left',fontSize:9,fontWeight:700,color:'rgba(255,255,255,.3)',textTransform:'uppercase',letterSpacing:'1px',background:'rgba(255,255,255,0.04)'}}>SFDA Limit</th></tr></thead>
                                 <tbody>{tests.map((t,j)=><tr key={j}><td style={{padding:'7px 14px',fontSize:11,color:'rgba(255,255,255,.65)',borderBottom:'1px solid rgba(255,255,255,.04)'}}>{t.name}</td><td style={{padding:'7px 14px',fontSize:11,color:'rgba(255,255,255,.35)',borderBottom:'1px solid rgba(255,255,255,.04)'}}>{t.unit}</td><td style={{padding:'7px 14px',fontSize:11,color:'#38C6FF',borderBottom:'1px solid rgba(255,255,255,.04)'}}>{t.limit}</td></tr>)}</tbody>
                               </table>
                             )}
@@ -368,7 +368,7 @@ function ResultModal({shipment,token,onClose,onRefresh}) {
                   {extracted&&<div style={{background:'rgba(0,200,150,.06)',border:'1px solid rgba(0,200,150,.2)',borderRadius:8,padding:'10px 14px',marginBottom:12,fontSize:12,color:'#00C896',fontWeight:600}}>🤖 AI extracted results from {file?.name} — review and confirm below</div>}
                   <div style={{fontSize:10,fontWeight:700,color:'rgba(255,255,255,.3)',textTransform:'uppercase',letterSpacing:'1.5px',marginBottom:10}}>Per-Product Results</div>
                   {products.map((p,i)=>(
-                    <div key={p.id} style={{background:'rgba(255,255,255,.02)',border:'1px solid rgba(255,255,255,.07)',borderRadius:12,padding:14,marginBottom:10}}>
+                    <div key={p.id} style={{background:'rgba(255,255,255,0.04)',border:'1px solid rgba(255,255,255,.07)',borderRadius:12,padding:14,marginBottom:10}}>
                       <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',marginBottom:12}}>
                         <div><div style={{fontSize:13,fontWeight:700,color:'#fff'}}>{p.product_name_en}</div>{p.ecos_ma_number&&<div style={{fontSize:10,color:'rgba(255,255,255,.3)',marginTop:2}}>E-Cosma: {p.ecos_ma_number}</div>}</div>
                         <select style={rsel(p.result)} value={p.result} onChange={e=>upd(i,'result',e.target.value)}><option value="APPROVED">✓ APPROVED</option><option value="CONDITIONALLY_APPROVED">⚠ CONDITIONAL</option><option value="REJECTED">✕ REJECTED</option></select>
@@ -397,7 +397,7 @@ function ResultModal({shipment,token,onClose,onRefresh}) {
                 <input type="checkbox" id="retest" checked={retest} onChange={e=>setRetest(e.target.checked)} style={{width:14,height:14,cursor:'pointer',accentColor:'#FF5470'}}/>
                 <label htmlFor="retest" style={{fontSize:12,color:'rgba(255,255,255,.6)',cursor:'pointer'}}>⚠ Flag one or more products for re-testing before final submission</label>
               </div>
-              <button onClick={submit} disabled={acting} style={{width:'100%',padding:13,background:'linear-gradient(135deg,#38C6FF,#0088DD)',color:'#0D1940',fontSize:13,fontWeight:800,borderRadius:10,border:'none',cursor:'pointer',fontFamily:'inherit',boxShadow:'0 4px 20px rgba(0,170,255,.3)'}}>
+              <button onClick={submit} disabled={acting} style={{width:'100%',padding:13,background:'linear-gradient(135deg,#38C6FF,#0088DD)',color:'#252266',fontSize:13,fontWeight:800,borderRadius:10,border:'none',cursor:'pointer',fontFamily:'inherit',boxShadow:'0 4px 20px rgba(0,170,255,.3)'}}>
                 {acting?'Submitting...':'✓ Submit Results to SFDA'}
               </button>
             </div>
@@ -446,7 +446,7 @@ function Analytics({shipments}) {
       {/* Metric cards */}
       <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:20}}>
         {metrics.map((m,i)=>(
-          <div key={i} style={{background:'rgba(255,255,255,.03)',border:'1px solid rgba(0,170,255,.1)',borderRadius:14,padding:'16px 18px',position:'relative',overflow:'hidden'}}>
+          <div key={i} style={{background:'rgba(255,255,255,0.05)',border:'1px solid rgba(0,170,255,.1)',borderRadius:14,padding:'16px 18px',position:'relative',overflow:'hidden'}}>
             <div style={{position:'absolute',top:0,left:0,right:0,height:2,background:`linear-gradient(90deg,${m.color},transparent)`}}></div>
             <div style={{fontSize:20,marginBottom:8}}>{m.icon}</div>
             <div style={{fontSize:10,fontWeight:700,color:'rgba(255,255,255,.3)',textTransform:'uppercase',letterSpacing:'1px',marginBottom:6}}>{m.label}</div>
@@ -457,12 +457,12 @@ function Analytics({shipments}) {
       </div>
 
       <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:14,marginBottom:14}}>
-        <div style={{background:'rgba(255,255,255,.03)',border:'1px solid rgba(0,170,255,.1)',borderRadius:14,padding:18}}>
+        <div style={{background:'rgba(255,255,255,0.05)',border:'1px solid rgba(0,170,255,.1)',borderRadius:14,padding:18}}>
           <div style={{fontSize:13,fontWeight:700,color:'#fff',marginBottom:3}}>Current Workload</div>
           <div style={{fontSize:11,color:'rgba(255,255,255,.3)',marginBottom:16}}>Status distribution of all assigned shipments</div>
           <Donut data={[{label:'In Analysis',value:inAnalysis,color:'#a78bfa'},{label:'Pending Acceptance',value:pending,color:'#F5A623'},{label:'Conforming',value:conforming,color:'#00C896'},{label:'Non-Conforming',value:nc,color:'#FF5470'},{label:'Result Submitted',value:submitted,color:'#38C6FF'}]}/>
         </div>
-        <div style={{background:'rgba(255,255,255,.03)',border:'1px solid rgba(0,170,255,.1)',borderRadius:14,padding:18}}>
+        <div style={{background:'rgba(255,255,255,0.05)',border:'1px solid rgba(0,170,255,.1)',borderRadius:14,padding:18}}>
           <div style={{fontSize:13,fontWeight:700,color:'#fff',marginBottom:3}}>Conformity Outcomes</div>
           <div style={{fontSize:11,color:'rgba(255,255,255,.3)',marginBottom:16}}>Final decisions on completed analyses</div>
           <Donut data={[{label:'Conforming',value:conforming,color:'#00C896'},{label:'Non-Conforming',value:nc,color:'#FF5470'},{label:'Awaiting Decision',value:submitted,color:'#38C6FF'}]}/>
@@ -470,7 +470,7 @@ function Analytics({shipments}) {
       </div>
 
       <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:14}}>
-        <div style={{background:'rgba(255,255,255,.03)',border:'1px solid rgba(0,170,255,.1)',borderRadius:14,padding:18}}>
+        <div style={{background:'rgba(255,255,255,0.05)',border:'1px solid rgba(0,170,255,.1)',borderRadius:14,padding:18}}>
           <div style={{fontSize:13,fontWeight:700,color:'#fff',marginBottom:3}}>Shipments by Country</div>
           <div style={{fontSize:11,color:'rgba(255,255,255,.3)',marginBottom:16}}>Top origin countries</div>
           {countries.length===0?<div style={{fontSize:12,color:'rgba(255,255,255,.2)'}}>No data</div>:countries.map(([c,n],i)=>(
@@ -481,7 +481,7 @@ function Analytics({shipments}) {
             </div>
           ))}
         </div>
-        <div style={{background:'rgba(255,255,255,.03)',border:'1px solid rgba(0,170,255,.1)',borderRadius:14,padding:18}}>
+        <div style={{background:'rgba(255,255,255,0.05)',border:'1px solid rgba(0,170,255,.1)',borderRadius:14,padding:18}}>
           <div style={{fontSize:13,fontWeight:700,color:'#fff',marginBottom:3}}>Non-Conformity by Country</div>
           <div style={{fontSize:11,color:'rgba(255,255,255,.3)',marginBottom:16}}>Countries with highest rejection rates</div>
           {ncC.length===0?<div style={{fontSize:12,color:'rgba(0,200,150,.5)',fontWeight:600}}>✅ No non-conforming shipments</div>:ncC.map(([c,n],i)=>(
@@ -554,7 +554,7 @@ export default function LabPortal({user:initUser,token,onLogout}) {
   ];
 
   return (
-    <div style={{display:'flex',flexDirection:'column',height:'100vh',background:'#0B1535',fontFamily:'Inter,sans-serif',color:'#fff',overflow:'hidden'}}>
+    <div style={{display:'flex',flexDirection:'column',height:'100vh',background:'#2D2B7A',fontFamily:'Inter,sans-serif',color:'#fff',overflow:'hidden'}}>
       <style>{`
         @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
         @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
@@ -568,8 +568,8 @@ export default function LabPortal({user:initUser,token,onLogout}) {
       `}</style>
 
       {/* ── Topbar ── */}
-      <div style={{height:58,background:'#091230',borderBottom:'1px solid rgba(0,170,255,.1)',display:'flex',alignItems:'center',padding:'0 24px',gap:14,flexShrink:0,zIndex:10}}>
-        <div style={{width:78,height:44,borderRadius:8,overflow:'hidden',position:'relative',flexShrink:0,background:'#2E2C70',boxShadow:'0 0 0 1px rgba(56,198,255,.15)'}}><img src="/demara-logo.png" alt="DEMARA" style={{position:'absolute',width:'300%',height:'300%',left:'-100%',top:'-100%'}}/></div>
+      <div style={{height:58,background:'#1E1A5E',borderBottom:'1px solid rgba(0,170,255,.1)',display:'flex',alignItems:'center',padding:'0 24px',gap:14,flexShrink:0,zIndex:10}}>
+        <img src="/logo_1.png" alt="DEMARA" style={{height:'38px', width:'auto'}} />
         <div style={{width:1,height:28,background:'rgba(255,255,255,.08)'}}></div>
         <div>
           <div style={{fontSize:14,fontWeight:800,color:'#fff',letterSpacing:'-.3px'}}>DEMARA Platform</div>
@@ -594,13 +594,13 @@ export default function LabPortal({user:initUser,token,onLogout}) {
       <div style={{display:'flex',flex:1,overflow:'hidden'}}>
 
         {/* ── Sidebar ── */}
-        <div style={{width:220,background:'#0D1940',borderRight:'1px solid rgba(0,170,255,.08)',display:'flex',flexDirection:'column',flexShrink:0,overflowY:'auto'}}>
+        <div style={{width:220,background:'#252266',borderRight:'1px solid rgba(0,170,255,.08)',display:'flex',flexDirection:'column',flexShrink:0,overflowY:'auto'}}>
           {/* KPI section */}
           <div style={{padding:'16px 14px',borderBottom:'1px solid rgba(0,170,255,.06)'}}>
             <div style={{fontSize:9,fontWeight:700,color:'rgba(255,255,255,.4)',textTransform:'uppercase',letterSpacing:'2px',marginBottom:12}}>Overview</div>
             <div style={{display:'flex',flexDirection:'column',gap:6}}>
               {kpis.map((k,i)=>(
-                <div key={i} style={{display:'flex',alignItems:'center',gap:10,padding:'8px 10px',borderRadius:9,background:'rgba(255,255,255,.03)',border:'1px solid rgba(255,255,255,.05)'}}>
+                <div key={i} style={{display:'flex',alignItems:'center',gap:10,padding:'8px 10px',borderRadius:9,background:'rgba(255,255,255,0.05)',border:'1px solid rgba(255,255,255,.05)'}}>
                   <span style={{fontSize:14,flexShrink:0}}>{k.icon}</span>
                   <span style={{fontSize:11,color:'rgba(255,255,255,.5)',flex:1}}>{k.label}</span>
                   <span style={{fontSize:16,fontWeight:900,color:k.color,letterSpacing:'-0.5px'}}>{k.value}</span>
@@ -616,7 +616,7 @@ export default function LabPortal({user:initUser,token,onLogout}) {
               <button key={n.id} onClick={()=>setTab(n.id)} style={{width:'100%',display:'flex',alignItems:'center',gap:10,padding:'9px 12px',borderRadius:9,cursor:'pointer',marginBottom:3,fontFamily:'inherit',fontSize:12,fontWeight:tab===n.id?700:500,background:tab===n.id?`rgba(${n.color==='#38C6FF'?'0,170,255':n.color==='#FF5470'?'255,84,112':n.color==='#00C896'?'0,200,150':n.color==='#a78bfa'?'124,92,252':'255,255,255'},.12)`:'transparent',color:tab===n.id?n.color:'rgba(255,255,255,.45)',border:tab===n.id?`1px solid ${n.color}33`:'1px solid transparent',transition:'all .15s',textAlign:'left'}}>
                 <span style={{fontSize:15}}>{n.icon}</span>
                 <span style={{flex:1}}>{n.label}</span>
-                {n.count!=null&&n.count>0&&<span style={{fontSize:10,fontWeight:700,background:tab===n.id?n.color:'rgba(255,255,255,.1)',color:tab===n.id?'#0D1940':'rgba(255,255,255,.5)',padding:'1px 7px',borderRadius:10}}>{n.count}</span>}
+                {n.count!=null&&n.count>0&&<span style={{fontSize:10,fontWeight:700,background:tab===n.id?n.color:'rgba(255,255,255,.1)',color:tab===n.id?'#252266':'rgba(255,255,255,.5)',padding:'1px 7px',borderRadius:10}}>{n.count}</span>}
               </button>
             ))}
           </div>
@@ -628,7 +628,7 @@ export default function LabPortal({user:initUser,token,onLogout}) {
         </div>
 
         {/* ── Main content ── */}
-        <div key={tab} style={{flex:1,overflowY:'auto',background:'#0B1535'}}>
+        <div key={tab} style={{flex:1,overflowY:'auto',background:'#2D2B7A'}}>
 
           {/* Alert cards */}
           {(awaiting.length>0||inAnalysis.length>0)&&tab!=='analytics'&&(
@@ -637,7 +637,7 @@ export default function LabPortal({user:initUser,token,onLogout}) {
                 <div style={{background:'rgba(0,170,255,.05)',border:'1px solid rgba(0,170,255,.18)',borderRadius:12,padding:14}}>
                   <div style={{fontSize:12,fontWeight:700,color:'#38C6FF',marginBottom:10,display:'flex',alignItems:'center',gap:6}}><span>📥</span>Samples Awaiting Analysis Start</div>
                   {awaiting.map(s=>(
-                    <div key={s.id} style={{display:'flex',alignItems:'center',justifyContent:'space-between',background:'rgba(255,255,255,.03)',borderRadius:8,padding:'7px 12px',marginBottom:5,border:'1px solid rgba(255,255,255,.05)'}}>
+                    <div key={s.id} style={{display:'flex',alignItems:'center',justifyContent:'space-between',background:'rgba(255,255,255,0.05)',borderRadius:8,padding:'7px 12px',marginBottom:5,border:'1px solid rgba(255,255,255,.05)'}}>
                       <div><div style={{fontSize:11,fontFamily:'JetBrains Mono,monospace',fontWeight:700,color:'#38C6FF'}}>{s.faseh_request_number}</div><div style={{fontSize:10,color:'rgba(255,255,255,.35)',marginTop:1}}>{s.importer_name}</div></div>
                       <span style={{fontSize:11,fontWeight:700,color:'#38C6FF'}}>{elapsed(s.state_entered_at)} waiting</span>
                     </div>
@@ -648,7 +648,7 @@ export default function LabPortal({user:initUser,token,onLogout}) {
                 <div style={{background:'rgba(124,92,252,.05)',border:'1px solid rgba(124,92,252,.18)',borderRadius:12,padding:14}}>
                   <div style={{fontSize:12,fontWeight:700,color:'#a78bfa',marginBottom:10,display:'flex',alignItems:'center',gap:6}}><span>🔬</span>Currently In Analysis</div>
                   {inAnalysis.map(s=>(
-                    <div key={s.id} style={{display:'flex',alignItems:'center',justifyContent:'space-between',background:'rgba(255,255,255,.03)',borderRadius:8,padding:'7px 12px',marginBottom:5,border:'1px solid rgba(255,255,255,.05)'}}>
+                    <div key={s.id} style={{display:'flex',alignItems:'center',justifyContent:'space-between',background:'rgba(255,255,255,0.05)',borderRadius:8,padding:'7px 12px',marginBottom:5,border:'1px solid rgba(255,255,255,.05)'}}>
                       <div><div style={{fontSize:11,fontFamily:'JetBrains Mono,monospace',fontWeight:700,color:'#a78bfa'}}>{s.faseh_request_number}</div><div style={{fontSize:10,color:'rgba(255,255,255,.35)',marginTop:1}}>{s.importer_name}</div></div>
                       <span style={{fontSize:11,fontWeight:700,color:'#a78bfa'}}>{elapsed(s.state_entered_at)} elapsed</span>
                     </div>
@@ -689,7 +689,7 @@ export default function LabPortal({user:initUser,token,onLogout}) {
                   <div style={{fontSize:12}}>{tab==='active'?'Samples appear here when assigned to your lab':tab==='declined'?'Declined assignments appear here':tab==='nc'?'Non-conforming shipments appear here':'Completed analyses appear here'}</div>
                 </div>
               ):(
-                <div style={{background:'rgba(255,255,255,.02)',border:'1px solid rgba(0,170,255,.1)',borderRadius:14,overflow:'hidden'}}>
+                <div style={{background:'rgba(255,255,255,0.04)',border:'1px solid rgba(0,170,255,.1)',borderRadius:14,overflow:'hidden'}}>
                   <table style={{width:'100%',borderCollapse:'collapse'}}>
                     <thead>
                       <tr style={{background:'rgba(0,170,255,.04)'}}>
@@ -741,7 +741,7 @@ export default function LabPortal({user:initUser,token,onLogout}) {
       {/* ── Decline modal ── */}
       {declining&&(
         <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,.8)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:100,padding:20,backdropFilter:'blur(6px)'}}>
-          <div style={{background:'#0D1940',border:'1px solid rgba(0,170,255,.15)',borderRadius:16,width:'100%',maxWidth:420,boxShadow:'0 24px 80px rgba(0,0,0,.8)'}}>
+          <div style={{background:'#252266',border:'1px solid rgba(0,170,255,.15)',borderRadius:16,width:'100%',maxWidth:420,boxShadow:'0 24px 80px rgba(0,0,0,.8)'}}>
             <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'18px 22px',borderBottom:'1px solid rgba(0,170,255,.1)'}}>
               <div><div style={{fontSize:15,fontWeight:800,color:'#fff'}}>Decline Assignment</div><div style={{fontSize:11,color:'rgba(255,255,255,.4)',marginTop:2}}>{declining.faseh_request_number}</div></div>
               <button onClick={()=>{setDeclining(null);setDeclineReason('');}} style={{width:32,height:32,borderRadius:8,background:'rgba(255,255,255,.06)',border:'1px solid rgba(255,255,255,.1)',color:'rgba(255,255,255,.6)',fontSize:18,cursor:'pointer',fontFamily:'inherit',display:'flex',alignItems:'center',justifyContent:'center'}}>×</button>

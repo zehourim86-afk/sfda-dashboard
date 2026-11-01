@@ -144,35 +144,35 @@ export default function Login({ onLogin }) {
   const tabBtn = (on) => ({flex:1,padding:'14px 0',fontSize:13,fontWeight:700,fontFamily:'inherit',cursor:'pointer',border:'none',transition:'all .15s',
     background:on ? 'rgba(56,198,255,.1)' : 'transparent',color:on ? '#38C6FF' : 'rgba(255,255,255,.45)',borderBottom:`2px solid ${on ? '#38C6FF' : 'transparent'}`});
   const primaryBtn = {width:'100%',padding:'13px 0',borderRadius:10,border:'none',fontSize:14,fontWeight:800,fontFamily:'inherit',cursor:'pointer',
-    color:'#0B1535',background:'linear-gradient(135deg,#38C6FF,#0088DD)',boxShadow:'0 6px 24px rgba(56,198,255,.3)',transition:'opacity .15s'};
+    color:'#2D2B7A',background:'linear-gradient(135deg,#38C6FF,#0088DD)',boxShadow:'0 6px 24px rgba(56,198,255,.3)',transition:'opacity .15s'};
   const notice = (rgb, color) => ({background:`rgba(${rgb},.1)`,border:`1px solid rgba(${rgb},.3)`,borderRadius:10,padding:'11px 14px',marginBottom:16,fontSize:13,color});
   const infoBox = {background:'rgba(56,198,255,.05)',border:'1px solid rgba(56,198,255,.15)',borderRadius:10,padding:'11px 14px'};
   const dropZone = {marginTop:6,border:'2px dashed rgba(56,198,255,.25)',borderRadius:10,padding:'12px',textAlign:'center',background:'rgba(56,198,255,.03)'};
 
   return (
     <div style={{minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center',padding:'40px 16px',boxSizing:'border-box',fontFamily:'Inter,sans-serif',color:'#fff',
-      background:'radial-gradient(900px 520px at 50% -8%, rgba(56,198,255,.16), transparent 65%), radial-gradient(700px 400px at 100% 110%, rgba(124,92,252,.10), transparent 60%), #0B1535'}}>
+      background:'radial-gradient(900px 520px at 50% -8%, rgba(56,198,255,.16), transparent 65%), radial-gradient(700px 400px at 100% 110%, rgba(124,92,252,.10), transparent 60%), #2D2B7A'}}>
       <style>{`
         .login-root input::placeholder{color:rgba(255,255,255,.25)}
         .login-root input:focus,.login-root select:focus{border-color:rgba(56,198,255,.6)!important;box-shadow:0 0 0 3px rgba(56,198,255,.12)}
-        .login-root select option{background:#0D1940;color:#fff}
+        .login-root select option{background:#252266;color:#fff}
         .login-tab:hover{color:#fff!important}
       `}</style>
       <div className="login-root" style={{width:'100%',maxWidth:460}}>
 
         {/* Logo / branding */}
         <div style={{textAlign:'center',marginBottom:28}}>
-          <div style={{width:224,height:126,margin:'0 auto 20px',borderRadius:18,overflow:'hidden',position:'relative',background:'#2E2C70',boxShadow:'0 12px 40px rgba(56,198,255,.18), 0 0 0 1px rgba(56,198,255,.2)'}}><img src="/demara-logo.png" alt="DEMARA" style={{position:'absolute',width:'300%',height:'300%',left:'-100%',top:'-100%'}} /></div>
+          <img src="/logo_1.png" alt="DEMARA" style={{height:'72px', width:'auto', display:'block', margin:'0 auto 20px'}} />
           <div style={{display:'inline-block',fontSize:11,fontWeight:800,letterSpacing:'5px',color:'#38C6FF',textTransform:'uppercase',padding:'4px 12px',border:'1px solid rgba(56,198,255,.3)',borderRadius:20,background:'rgba(56,198,255,.08)',marginBottom:12}}>MASAAR</div>
           <h1 style={{margin:0,fontSize:30,fontWeight:900,letterSpacing:'-.6px',color:'#fff'}}>DEMARA Masaar</h1>
           <p style={{margin:'8px 0 0',fontSize:13,color:'rgba(255,255,255,.55)'}}>Drug Import Traceability Platform · Powered by DEMARA</p>
         </div>
 
         {/* Card */}
-        <div style={{background:'#0D1940',border:'1px solid rgba(56,198,255,.15)',borderRadius:18,boxShadow:'0 30px 80px rgba(0,0,0,.55)',overflow:'hidden'}}>
+        <div style={{background:'#252266',border:'1px solid rgba(56,198,255,.15)',borderRadius:18,boxShadow:'0 30px 80px rgba(0,0,0,.55)',overflow:'hidden'}}>
 
           {/* Tabs */}
-          <div style={{display:'flex',background:'#091230',borderBottom:'1px solid rgba(56,198,255,.12)'}}>
+          <div style={{display:'flex',background:'#1E1A5E',borderBottom:'1px solid rgba(56,198,255,0.2)'}}>
             <button
               onClick={() => { setMode('login'); setError(null); setSuccess(null); }}
               className="login-tab" style={tabBtn(mode === 'login')}
@@ -336,7 +336,7 @@ export default function Login({ onLogin }) {
                   <p style={{margin:0,fontSize:12,color:'#38C6FF',fontWeight:700}}>📋 Document Verification</p>
                   <p style={{margin:'4px 0 0',fontSize:12,color:'rgba(255,255,255,.6)',lineHeight:1.5}}>Uploaded documents will be reviewed by the DEMARA team. Your account will be activated after verification — typically within 1 business day.</p>
                 </div>
-                <div style={{...infoBox,background:'rgba(255,255,255,.03)',borderColor:'rgba(255,255,255,.08)'}}>
+                <div style={{...infoBox,background:'rgba(255,255,255,0.05)',borderColor:'rgba(255,255,255,.08)'}}>
                   <p style={{margin:0,fontSize:12,color:'rgba(255,255,255,.85)',fontWeight:700}}>📧 Email Notification Consent</p>
                   <p style={{margin:'4px 0 0',fontSize:12,color:'rgba(255,255,255,.55)',lineHeight:1.5}}>By registering, you consent to DEMARA receiving a copy of SFDA communications related to your shipments when CC'd to qc@demara.sa. DEMARA uses these emails solely to automate shipment tracking and notifications. SFDA systems are never accessed or modified by DEMARA.</p>
                 </div>

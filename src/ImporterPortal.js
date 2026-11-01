@@ -30,7 +30,7 @@ function badge(label, tone = 'grey') {
 
 const S = {
   backdrop: {position:'fixed',inset:0,background:'rgba(0,0,0,.8)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:100,padding:20,backdropFilter:'blur(6px)'},
-  modal: (maxWidth) => ({background:'#0D1940',border:'1px solid rgba(0,170,255,.18)',borderRadius:18,width:'100%',maxWidth,maxHeight:'92vh',overflowY:'auto',boxShadow:'0 32px 80px rgba(0,0,0,.8)',color:'#fff',fontFamily:'Inter,sans-serif'}),
+  modal: (maxWidth) => ({background:'#252266',border:'1px solid rgba(0,170,255,.18)',borderRadius:18,width:'100%',maxWidth,maxHeight:'92vh',overflowY:'auto',boxShadow:'0 32px 80px rgba(0,0,0,.8)',color:'#fff',fontFamily:'Inter,sans-serif'}),
   modalHead: {display:'flex',alignItems:'center',justifyContent:'space-between',padding:'18px 22px',borderBottom:'1px solid rgba(0,170,255,.1)',background:'linear-gradient(180deg,rgba(0,170,255,.05),transparent)'},
   closeBtn: {width:32,height:32,borderRadius:8,background:'rgba(255,255,255,.06)',border:'1px solid rgba(255,255,255,.1)',color:'rgba(255,255,255,.6)',fontSize:18,cursor:'pointer',fontFamily:'inherit',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0},
   ipt: {width:'100%',background:'rgba(255,255,255,.05)',border:'1px solid rgba(255,255,255,.1)',borderRadius:8,padding:'8px 12px',fontSize:12,color:'#fff',fontFamily:'inherit',outline:'none',colorScheme:'dark'},
@@ -38,18 +38,18 @@ const S = {
   section: {fontSize:10,fontWeight:700,color:'rgba(255,255,255,.3)',textTransform:'uppercase',letterSpacing:'1.5px',marginBottom:10},
   error: {background:'rgba(255,84,112,.08)',border:'1px solid rgba(255,84,112,.2)',borderRadius:8,padding:'10px 14px',fontSize:12,color:'#FF5470'},
   mono: 'JetBrains Mono,monospace',
-  card: {background:'rgba(255,255,255,.03)',border:'1px solid rgba(0,170,255,.1)',borderRadius:14,padding:18},
+  card: {background:'rgba(255,255,255,0.05)',border:'1px solid rgba(0,170,255,.1)',borderRadius:14,padding:18},
   cardHead: {display:'flex',alignItems:'flex-start',justifyContent:'space-between',gap:10,marginBottom:14},
   cardTitle: {fontSize:13,fontWeight:700,color:'#fff'},
   cardSub: {fontSize:11,color:'rgba(255,255,255,.3)',marginTop:2},
-  subCard: {background:'rgba(255,255,255,.03)',border:'1px solid rgba(255,255,255,.06)',borderRadius:10,padding:'10px 12px'},
+  subCard: {background:'rgba(255,255,255,0.05)',border:'1px solid rgba(255,255,255,.06)',borderRadius:10,padding:'10px 12px'},
   infoTile: {background:'rgba(0,170,255,.04)',border:'1px solid rgba(0,170,255,.1)',borderRadius:9,padding:'8px 12px'},
   meta: {fontSize:11,color:'rgba(255,255,255,.4)'},
   panel: (tone) => ({background:tint(tone,.06),border:`1px solid ${tint(tone,.22)}`,borderRadius:12,padding:'14px 16px'}),
   panelTitle: (tone) => ({fontSize:13,fontWeight:700,color:TONES[tone][0],marginBottom:6}),
   panelText: {fontSize:12,color:'rgba(255,255,255,.55)',marginTop:4,lineHeight:1.5},
   pill: (tone) => ({fontSize:10,fontWeight:700,color:TONES[tone][0],background:tint(tone,.12),border:`1px solid ${tint(tone,.3)}`,borderRadius:20,padding:'2px 8px',whiteSpace:'nowrap'}),
-  primaryBtn: {width:'100%',padding:12,background:'linear-gradient(135deg,#38C6FF,#0088DD)',color:'#0D1940',fontSize:13,fontWeight:800,borderRadius:10,border:'none',cursor:'pointer',fontFamily:'inherit',boxShadow:'0 4px 20px rgba(0,170,255,.25)'},
+  primaryBtn: {width:'100%',padding:12,background:'linear-gradient(135deg,#38C6FF,#0088DD)',color:'#252266',fontSize:13,fontWeight:800,borderRadius:10,border:'none',cursor:'pointer',fontFamily:'inherit',boxShadow:'0 4px 20px rgba(0,170,255,.25)'},
   ghostBtn: {padding:'10px 16px',background:'rgba(255,255,255,.05)',border:'1px solid rgba(255,255,255,.12)',color:'rgba(255,255,255,.65)',fontSize:12,fontWeight:600,borderRadius:9,cursor:'pointer',fontFamily:'inherit'},
 };
 const smallBtn = (tone) => ({background:tint(tone,.12),border:`1px solid ${tint(tone,.25)}`,color:TONES[tone][0],fontSize:11,fontWeight:700,padding:'6px 12px',borderRadius:7,cursor:'pointer',fontFamily:'inherit',whiteSpace:'nowrap',flexShrink:0});
@@ -162,7 +162,7 @@ function ProgressTracker({ currentStep, currentState }) {
             <div style={{display:'flex',flexDirection:'column',alignItems:'center'}}>
               <div style={{width:32,height:32,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,fontWeight:800,
                 background: done ? '#00C896' : current ? '#38C6FF' : 'rgba(255,255,255,.06)',
-                color: done || current ? '#0D1940' : 'rgba(255,255,255,.35)',
+                color: done || current ? '#252266' : 'rgba(255,255,255,.35)',
                 border: done || current ? 'none' : '1px solid rgba(255,255,255,.1)',
                 boxShadow: current ? '0 0 0 4px rgba(56,198,255,.15)' : 'none'}}>
                 {currentStep > step.number ? '✓' : step.number}
@@ -527,7 +527,7 @@ Saudi Food and Drug Authority`;
               <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
                 <div>
                   <label style={S.lbl}>Document Type</label>
-                  <div style={{...S.ipt,background:'rgba(255,255,255,.03)',color:'rgba(255,255,255,.7)',fontWeight:600}}>
+                  <div style={{...S.ipt,background:'rgba(255,255,255,0.05)',color:'rgba(255,255,255,.7)',fontWeight:600}}>
                     {extractedData.document_type?.replace(/_/g, ' ')}
                   </div>
                 </div>
@@ -1371,7 +1371,7 @@ function ConfirmDocumentsPanel({ shipment, token, readiness, confirmation, onCon
   };
 
   return (
-    <div style={{background:'rgba(255,255,255,.03)',border:`2px solid ${scoreColor(score)}`,borderRadius:'14px',padding:'18px 20px',marginBottom:'20px'}}>
+    <div style={{background:'rgba(255,255,255,0.05)',border:`2px solid ${scoreColor(score)}`,borderRadius:'14px',padding:'18px 20px',marginBottom:'20px'}}>
       <div style={{display:'flex',alignItems:'center',gap:'16px',marginBottom:'14px'}}>
         <div style={{width:'64px',height:'64px',borderRadius:'50%',flexShrink:0,
           border:`5px solid ${scoreColor(score)}`,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center'}}>
@@ -1389,7 +1389,7 @@ function ConfirmDocumentsPanel({ shipment, token, readiness, confirmation, onCon
       {/* Per-document status */}
       <div style={{display:'flex',flexDirection:'column',gap:'4px',marginBottom:'14px'}}>
         {rows.map(r => (
-          <div key={r.type} style={{padding:'7px 10px',borderRadius:'8px',background:'rgba(255,255,255,.03)',border:'1px solid rgba(255,255,255,.06)'}}>
+          <div key={r.type} style={{padding:'7px 10px',borderRadius:'8px',background:'rgba(255,255,255,0.05)',border:'1px solid rgba(255,255,255,.06)'}}>
             <div style={{display:'flex',alignItems:'center',gap:'8px'}}>
               <span style={{color:r.color,fontWeight:700,width:'14px',textAlign:'center'}}>{r.icon}</span>
               <span style={{fontSize:'12px',fontWeight:600,color:'#fff',flex:1}}>{r.label}</span>
@@ -1423,7 +1423,7 @@ function ConfirmDocumentsPanel({ shipment, token, readiness, confirmation, onCon
         </button>
         <button onClick={handleConfirm} disabled={!canConfirm}
           style={{flex:1,padding:'9px 16px',borderRadius:'8px',fontSize:'12px',fontWeight:700,border:'none',fontFamily:'inherit',
-            color: canConfirm ? '#0D1940' : 'rgba(255,255,255,.35)',
+            color: canConfirm ? '#252266' : 'rgba(255,255,255,.35)',
             background: canConfirm ? 'linear-gradient(135deg,#38C6FF,#0088DD)' : 'rgba(255,255,255,.08)', cursor: canConfirm ? 'pointer' : 'not-allowed'}}>
           {submitting ? '⟳ Confirming...' : 'Confirm & Share with Clearance'}
         </button>
@@ -1461,7 +1461,7 @@ function ShipmentDetailModal({ shipmentId, token, onClose }) {
 
   if (loading) return (
     <div style={S.backdrop}>
-      <div style={{background:'#0D1940',border:'1px solid rgba(0,170,255,.15)',borderRadius:14,padding:'28px 36px',fontSize:13,color:'rgba(255,255,255,.5)',fontFamily:'Inter,sans-serif'}}>Loading...</div>
+      <div style={{background:'#252266',border:'1px solid rgba(0,170,255,.15)',borderRadius:14,padding:'28px 36px',fontSize:13,color:'rgba(255,255,255,.5)',fontFamily:'Inter,sans-serif'}}>Loading...</div>
     </div>
   );
 
@@ -1487,7 +1487,7 @@ function ShipmentDetailModal({ shipmentId, token, onClose }) {
           <OverdueDecisionBanner shipment={shipment} token={token} onClose={onClose} />
         )}
         {/* Tab navigation */}
-        <div style={{display:'flex',gap:2,padding:'0 22px',borderBottom:'1px solid rgba(0,170,255,.1)',background:'rgba(255,255,255,.02)'}}>
+        <div style={{display:'flex',gap:2,padding:'0 22px',borderBottom:'1px solid rgba(0,170,255,.1)',background:'rgba(255,255,255,0.04)'}}>
           {[
             {key:'details',label:'📋 Shipment Details'},
             {key:'documents',label:'📁 Document Readiness'},
@@ -1551,7 +1551,7 @@ function ShipmentDetailModal({ shipmentId, token, onClose }) {
                           {/* Dot */}
                           <div style={{
                             width:'30px',height:'30px',borderRadius:'50%',
-                            background: isFirst ? 'rgba(56,198,255,0.15)' : '#0D1940',
+                            background: isFirst ? 'rgba(56,198,255,0.15)' : '#252266',
                             border:`2px solid ${isFirst ? '#38C6FF' : 'rgba(255,255,255,0.12)'}`,
                             display:'flex',alignItems:'center',justifyContent:'center',
                             flexShrink:0,zIndex:1,
@@ -1564,7 +1564,7 @@ function ShipmentDetailModal({ shipmentId, token, onClose }) {
                           </div>
                           {/* Content */}
                           <div style={{
-                            flex:1,background:'rgba(255,255,255,0.03)',
+                            flex:1,background:'rgba(255,255,255,0.05)',
                             border:`1px solid ${isFirst ? 'rgba(56,198,255,0.3)' : 'rgba(255,255,255,0.06)'}`,
                             borderRadius:'10px',padding:'12px 14px',
                             boxShadow: isFirst ? '0 2px 12px rgba(56,198,255,0.08)' : 'none'
@@ -1676,7 +1676,7 @@ function ShipmentDetailModal({ shipmentId, token, onClose }) {
               <div style={{display:'flex',flexDirection:'column',gap:8}}>
                 {shipment.products.map(p => (
                   <div key={p.id} style={{borderRadius:10,padding:'12px 14px',
-                    background: p.current_decision === 'REJECTED' ? tint('red',.06) : p.current_decision === 'APPROVED' ? tint('green',.05) : 'rgba(255,255,255,.02)',
+                    background: p.current_decision === 'REJECTED' ? tint('red',.06) : p.current_decision === 'APPROVED' ? tint('green',.05) : 'rgba(255,255,255,0.04)',
                     border:`1px solid ${p.current_decision === 'REJECTED' ? tint('red',.2) : p.current_decision === 'APPROVED' ? tint('green',.18) : 'rgba(255,255,255,.06)'}`}}>
                     <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:12}}>
                       <div style={{fontSize:13,fontWeight:700,color:'#fff'}}>{p.product_name_en}</div>
@@ -1705,7 +1705,7 @@ function ShipmentDetailModal({ shipmentId, token, onClose }) {
               <div style={S.section}>Documents ({shipment.documents.length})</div>
               <div style={{display:'flex',flexDirection:'column',gap:4}}>
                 {shipment.documents.map(doc => (
-                  <div key={doc.id} style={{display:'flex',alignItems:'center',gap:10,padding:'8px 12px',background:'rgba(255,255,255,.03)',borderRadius:8}}>
+                  <div key={doc.id} style={{display:'flex',alignItems:'center',gap:10,padding:'8px 12px',background:'rgba(255,255,255,0.05)',borderRadius:8}}>
                     <span style={{fontSize:16}}>📄</span>
                     <div>
                       <div style={{fontSize:12,fontWeight:600,color:'#fff'}}>{doc.file_name}</div>
@@ -1795,7 +1795,7 @@ function ShipmentDetailModal({ shipmentId, token, onClose }) {
               <div style={S.section}>Shipment Timeline</div>
               <div style={{display:'flex',flexDirection:'column',gap:5,maxHeight:192,overflowY:'auto'}}>
                 {shipment.audit_log.map(log => (
-                  <div key={log.id} style={{display:'flex',alignItems:'flex-start',gap:10,padding:'8px 12px',borderRadius:8,background:'rgba(255,255,255,.02)'}}>
+                  <div key={log.id} style={{display:'flex',alignItems:'flex-start',gap:10,padding:'8px 12px',borderRadius:8,background:'rgba(255,255,255,0.04)'}}>
                     <span style={{marginTop:5,width:6,height:6,borderRadius:'50%',flexShrink:0,
                       background: log.trigger_source === 'EMAIL_PARSER' ? '#38C6FF' :
                       log.trigger_source === 'SYSTEM' ? '#a78bfa' : '#00C896'}}></span>
@@ -2102,7 +2102,7 @@ export default function ImporterPortal({ user: initialUser, token, onLogout }) {
     const td = {padding:'12px 16px',verticalAlign:'top'};
 
     return (
-    <div style={{display:'flex',flexDirection:'column',height:'100vh',background:'#0B1535',fontFamily:'Inter,sans-serif',color:'#fff',overflow:'hidden'}}>
+    <div style={{display:'flex',flexDirection:'column',height:'100vh',background:'#2D2B7A',fontFamily:'Inter,sans-serif',color:'#fff',overflow:'hidden'}}>
       <style>{`
         @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
         @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
@@ -2112,13 +2112,13 @@ export default function ImporterPortal({ user: initialUser, token, onLogout }) {
         ::-webkit-scrollbar-thumb{background:rgba(0,170,255,.2);border-radius:2px}
         input:focus,textarea:focus,select:focus{border-color:rgba(0,170,255,.5)!important;outline:none}
         input::placeholder,textarea::placeholder{color:rgba(255,255,255,.2)}
-        select option{background:#0D1940;color:#fff}
+        select option{background:#252266;color:#fff}
         tr.row:hover td{background:rgba(0,170,255,.04)!important}
       `}</style>
 
       {/* ── Topbar ── */}
-      <div style={{height:58,background:'#091230',borderBottom:'1px solid rgba(0,170,255,.1)',display:'flex',alignItems:'center',padding:'0 24px',gap:14,flexShrink:0,zIndex:10}}>
-        <div style={{width:78,height:44,borderRadius:8,overflow:'hidden',position:'relative',flexShrink:0,background:'#2E2C70',boxShadow:'0 0 0 1px rgba(56,198,255,.15)'}}><img src="/demara-logo.png" alt="DEMARA" style={{position:'absolute',width:'300%',height:'300%',left:'-100%',top:'-100%'}}/></div>
+      <div style={{height:58,background:'#1E1A5E',borderBottom:'1px solid rgba(0,170,255,.1)',display:'flex',alignItems:'center',padding:'0 24px',gap:14,flexShrink:0,zIndex:10}}>
+        <img src="/logo_1.png" alt="DEMARA" style={{height:'38px', width:'auto'}} />
         <div style={{width:1,height:28,background:'rgba(255,255,255,.08)'}}></div>
         <div>
           <div style={{fontSize:14,fontWeight:800,color:'#fff',letterSpacing:'-.3px'}}>DEMARA Platform</div>
@@ -2128,7 +2128,7 @@ export default function ImporterPortal({ user: initialUser, token, onLogout }) {
           <div style={{display:'flex',alignItems:'center',gap:5,fontSize:11,fontWeight:600,color:'#00C896',background:'rgba(0,200,150,.08)',border:'1px solid rgba(0,200,150,.2)',borderRadius:20,padding:'4px 10px'}}>
             <span style={{width:6,height:6,borderRadius:'50%',background:'#00C896',animation:'pulse 2s infinite',display:'inline-block'}}></span>Live
           </div>
-          <button onClick={() => setShowNewForm(true)} style={{background:'linear-gradient(135deg,#38C6FF,#0088DD)',border:'none',color:'#0D1940',fontSize:12,fontWeight:800,padding:'8px 14px',borderRadius:8,cursor:'pointer',fontFamily:'inherit',boxShadow:'0 4px 14px rgba(0,170,255,.25)'}}>+ New Shipment</button>
+          <button onClick={() => setShowNewForm(true)} style={{background:'linear-gradient(135deg,#38C6FF,#0088DD)',border:'none',color:'#252266',fontSize:12,fontWeight:800,padding:'8px 14px',borderRadius:8,cursor:'pointer',fontFamily:'inherit',boxShadow:'0 4px 14px rgba(0,170,255,.25)'}}>+ New Shipment</button>
           <NotificationBell token={token} />
           {user && (
             <div style={{display:'flex',alignItems:'center',gap:9,background:'rgba(255,255,255,.05)',border:'1px solid rgba(255,255,255,.1)',borderRadius:10,padding:'6px 12px'}}>
@@ -2144,7 +2144,7 @@ export default function ImporterPortal({ user: initialUser, token, onLogout }) {
       <div style={{display:'flex',flex:1,overflow:'hidden'}}>
 
         {/* ── Sidebar ── */}
-        <div style={{width:220,background:'#0D1940',borderRight:'1px solid rgba(0,170,255,.08)',display:'flex',flexDirection:'column',flexShrink:0,overflowY:'auto'}}>
+        <div style={{width:220,background:'#252266',borderRight:'1px solid rgba(0,170,255,.08)',display:'flex',flexDirection:'column',flexShrink:0,overflowY:'auto'}}>
           <div style={{padding:'4px 10px 12px',flex:1}}>
             <div style={navSection}>Shipments</div>
             <button style={navItem(activeTab === 'active')} onClick={() => { setActiveTab('active'); setFilterStatus(''); setActiveKpi(null); }}>
@@ -2192,7 +2192,7 @@ export default function ImporterPortal({ user: initialUser, token, onLogout }) {
         </div>
 
         {/* ── Main content ── */}
-        <div key={activeTab} style={{flex:1,overflowY:'auto',background:'#0B1535',padding:'20px 24px'}}>
+        <div key={activeTab} style={{flex:1,overflowY:'auto',background:'#2D2B7A',padding:'20px 24px'}}>
 
           {/* Load error (set by fetchData) */}
           {error && (
@@ -2469,7 +2469,7 @@ export default function ImporterPortal({ user: initialUser, token, onLogout }) {
 
           {/* Shipments table */}
           {activeTab !== 'org-admin' && (
-            <div style={{background:'rgba(255,255,255,.02)',border:'1px solid rgba(0,170,255,.1)',borderRadius:14,overflow:'hidden'}}>
+            <div style={{background:'rgba(255,255,255,0.04)',border:'1px solid rgba(0,170,255,.1)',borderRadius:14,overflow:'hidden'}}>
               <div style={{display:'flex',alignItems:'center',gap:10,padding:'12px 16px',borderBottom:'1px solid rgba(0,170,255,.08)',flexWrap:'wrap'}}>
                 <div style={{fontSize:14,fontWeight:800,color:'#fff'}}>Shipments</div>
                 <div style={{fontSize:11,color:'rgba(255,255,255,.35)'}}>{filtered.length} results</div>
