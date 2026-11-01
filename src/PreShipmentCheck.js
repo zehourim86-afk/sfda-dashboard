@@ -133,7 +133,7 @@ const ACCENT = '#38C6FF';
 const s = {
   page: { minHeight: '100vh', background: '#2D2B7A', fontFamily: 'Inter, sans-serif', color: '#fff', padding: '40px 16px' },
   wrap: { maxWidth: 760, margin: '0 auto' },
-  card: { background: '#252266', border: `1px solid ${BORDER}`, borderRadius: 18, padding: 28, marginBottom: 20 },
+  card: { background: '#332E8A', border: `1px solid ${BORDER}`, borderRadius: 18, padding: 28, marginBottom: 20 },
   eyebrow: { fontSize: 11, fontWeight: 700, letterSpacing: '.12em', textTransform: 'uppercase', color: ACCENT, marginBottom: 8 },
   title: { fontSize: 22, fontWeight: 700, margin: 0 },
   subtitle: { fontSize: 13, color: 'rgba(255,255,255,.5)', marginTop: 6, lineHeight: 1.5 },
@@ -215,8 +215,8 @@ export default function PreShipmentCheck({ token, onProceed }) {
                 onChange={e => setForm({ ...form, product_category: e.target.value })}
                 style={{ ...s.input, cursor: 'pointer' }}
               >
-                <option value="" style={{ background: '#252266' }}>Select SFDA category…</option>
-                {CATEGORIES.map(c => <option key={c} value={c} style={{ background: '#252266' }}>{c}</option>)}
+                <option value="" style={{ background: '#332E8A' }}>Select SFDA category…</option>
+                {CATEGORIES.map(c => <option key={c} value={c} style={{ background: '#332E8A' }}>{c}</option>)}
               </select>
             </div>
 

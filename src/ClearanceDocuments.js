@@ -62,7 +62,7 @@ export default function ClearanceDocuments({ shipmentId, token, onClose }) {
       zIndex:1000,padding:'20px',fontFamily:'Inter,sans-serif'
     }}>
       <div style={{
-        background:'#252266',borderRadius:'16px',
+        background:'#332E8A',borderRadius:'16px',
         width:'100%',maxWidth:'760px',
         maxHeight:'90vh',overflow:'hidden',
         display:'flex',flexDirection:'column',
@@ -244,7 +244,7 @@ export default function ClearanceDocuments({ shipmentId, token, onClose }) {
                             style={{
                               width:'100%',border:'1px solid rgba(255,255,255,0.15)',
                               borderRadius:'8px',padding:'8px 12px',
-                              fontSize:'12px',color:'#FFFFFF',background:'#252266',
+                              fontSize:'12px',color:'#FFFFFF',background:'#332E8A',
                               fontFamily:'Inter,sans-serif',outline:'none',resize:'none'
                             }}
                           />
@@ -293,7 +293,7 @@ export default function ClearanceDocuments({ shipmentId, token, onClose }) {
                                   const checkColor = check.status === 'PASS' ? '#00C896' : check.status === 'WARN' ? '#F5A623' : check.status === 'FAIL' ? '#FF5470' : '#808285';
                                   const checkIcon = check.status === 'PASS' ? '✓' : check.status === 'WARN' ? '⚠' : check.status === 'FAIL' ? '✕' : '○';
                                   return (
-                                    <div key={i} style={{display:'flex',alignItems:'flex-start',gap:'8px',padding:'6px 10px',background:'#252266',borderRadius:'6px',border:'1px solid rgba(255,255,255,0.06)'}}>
+                                    <div key={i} style={{display:'flex',alignItems:'flex-start',gap:'8px',padding:'6px 10px',background:'#332E8A',borderRadius:'6px',border:'1px solid rgba(255,255,255,0.06)'}}>
                                       <span style={{color:checkColor,fontWeight:700,flexShrink:0}}>{checkIcon}</span>
                                       <div>
                                         <span style={{fontSize:'11px',fontWeight:600,color:'#FFFFFF'}}>{check.item}</span>

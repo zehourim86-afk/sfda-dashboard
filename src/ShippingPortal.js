@@ -116,7 +116,7 @@ function getSamplingRecommendation(s) {
 }
 
 const panel = {
-  wrap: { background: '#252266', border: '1px solid rgba(56,198,255,0.2)', borderRadius: 14, padding: 20, fontFamily: 'Inter, sans-serif', color: '#fff' },
+  wrap: { background: '#332E8A', border: '1px solid rgba(56,198,255,0.2)', borderRadius: 14, padding: 20, fontFamily: 'Inter, sans-serif', color: '#fff' },
   eyebrow: { fontSize: 11, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: '#38C6FF', marginBottom: 12 },
   reason: { display: 'flex', gap: 8, alignItems: 'flex-start', fontSize: 12, color: 'rgba(255,255,255,0.65)', lineHeight: 1.5, marginBottom: 6 },
   primary: { flex: 1, background: '#38C6FF', color: '#2D2B7A', border: 'none', borderRadius: 8, padding: '10px 14px', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' },
@@ -348,7 +348,7 @@ function SampleActionModal({ shipment, token, isInspector, onClose, onRefresh })
 
   return (
     <div style={S.backdrop}>
-      <div style={{background:'#252266',border:'1px solid rgba(0,170,255,.15)',borderRadius:18,width:'100%',maxWidth:560,maxHeight:'92vh',overflowY:'auto',boxShadow:'0 32px 80px rgba(0,0,0,.8)'}}>
+      <div style={{background:'#332E8A',border:'1px solid rgba(0,170,255,.15)',borderRadius:18,width:'100%',maxWidth:560,maxHeight:'92vh',overflowY:'auto',boxShadow:'0 32px 80px rgba(0,0,0,.8)'}}>
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'18px 22px',borderBottom:'1px solid rgba(0,170,255,.1)',background:'linear-gradient(180deg,rgba(0,170,255,.05),transparent)'}}>
           <div>
             <div style={{fontSize:15,fontWeight:800,color:'#fff',fontFamily:S.mono}}>{shipment.faseh_request_number}</div>
@@ -698,7 +698,7 @@ export default function InspectorApp({ user: initialUser, token, onLogout }) {
 
       {/* ── Topbar ── */}
       <div style={{height:58,background:'#1E1A5E',borderBottom:'1px solid rgba(0,170,255,.1)',display:'flex',alignItems:'center',padding:'0 24px',gap:14,flexShrink:0,zIndex:10}}>
-        <img src="/logo_1.png" alt="DEMARA" style={{height:'38px', width:'auto'}} />
+        <img src="/logo_1.png" alt="DEMARA" style={{height:'52px', width:'auto', display:'block', objectFit:'contain'}} />
         <div style={{width:1,height:28,background:'rgba(255,255,255,.08)'}}></div>
         <div>
           <div style={{fontSize:14,fontWeight:800,color:'#fff',letterSpacing:'-.3px'}}>DEMARA Platform</div>
@@ -723,7 +723,7 @@ export default function InspectorApp({ user: initialUser, token, onLogout }) {
       <div style={{display:'flex',flex:1,overflow:'hidden'}}>
 
         {/* ── Sidebar ── */}
-        <div style={{width:220,background:'#252266',borderRight:'1px solid rgba(0,170,255,.08)',display:'flex',flexDirection:'column',flexShrink:0,overflowY:'auto'}}>
+        <div style={{width:220,background:'#2D2B7A',borderRight:'1px solid rgba(0,170,255,.08)',display:'flex',flexDirection:'column',flexShrink:0,overflowY:'auto'}}>
           {/* KPI section */}
           <div style={{padding:'16px 14px',borderBottom:'1px solid rgba(0,170,255,.06)'}}>
             <div style={{fontSize:9,fontWeight:700,color:'rgba(255,255,255,.4)',textTransform:'uppercase',letterSpacing:'2px',marginBottom:12}}>Overview</div>

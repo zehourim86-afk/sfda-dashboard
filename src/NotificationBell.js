@@ -102,7 +102,7 @@ export default function NotificationBell({ token }) {
       </button>
 
       {open && (
-        <div style={{position:'absolute',right:0,marginTop:8,width:320,background:'#252266',border:'1px solid rgba(56,198,255,0.2)',borderRadius:12,
+        <div style={{position:'absolute',right:0,marginTop:8,width:320,background:'#332E8A',border:'1px solid rgba(56,198,255,0.2)',borderRadius:12,
           boxShadow:'0 20px 60px rgba(0,0,0,.6)',zIndex:50,overflow:'hidden'}}>
           <div style={{padding:'12px 16px',background:'#1E1A5E',borderBottom:'1px solid rgba(56,198,255,0.2)',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
             <div style={{fontSize:13,fontWeight:700,color:'#fff'}}>Notifications</div>

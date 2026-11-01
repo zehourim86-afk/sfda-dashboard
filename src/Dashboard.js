@@ -12,7 +12,7 @@ const DARK_CSS = `
   ::-webkit-scrollbar-thumb{background:rgba(0,170,255,.2);border-radius:2px}
   input:focus,textarea:focus,select:focus{border-color:rgba(0,170,255,.5)!important;outline:none}
   input::placeholder,textarea::placeholder{color:rgba(255,255,255,.25)}
-  select option{background:#252266;color:#fff}
+  select option{background:#332E8A;color:#fff}
   .dv>*+*{border-top:1px solid rgba(255,255,255,.05)}
   .hv-bg{transition:background .15s}
   .hv-bg:hover{background:rgba(0,170,255,.06)!important}
@@ -74,7 +74,7 @@ function TraceModal({ trace, onClose }) {
   if (!trace) return null;
   return (
     <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,.8)',backdropFilter:'blur(6px)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:100,padding:16}}>
-      <div style={{background:'#252266',borderRadius:12,boxShadow:'0 32px 80px rgba(0,0,0,.8)',border:'1px solid rgba(0,170,255,.18)',width:'100%',maxWidth:768,maxHeight:'92vh',overflowY:'auto'}}>
+      <div style={{background:'#332E8A',borderRadius:12,boxShadow:'0 32px 80px rgba(0,0,0,.8)',border:'1px solid rgba(0,170,255,.18)',width:'100%',maxWidth:768,maxHeight:'92vh',overflowY:'auto'}}>
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',borderColor:'rgba(255,255,255,.08)',borderBottomWidth:1,padding:24}}>
           <div>
             <h2 style={{fontSize:20,fontWeight:700,color:'#fff'}}>{trace.trace_number}</h2>
@@ -240,7 +240,7 @@ export default function Dashboard({ user, token, onLogout }) {
 
       {/* ── Topbar ── */}
       <div style={{height:58,background:'#1E1A5E',borderBottom:'1px solid rgba(0,170,255,.1)',display:'flex',alignItems:'center',padding:'0 24px',gap:14,flexShrink:0,zIndex:10}}>
-        <img src="/logo_1.png" alt="DEMARA" style={{height:'38px', width:'auto'}} />
+        <img src="/logo_1.png" alt="DEMARA" style={{height:'52px', width:'auto', display:'block', objectFit:'contain'}} />
         <div style={{width:1,height:28,background:'rgba(255,255,255,.08)'}}></div>
         <div>
           <div style={{fontSize:14,fontWeight:800,color:'#fff',letterSpacing:'-.3px'}}>Drug Import Traceability Platform</div>
@@ -268,7 +268,7 @@ export default function Dashboard({ user, token, onLogout }) {
       <div style={{display:'flex',flex:1,overflow:'hidden'}}>
 
         {/* ── Sidebar ── */}
-        <div style={{width:220,background:'#252266',borderRight:'1px solid rgba(0,170,255,.08)',display:'flex',flexDirection:'column',flexShrink:0,overflowY:'auto'}}>
+        <div style={{width:220,background:'#2D2B7A',borderRight:'1px solid rgba(0,170,255,.08)',display:'flex',flexDirection:'column',flexShrink:0,overflowY:'auto'}}>
           <div style={{padding:'16px 14px',borderBottom:'1px solid rgba(0,170,255,.06)'}}>
             <div style={{fontSize:9,fontWeight:700,color:'rgba(255,255,255,.4)',textTransform:'uppercase',letterSpacing:'2px',marginBottom:12}}>Overview</div>
             <div style={{display:'flex',flexDirection:'column',gap:6}}>
@@ -335,7 +335,7 @@ export default function Dashboard({ user, token, onLogout }) {
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
                   <XAxis dataKey="state" tick={{fontSize: 9, fill: 'rgba(255,255,255,0.45)'}} angle={-45} textAnchor="end" />
                   <YAxis tick={{fontSize: 10, fill: 'rgba(255,255,255,0.45)'}} allowDecimals={false} />
-                  <Tooltip contentStyle={{background:'#252266',border:'1px solid rgba(0,170,255,.2)',borderRadius:8,color:'#fff'}} itemStyle={{color:'#fff'}} labelStyle={{color:'rgba(255,255,255,.6)'}} cursor={{fill:'rgba(0,170,255,.06)'}} />
+                  <Tooltip contentStyle={{background:'#332E8A',border:'1px solid rgba(0,170,255,.2)',borderRadius:8,color:'#fff'}} itemStyle={{color:'#fff'}} labelStyle={{color:'rgba(255,255,255,.6)'}} cursor={{fill:'rgba(0,170,255,.06)'}} />
                   <Bar dataKey="count" fill="#38C6FF" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
@@ -359,7 +359,7 @@ export default function Dashboard({ user, token, onLogout }) {
                       <Cell key={index} fill={CHART_COLORS[index % CHART_COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip contentStyle={{background:'#252266',border:'1px solid rgba(0,170,255,.2)',borderRadius:8,color:'#fff'}} itemStyle={{color:'#fff'}} labelStyle={{color:'rgba(255,255,255,.6)'}} cursor={{fill:'rgba(0,170,255,.06)'}} />
+                  <Tooltip contentStyle={{background:'#332E8A',border:'1px solid rgba(0,170,255,.2)',borderRadius:8,color:'#fff'}} itemStyle={{color:'#fff'}} labelStyle={{color:'rgba(255,255,255,.6)'}} cursor={{fill:'rgba(0,170,255,.06)'}} />
                 </PieChart>
               </ResponsiveContainer>
             </div>
@@ -375,7 +375,7 @@ export default function Dashboard({ user, token, onLogout }) {
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
                   <XAxis dataKey="country" tick={{fontSize: 10, fill: 'rgba(255,255,255,0.45)'}} />
                   <YAxis tick={{fontSize: 10, fill: 'rgba(255,255,255,0.45)'}} allowDecimals={false} />
-                  <Tooltip contentStyle={{background:'#252266',border:'1px solid rgba(0,170,255,.2)',borderRadius:8,color:'#fff'}} itemStyle={{color:'#fff'}} labelStyle={{color:'rgba(255,255,255,.6)'}} cursor={{fill:'rgba(0,170,255,.06)'}} />
+                  <Tooltip contentStyle={{background:'#332E8A',border:'1px solid rgba(0,170,255,.2)',borderRadius:8,color:'#fff'}} itemStyle={{color:'#fff'}} labelStyle={{color:'rgba(255,255,255,.6)'}} cursor={{fill:'rgba(0,170,255,.06)'}} />
                   <Bar dataKey="count" fill="#00C896" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
@@ -403,7 +403,7 @@ export default function Dashboard({ user, token, onLogout }) {
                     <Cell fill="#38C6FF" />
                     <Cell fill="#FF5470" />
                   </Pie>
-                  <Tooltip contentStyle={{background:'#252266',border:'1px solid rgba(0,170,255,.2)',borderRadius:8,color:'#fff'}} itemStyle={{color:'#fff'}} labelStyle={{color:'rgba(255,255,255,.6)'}} cursor={{fill:'rgba(0,170,255,.06)'}} />
+                  <Tooltip contentStyle={{background:'#332E8A',border:'1px solid rgba(0,170,255,.2)',borderRadius:8,color:'#fff'}} itemStyle={{color:'#fff'}} labelStyle={{color:'rgba(255,255,255,.6)'}} cursor={{fill:'rgba(0,170,255,.06)'}} />
                 </PieChart>
               </ResponsiveContainer>
             </div>

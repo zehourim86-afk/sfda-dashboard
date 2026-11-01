@@ -65,7 +65,7 @@ export default function ShipmentTimeline({ shipmentId, token, onClose }) {
       zIndex:1000, padding:'20px', fontFamily:'Inter,sans-serif'
     }}>
       <div style={{
-        background:'#252266', borderRadius:'16px',
+        background:'#332E8A', borderRadius:'16px',
         width:'100%', maxWidth:'720px',
         maxHeight:'90vh', overflow:'hidden',
         display:'flex', flexDirection:'column',
@@ -180,7 +180,7 @@ export default function ShipmentTimeline({ shipmentId, token, onClose }) {
                         {/* Dot */}
                         <div style={{
                           width:'30px', height:'30px', borderRadius:'50%',
-                          background: isLast ? 'rgba(56,198,255,0.15)' : '#252266',
+                          background: isLast ? 'rgba(56,198,255,0.15)' : '#332E8A',
                           border:`2px solid ${isLast ? '#38C6FF' : sig.dot}`,
                           display:'flex', alignItems:'center', justifyContent:'center',
                           flexShrink:0, zIndex:1,

@@ -64,7 +64,7 @@ export default function AIAssistant({ token, shipmentId }) {
   return (
     <div style={{
       display:'flex', flexDirection:'column', height:'100%',
-      fontFamily:'Inter,sans-serif', background:'#252266',
+      fontFamily:'Inter,sans-serif', background:'#332E8A',
       borderRadius:'14px', border:'1px solid rgba(0,170,255,0.12)',
       overflow:'hidden'
     }}>

@@ -55,7 +55,7 @@ export default function SFDAObserverAssistant({ token }) {
   };
 
   return (
-    <div style={{display:'flex',flexDirection:'column',height:'100%',fontFamily:'Inter,sans-serif',background:'#252266',borderRadius:'14px',border:'1px solid rgba(0,170,255,0.12)',overflow:'hidden'}}>
+    <div style={{display:'flex',flexDirection:'column',height:'100%',fontFamily:'Inter,sans-serif',background:'#332E8A',borderRadius:'14px',border:'1px solid rgba(0,170,255,0.12)',overflow:'hidden'}}>
 
       {/* Header */}
       <div style={{padding:'14px 18px',background:'linear-gradient(135deg, #1E1A5E 0%, #252266 100%)',display:'flex',alignItems:'center',gap:'10px'}}>

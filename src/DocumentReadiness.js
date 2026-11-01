@@ -112,7 +112,7 @@ export default function DocumentReadiness({ shipmentId, token, shipment, onDataL
 
       {/* Overall Readiness Score */}
       <div style={{
-        background:'#252266',
+        background:'#332E8A',
         border:`2px solid ${overall.color}`,
         borderRadius:'14px',
         padding:'20px 24px',
@@ -209,7 +209,7 @@ export default function DocumentReadiness({ shipmentId, token, shipment, onDataL
 
           return (
             <div key={typeKey} style={{
-              background:'#252266',
+              background:'#332E8A',
               border:`1px solid ${uploaded ? cfg.border : 'rgba(255,255,255,0.08)'}`,
               borderRadius:'10px',
               overflow:'hidden',
@@ -323,7 +323,7 @@ export default function DocumentReadiness({ shipmentId, token, shipment, onDataL
                     style={{
                       width:'100%',border:'1px solid rgba(255,255,255,0.15)',borderRadius:'8px',
                       padding:'10px 12px',fontSize:'12px',fontFamily:'JetBrains Mono,monospace',
-                      color:'#FFFFFF',background:'#252266',outline:'none',resize:'vertical'
+                      color:'#FFFFFF',background:'#332E8A',outline:'none',resize:'vertical'
                     }}
                   />
                   <div style={{display:'flex',gap:'8px',marginTop:'8px'}}>
@@ -368,7 +368,7 @@ export default function DocumentReadiness({ shipmentId, token, shipment, onDataL
                       <div style={{fontSize:'11px',fontWeight:700,color:'rgba(255,255,255,0.45)',textTransform:'uppercase',letterSpacing:'0.8px',marginBottom:'8px'}}>Extracted Information</div>
                       <div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:'6px'}}>
                         {Object.entries(validation.extracted).filter(([,v]) => v && v !== 'null').map(([key,value]) => (
-                          <div key={key} style={{background:'#252266',border:'1px solid rgba(255,255,255,0.08)',borderRadius:'6px',padding:'8px 10px'}}>
+                          <div key={key} style={{background:'#332E8A',border:'1px solid rgba(255,255,255,0.08)',borderRadius:'6px',padding:'8px 10px'}}>
                             <div style={{fontSize:'9px',fontWeight:700,color:'rgba(255,255,255,0.45)',textTransform:'uppercase',letterSpacing:'0.8px',marginBottom:'2px'}}>{key.replace(/_/g,' ')}</div>
                             <div style={{fontSize:'11px',color:'#FFFFFF',fontWeight:500,fontFamily:'JetBrains Mono,monospace'}}>
                               {Array.isArray(value) ? value.join(', ') : String(value)}
@@ -388,7 +388,7 @@ export default function DocumentReadiness({ shipmentId, token, shipment, onDataL
                           const checkColor = check.status === 'PASS' ? '#00C896' : check.status === 'WARN' ? '#F5A623' : check.status === 'FAIL' ? '#FF5470' : '#808285';
                           const checkIcon = check.status === 'PASS' ? '✓' : check.status === 'WARN' ? '⚠' : check.status === 'FAIL' ? '✕' : '○';
                           return (
-                            <div key={i} style={{display:'flex',alignItems:'flex-start',gap:'8px',padding:'7px 10px',background:'#252266',borderRadius:'6px',border:'1px solid rgba(255,255,255,0.06)'}}>
+                            <div key={i} style={{display:'flex',alignItems:'flex-start',gap:'8px',padding:'7px 10px',background:'#332E8A',borderRadius:'6px',border:'1px solid rgba(255,255,255,0.06)'}}>
                               <span style={{color:checkColor,fontWeight:700,flexShrink:0,marginTop:'1px'}}>{checkIcon}</span>
                               <div style={{flex:1}}>
                                 <span style={{fontSize:'11px',fontWeight:600,color:'#FFFFFF'}}>{check.item}</span>

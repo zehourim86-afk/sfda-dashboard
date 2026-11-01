@@ -73,7 +73,7 @@ const C = {
   // Layout
   page:     'display:flex;flex-direction:column;min-height:100vh;background:#2D2B7A;font-family:Inter,sans-serif;color:#fff',
   body:     'display:flex;flex:1;overflow:hidden',
-  sidebar:  'width:220px;background:#252266;border-right:1px solid rgba(0,170,255,.08);display:flex;flex-direction:column;flex-shrink:0;height:calc(100vh - 58px)',
+  sidebar:  'width:220px;background:#2D2B7A;border-right:1px solid rgba(0,170,255,.08);display:flex;flex-direction:column;flex-shrink:0;height:calc(100vh - 58px)',
   content:  'flex:1;overflow-y:auto;background:#2D2B7A',
   // Cards
   card:     'background:rgba(255,255,255,0.05);border:1px solid rgba(0,170,255,.1);border-radius:14px;padding:18px',
@@ -133,7 +133,7 @@ function DetailModal({shipment,token,onClose}) {
   const dc={APPROVED:'#00C896',REJECTED:'#FF5470',CONDITIONALLY_APPROVED:'#F5A623'};
   return (
     <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,.8)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:100,padding:20,backdropFilter:'blur(6px)'}}>
-      <div style={{background:'#252266',border:'1px solid rgba(0,170,255,.2)',borderRadius:18,width:'100%',maxWidth:860,maxHeight:'90vh',overflowY:'auto',boxShadow:'0 32px 80px rgba(0,0,0,.8)'}}>
+      <div style={{background:'#332E8A',border:'1px solid rgba(0,170,255,.2)',borderRadius:18,width:'100%',maxWidth:860,maxHeight:'90vh',overflowY:'auto',boxShadow:'0 32px 80px rgba(0,0,0,.8)'}}>
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'20px 24px',borderBottom:'1px solid rgba(0,170,255,.1)'}}>
           <div>
             <div style={{fontSize:16,fontWeight:800,color:'#fff'}}>📋 {shipment.faseh_request_number}</div>
@@ -253,7 +253,7 @@ function ResultModal({shipment,token,onClose,onRefresh}) {
 
   return (
     <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,.8)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:100,padding:20,backdropFilter:'blur(6px)'}}>
-      <div style={{background:'#252266',border:'1px solid rgba(0,170,255,.15)',borderRadius:18,width:'100%',maxWidth:680,maxHeight:'92vh',overflowY:'auto',boxShadow:'0 32px 80px rgba(0,0,0,.8)'}}>
+      <div style={{background:'#332E8A',border:'1px solid rgba(0,170,255,.15)',borderRadius:18,width:'100%',maxWidth:680,maxHeight:'92vh',overflowY:'auto',boxShadow:'0 32px 80px rgba(0,0,0,.8)'}}>
         {/* Header */}
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'18px 22px',borderBottom:'1px solid rgba(0,170,255,.1)',background:'linear-gradient(180deg,rgba(0,170,255,.05),transparent)'}}>
           <div>
@@ -569,7 +569,7 @@ export default function LabPortal({user:initUser,token,onLogout}) {
 
       {/* ── Topbar ── */}
       <div style={{height:58,background:'#1E1A5E',borderBottom:'1px solid rgba(0,170,255,.1)',display:'flex',alignItems:'center',padding:'0 24px',gap:14,flexShrink:0,zIndex:10}}>
-        <img src="/logo_1.png" alt="DEMARA" style={{height:'38px', width:'auto'}} />
+        <img src="/logo_1.png" alt="DEMARA" style={{height:'52px', width:'auto', display:'block', objectFit:'contain'}} />
         <div style={{width:1,height:28,background:'rgba(255,255,255,.08)'}}></div>
         <div>
           <div style={{fontSize:14,fontWeight:800,color:'#fff',letterSpacing:'-.3px'}}>DEMARA Platform</div>
@@ -594,7 +594,7 @@ export default function LabPortal({user:initUser,token,onLogout}) {
       <div style={{display:'flex',flex:1,overflow:'hidden'}}>
 
         {/* ── Sidebar ── */}
-        <div style={{width:220,background:'#252266',borderRight:'1px solid rgba(0,170,255,.08)',display:'flex',flexDirection:'column',flexShrink:0,overflowY:'auto'}}>
+        <div style={{width:220,background:'#2D2B7A',borderRight:'1px solid rgba(0,170,255,.08)',display:'flex',flexDirection:'column',flexShrink:0,overflowY:'auto'}}>
           {/* KPI section */}
           <div style={{padding:'16px 14px',borderBottom:'1px solid rgba(0,170,255,.06)'}}>
             <div style={{fontSize:9,fontWeight:700,color:'rgba(255,255,255,.4)',textTransform:'uppercase',letterSpacing:'2px',marginBottom:12}}>Overview</div>
@@ -741,7 +741,7 @@ export default function LabPortal({user:initUser,token,onLogout}) {
       {/* ── Decline modal ── */}
       {declining&&(
         <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,.8)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:100,padding:20,backdropFilter:'blur(6px)'}}>
-          <div style={{background:'#252266',border:'1px solid rgba(0,170,255,.15)',borderRadius:16,width:'100%',maxWidth:420,boxShadow:'0 24px 80px rgba(0,0,0,.8)'}}>
+          <div style={{background:'#332E8A',border:'1px solid rgba(0,170,255,.15)',borderRadius:16,width:'100%',maxWidth:420,boxShadow:'0 24px 80px rgba(0,0,0,.8)'}}>
             <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'18px 22px',borderBottom:'1px solid rgba(0,170,255,.1)'}}>
               <div><div style={{fontSize:15,fontWeight:800,color:'#fff'}}>Decline Assignment</div><div style={{fontSize:11,color:'rgba(255,255,255,.4)',marginTop:2}}>{declining.faseh_request_number}</div></div>
               <button onClick={()=>{setDeclining(null);setDeclineReason('');}} style={{width:32,height:32,borderRadius:8,background:'rgba(255,255,255,.06)',border:'1px solid rgba(255,255,255,.1)',color:'rgba(255,255,255,.6)',fontSize:18,cursor:'pointer',fontFamily:'inherit',display:'flex',alignItems:'center',justifyContent:'center'}}>×</button>

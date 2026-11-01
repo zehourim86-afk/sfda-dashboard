@@ -83,7 +83,7 @@ const CHART = {
   grid: 'rgba(255,255,255,.06)',
   tick: {fontSize:10, fill:'rgba(255,255,255,.4)'},
   tooltip: {
-    contentStyle: {background:'#252266',border:'1px solid rgba(0,170,255,.2)',borderRadius:8,fontSize:12,color:'#fff'},
+    contentStyle: {background:'#332E8A',border:'1px solid rgba(0,170,255,.2)',borderRadius:8,fontSize:12,color:'#fff'},
     itemStyle: {color:'#fff'},
     labelStyle: {color:'rgba(255,255,255,.6)'},
     cursor: {fill:'rgba(0,170,255,.06)'},
@@ -388,14 +388,14 @@ export default function SFDAObserverPortal({ user, token, onLogout }) {
         ::-webkit-scrollbar-thumb{background:rgba(0,170,255,.2);border-radius:2px}
         input:focus,textarea:focus,select:focus{border-color:rgba(0,170,255,.5)!important;outline:none}
         input::placeholder,textarea::placeholder{color:rgba(255,255,255,.2)}
-        select option{background:#252266;color:#fff}
+        select option{background:#332E8A;color:#fff}
         tr.row:hover td{background:rgba(0,170,255,.04)!important}
         .hov:hover{background:rgba(0,170,255,.07)!important;border-color:rgba(0,170,255,.2)!important}
       `}</style>
 
       {/* ── Topbar ── */}
       <div style={{height:58,background:'#1E1A5E',borderBottom:'1px solid rgba(0,170,255,.1)',display:'flex',alignItems:'center',padding:'0 24px',gap:14,flexShrink:0,zIndex:10}}>
-        <img src="/logo_1.png" alt="DEMARA" style={{height:'38px', width:'auto'}} />
+        <img src="/logo_1.png" alt="DEMARA" style={{height:'52px', width:'auto', display:'block', objectFit:'contain'}} />
         <div style={{width:1,height:28,background:'rgba(255,255,255,.08)'}}></div>
         <div>
           <div style={{fontSize:14,fontWeight:800,color:'#fff',letterSpacing:'-.3px'}}>DEMARA Platform</div>
@@ -420,7 +420,7 @@ export default function SFDAObserverPortal({ user, token, onLogout }) {
       <div style={{display:'flex',flex:1,overflow:'hidden'}}>
 
         {/* ── Sidebar ── */}
-        <div style={{width:220,background:'#252266',borderRight:'1px solid rgba(0,170,255,.08)',display:'flex',flexDirection:'column',flexShrink:0,overflowY:'auto'}}>
+        <div style={{width:220,background:'#2D2B7A',borderRight:'1px solid rgba(0,170,255,.08)',display:'flex',flexDirection:'column',flexShrink:0,overflowY:'auto'}}>
           {/* KPI section */}
           <div style={{padding:'16px 14px',borderBottom:'1px solid rgba(0,170,255,.06)'}}>
             <div style={{fontSize:9,fontWeight:700,color:'rgba(255,255,255,.4)',textTransform:'uppercase',letterSpacing:'2px',marginBottom:12}}>Overview</div>
@@ -789,7 +789,7 @@ function ShipmentDetailReadOnly({ shipment, token, onClose }) {
 
   if (!detail) return (
     <div style={S.backdrop}>
-      <div style={{background:'#252266',border:'1px solid rgba(0,170,255,.15)',borderRadius:14,padding:'28px 36px',fontSize:13,color:'rgba(255,255,255,.5)'}}>Loading...</div>
+      <div style={{background:'#332E8A',border:'1px solid rgba(0,170,255,.15)',borderRadius:14,padding:'28px 36px',fontSize:13,color:'rgba(255,255,255,.5)'}}>Loading...</div>
     </div>
   );
 
@@ -799,7 +799,7 @@ function ShipmentDetailReadOnly({ shipment, token, onClose }) {
 
   return (
     <div style={S.backdrop}>
-      <div style={{background:'#252266',border:'1px solid rgba(0,170,255,.2)',borderRadius:18,width:'100%',maxWidth:860,maxHeight:'90vh',overflowY:'auto',boxShadow:'0 32px 80px rgba(0,0,0,.8)'}}>
+      <div style={{background:'#332E8A',border:'1px solid rgba(0,170,255,.2)',borderRadius:18,width:'100%',maxWidth:860,maxHeight:'90vh',overflowY:'auto',boxShadow:'0 32px 80px rgba(0,0,0,.8)'}}>
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'20px 24px',borderBottom:'1px solid rgba(0,170,255,.1)',background:'linear-gradient(180deg,rgba(0,170,255,.05),transparent)'}}>
           <div>
             <div style={{fontSize:16,fontWeight:800,color:'#fff',fontFamily:S.mono}}>{detail.faseh_request_number}</div>

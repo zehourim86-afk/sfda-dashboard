@@ -30,7 +30,7 @@ function badge(label, tone = 'grey') {
 
 const S = {
   backdrop: {position:'fixed',inset:0,background:'rgba(0,0,0,.8)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:100,padding:20,backdropFilter:'blur(6px)'},
-  modal: (maxWidth) => ({background:'#252266',border:'1px solid rgba(0,170,255,.18)',borderRadius:18,width:'100%',maxWidth,maxHeight:'92vh',overflowY:'auto',boxShadow:'0 32px 80px rgba(0,0,0,.8)',color:'#fff',fontFamily:'Inter,sans-serif'}),
+  modal: (maxWidth) => ({background:'#332E8A',border:'1px solid rgba(0,170,255,.18)',borderRadius:18,width:'100%',maxWidth,maxHeight:'92vh',overflowY:'auto',boxShadow:'0 32px 80px rgba(0,0,0,.8)',color:'#fff',fontFamily:'Inter,sans-serif'}),
   modalHead: {display:'flex',alignItems:'center',justifyContent:'space-between',padding:'18px 22px',borderBottom:'1px solid rgba(0,170,255,.1)',background:'linear-gradient(180deg,rgba(0,170,255,.05),transparent)'},
   closeBtn: {width:32,height:32,borderRadius:8,background:'rgba(255,255,255,.06)',border:'1px solid rgba(255,255,255,.1)',color:'rgba(255,255,255,.6)',fontSize:18,cursor:'pointer',fontFamily:'inherit',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0},
   ipt: {width:'100%',background:'rgba(255,255,255,.05)',border:'1px solid rgba(255,255,255,.1)',borderRadius:8,padding:'8px 12px',fontSize:12,color:'#fff',fontFamily:'inherit',outline:'none',colorScheme:'dark'},
@@ -1461,7 +1461,7 @@ function ShipmentDetailModal({ shipmentId, token, onClose }) {
 
   if (loading) return (
     <div style={S.backdrop}>
-      <div style={{background:'#252266',border:'1px solid rgba(0,170,255,.15)',borderRadius:14,padding:'28px 36px',fontSize:13,color:'rgba(255,255,255,.5)',fontFamily:'Inter,sans-serif'}}>Loading...</div>
+      <div style={{background:'#332E8A',border:'1px solid rgba(0,170,255,.15)',borderRadius:14,padding:'28px 36px',fontSize:13,color:'rgba(255,255,255,.5)',fontFamily:'Inter,sans-serif'}}>Loading...</div>
     </div>
   );
 
@@ -1551,7 +1551,7 @@ function ShipmentDetailModal({ shipmentId, token, onClose }) {
                           {/* Dot */}
                           <div style={{
                             width:'30px',height:'30px',borderRadius:'50%',
-                            background: isFirst ? 'rgba(56,198,255,0.15)' : '#252266',
+                            background: isFirst ? 'rgba(56,198,255,0.15)' : '#332E8A',
                             border:`2px solid ${isFirst ? '#38C6FF' : 'rgba(255,255,255,0.12)'}`,
                             display:'flex',alignItems:'center',justifyContent:'center',
                             flexShrink:0,zIndex:1,
@@ -2112,13 +2112,13 @@ export default function ImporterPortal({ user: initialUser, token, onLogout }) {
         ::-webkit-scrollbar-thumb{background:rgba(0,170,255,.2);border-radius:2px}
         input:focus,textarea:focus,select:focus{border-color:rgba(0,170,255,.5)!important;outline:none}
         input::placeholder,textarea::placeholder{color:rgba(255,255,255,.2)}
-        select option{background:#252266;color:#fff}
+        select option{background:#332E8A;color:#fff}
         tr.row:hover td{background:rgba(0,170,255,.04)!important}
       `}</style>
 
       {/* ── Topbar ── */}
       <div style={{height:58,background:'#1E1A5E',borderBottom:'1px solid rgba(0,170,255,.1)',display:'flex',alignItems:'center',padding:'0 24px',gap:14,flexShrink:0,zIndex:10}}>
-        <img src="/logo_1.png" alt="DEMARA" style={{height:'38px', width:'auto'}} />
+        <img src="/logo_1.png" alt="DEMARA" style={{height:'52px', width:'auto', display:'block', objectFit:'contain'}} />
         <div style={{width:1,height:28,background:'rgba(255,255,255,.08)'}}></div>
         <div>
           <div style={{fontSize:14,fontWeight:800,color:'#fff',letterSpacing:'-.3px'}}>DEMARA Platform</div>
@@ -2144,7 +2144,7 @@ export default function ImporterPortal({ user: initialUser, token, onLogout }) {
       <div style={{display:'flex',flex:1,overflow:'hidden'}}>
 
         {/* ── Sidebar ── */}
-        <div style={{width:220,background:'#252266',borderRight:'1px solid rgba(0,170,255,.08)',display:'flex',flexDirection:'column',flexShrink:0,overflowY:'auto'}}>
+        <div style={{width:220,background:'#2D2B7A',borderRight:'1px solid rgba(0,170,255,.08)',display:'flex',flexDirection:'column',flexShrink:0,overflowY:'auto'}}>
           <div style={{padding:'4px 10px 12px',flex:1}}>
             <div style={navSection}>Shipments</div>
             <button style={navItem(activeTab === 'active')} onClick={() => { setActiveTab('active'); setFilterStatus(''); setActiveKpi(null); }}>

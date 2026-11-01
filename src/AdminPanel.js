@@ -13,7 +13,7 @@ const DARK_CSS = `
   ::-webkit-scrollbar-thumb{background:rgba(0,170,255,.2);border-radius:2px}
   input:focus,textarea:focus,select:focus{border-color:rgba(0,170,255,.5)!important;outline:none}
   input::placeholder,textarea::placeholder{color:rgba(255,255,255,.25)}
-  select option{background:#252266;color:#fff}
+  select option{background:#332E8A;color:#fff}
   .dv>*+*{border-top:1px solid rgba(255,255,255,.05)}
   .hv-bg{transition:background .15s}
   .hv-bg:hover{background:rgba(0,170,255,.06)!important}
@@ -325,7 +325,7 @@ function OverviewSection({ token }) {
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
               <XAxis dataKey="name" tick={{fontSize: 8, fill: 'rgba(255,255,255,0.45)'}} angle={-30} textAnchor="end" />
               <YAxis tick={{fontSize: 10, fill: 'rgba(255,255,255,0.45)'}} allowDecimals={false} />
-              <Tooltip contentStyle={{background:'#252266',border:'1px solid rgba(0,170,255,.2)',borderRadius:8,color:'#fff'}} itemStyle={{color:'#fff'}} labelStyle={{color:'rgba(255,255,255,.6)'}} cursor={{fill:'rgba(0,170,255,.06)'}} />
+              <Tooltip contentStyle={{background:'#332E8A',border:'1px solid rgba(0,170,255,.2)',borderRadius:8,color:'#fff'}} itemStyle={{color:'#fff'}} labelStyle={{color:'rgba(255,255,255,.6)'}} cursor={{fill:'rgba(0,170,255,.06)'}} />
               <Bar dataKey="value" fill="#38C6FF" radius={[4,4,0,0]} />
             </BarChart>
           </ResponsiveContainer>
@@ -338,7 +338,7 @@ function OverviewSection({ token }) {
                 dataKey="value" label={({name, value}) => `${name}: ${value}`}>
                 {portData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
               </Pie>
-              <Tooltip contentStyle={{background:'#252266',border:'1px solid rgba(0,170,255,.2)',borderRadius:8,color:'#fff'}} itemStyle={{color:'#fff'}} labelStyle={{color:'rgba(255,255,255,.6)'}} cursor={{fill:'rgba(0,170,255,.06)'}} />
+              <Tooltip contentStyle={{background:'#332E8A',border:'1px solid rgba(0,170,255,.2)',borderRadius:8,color:'#fff'}} itemStyle={{color:'#fff'}} labelStyle={{color:'rgba(255,255,255,.6)'}} cursor={{fill:'rgba(0,170,255,.06)'}} />
             </PieChart>
           </ResponsiveContainer>
         </div>
@@ -522,7 +522,7 @@ function ShipmentsSection({ token }) {
 
       {resetShipment && (
         <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,.8)',backdropFilter:'blur(6px)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:100,padding:16}}>
-          <div style={{background:'#252266',borderRadius:12,boxShadow:'0 32px 80px rgba(0,0,0,.8)',border:'1px solid rgba(0,170,255,.18)',width:'100%',maxWidth:448,padding:24}}>
+          <div style={{background:'#332E8A',borderRadius:12,boxShadow:'0 32px 80px rgba(0,0,0,.8)',border:'1px solid rgba(0,170,255,.18)',width:'100%',maxWidth:448,padding:24}}>
             <h2 style={{fontSize:18,fontWeight:700,color:'#fff',marginBottom:8}}>↩ Reset Decision</h2>
             <p style={{fontSize:14,color:'rgba(255,255,255,.5)',marginBottom:4}}>{resetShipment.faseh_request_number}</p>
             <p style={{fontSize:12,color:'#F5A623',marginBottom:16}}>This will reset the shipment from <strong>{resetShipment.current_state}</strong> to RESULT_SUBMITTED. The corrected SFDA decision email can then be processed.</p>
@@ -906,7 +906,7 @@ function MetricsSection({ token }) {
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
             <XAxis dataKey="month" tick={{fontSize: 10, fill: 'rgba(255,255,255,0.45)'}} />
             <YAxis tick={{fontSize: 10, fill: 'rgba(255,255,255,0.45)'}} />
-            <Tooltip contentStyle={{background:'#252266',border:'1px solid rgba(0,170,255,.2)',borderRadius:8,color:'#fff'}} itemStyle={{color:'#fff'}} labelStyle={{color:'rgba(255,255,255,.6)'}} cursor={{fill:'rgba(0,170,255,.06)'}} />
+            <Tooltip contentStyle={{background:'#332E8A',border:'1px solid rgba(0,170,255,.2)',borderRadius:8,color:'#fff'}} itemStyle={{color:'#fff'}} labelStyle={{color:'rgba(255,255,255,.6)'}} cursor={{fill:'rgba(0,170,255,.06)'}} />
             <Line type="monotone" dataKey="manual" stroke="#FF5470" strokeWidth={2} name="Manual Process" strokeDasharray="5 5" />
             <Line type="monotone" dataKey="demara" stroke="#00C896" strokeWidth={2} name="With DEMARA" />
           </LineChart>
@@ -926,7 +926,7 @@ function MetricsSection({ token }) {
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
               <XAxis dataKey="name" tick={{fontSize: 10, fill: 'rgba(255,255,255,0.45)'}} />
               <YAxis tick={{fontSize: 10, fill: 'rgba(255,255,255,0.45)'}} allowDecimals={false} />
-              <Tooltip contentStyle={{background:'#252266',border:'1px solid rgba(0,170,255,.2)',borderRadius:8,color:'#fff'}} itemStyle={{color:'#fff'}} labelStyle={{color:'rgba(255,255,255,.6)'}} cursor={{fill:'rgba(0,170,255,.06)'}} />
+              <Tooltip contentStyle={{background:'#332E8A',border:'1px solid rgba(0,170,255,.2)',borderRadius:8,color:'#fff'}} itemStyle={{color:'#fff'}} labelStyle={{color:'rgba(255,255,255,.6)'}} cursor={{fill:'rgba(0,170,255,.06)'}} />
               <Bar dataKey="value" fill="#38C6FF" radius={[4,4,0,0]} />
             </BarChart>
           </ResponsiveContainer>
@@ -1192,7 +1192,7 @@ function SFDADashboard({ token }) {
                   <Cell key={i} fill={entry.color} />
                 ))}
               </Pie>
-              <Tooltip contentStyle={{background:'#252266',border:'1px solid rgba(0,170,255,.2)',borderRadius:8,color:'#fff'}} itemStyle={{color:'#fff'}} labelStyle={{color:'rgba(255,255,255,.6)'}} cursor={{fill:'rgba(0,170,255,.06)'}} />
+              <Tooltip contentStyle={{background:'#332E8A',border:'1px solid rgba(0,170,255,.2)',borderRadius:8,color:'#fff'}} itemStyle={{color:'#fff'}} labelStyle={{color:'rgba(255,255,255,.6)'}} cursor={{fill:'rgba(0,170,255,.06)'}} />
             </PieChart>
           </ResponsiveContainer>
         </div>
@@ -1205,7 +1205,7 @@ function SFDADashboard({ token }) {
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
               <XAxis dataKey="name" tick={{fontSize: 9, fill: 'rgba(255,255,255,0.45)'}} angle={-20} textAnchor="end" />
               <YAxis tick={{fontSize: 10, fill: 'rgba(255,255,255,0.45)'}} allowDecimals={false} />
-              <Tooltip contentStyle={{background:'#252266',border:'1px solid rgba(0,170,255,.2)',borderRadius:8,color:'#fff'}} itemStyle={{color:'#fff'}} labelStyle={{color:'rgba(255,255,255,.6)'}} cursor={{fill:'rgba(0,170,255,.06)'}} />
+              <Tooltip contentStyle={{background:'#332E8A',border:'1px solid rgba(0,170,255,.2)',borderRadius:8,color:'#fff'}} itemStyle={{color:'#fff'}} labelStyle={{color:'rgba(255,255,255,.6)'}} cursor={{fill:'rgba(0,170,255,.06)'}} />
               <Bar dataKey="value" fill="#38C6FF" radius={[4,4,0,0]} />
             </BarChart>
           </ResponsiveContainer>
@@ -1219,7 +1219,7 @@ function SFDADashboard({ token }) {
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
               <XAxis type="number" tick={{fontSize: 10, fill: 'rgba(255,255,255,0.45)'}} allowDecimals={false} />
               <YAxis type="category" dataKey="name" tick={{fontSize: 10, fill: 'rgba(255,255,255,0.45)'}} width={60} />
-              <Tooltip contentStyle={{background:'#252266',border:'1px solid rgba(0,170,255,.2)',borderRadius:8,color:'#fff'}} itemStyle={{color:'#fff'}} labelStyle={{color:'rgba(255,255,255,.6)'}} cursor={{fill:'rgba(0,170,255,.06)'}} />
+              <Tooltip contentStyle={{background:'#332E8A',border:'1px solid rgba(0,170,255,.2)',borderRadius:8,color:'#fff'}} itemStyle={{color:'#fff'}} labelStyle={{color:'rgba(255,255,255,.6)'}} cursor={{fill:'rgba(0,170,255,.06)'}} />
               <Bar dataKey="value" fill="#38C6FF" radius={[0,4,4,0]} />
             </BarChart>
           </ResponsiveContainer>
@@ -1308,7 +1308,7 @@ export default function AdminPanel({ user, token, onLogout }) {
 
       {/* ── Topbar ── */}
       <div style={{height:58,background:'#1E1A5E',borderBottom:'1px solid rgba(0,170,255,.1)',display:'flex',alignItems:'center',padding:'0 24px',gap:14,flexShrink:0,zIndex:10}}>
-        <img src="/logo_1.png" alt="DEMARA" style={{height:'38px', width:'auto'}} />
+        <img src="/logo_1.png" alt="DEMARA" style={{height:'52px', width:'auto', display:'block', objectFit:'contain'}} />
         <div style={{width:1,height:28,background:'rgba(255,255,255,.08)'}}></div>
         <div>
           <div style={{fontSize:14,fontWeight:800,color:'#fff',letterSpacing:'-.3px'}}>DEMARA Platform</div>
@@ -1335,7 +1335,7 @@ export default function AdminPanel({ user, token, onLogout }) {
       <div style={{display:'flex',flex:1,overflow:'hidden'}}>
 
         {/* ── Sidebar ── */}
-        <div style={{width:220,background:'#252266',borderRight:'1px solid rgba(0,170,255,.08)',display:'flex',flexDirection:'column',flexShrink:0,overflowY:'auto'}}>
+        <div style={{width:220,background:'#2D2B7A',borderRight:'1px solid rgba(0,170,255,.08)',display:'flex',flexDirection:'column',flexShrink:0,overflowY:'auto'}}>
           <div style={{padding:'16px 10px',flex:1}}>
             <div style={{fontSize:9,fontWeight:700,color:'rgba(255,255,255,.4)',textTransform:'uppercase',letterSpacing:'2px',marginBottom:10,paddingLeft:4}}>Administration</div>
             {NAV_ITEMS.map(item => (
