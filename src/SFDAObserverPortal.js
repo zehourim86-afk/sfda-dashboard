@@ -55,9 +55,9 @@ function badge(state) {
   const color = TONES[tone][0];
   const strong = STRONG_STATES.includes(state);
   return (
-    <span style={{display:'inline-flex',alignItems:'center',gap:5,padding:'4px 10px',borderRadius:20,fontSize:11,fontWeight:strong?700:600,whiteSpace:'nowrap',
+    <span style={{display:'inline-flex',alignItems:'center',justifyContent:'center',gap:6,minWidth:120,padding:'4px 12px',borderRadius:20,fontSize:11,fontWeight:700,whiteSpace:'nowrap',
       background:tint(tone,strong?.2:.1),color,border:`1px solid ${tint(tone,strong?.5:.3)}`}}>
-      <span style={{width:5,height:5,borderRadius:'50%',background:color,flexShrink:0}}></span>
+      <span style={{width:6,height:6,borderRadius:'50%',background:color,flexShrink:0}}></span>
       {stateBadgeLabel(state)}
     </span>
   );
@@ -407,9 +407,9 @@ export default function SFDAObserverPortal({ user, token, onLogout }) {
           </div>
           <NotificationBell token={token} />
           {user && (
-            <div style={{display:'flex',alignItems:'center',gap:9,background:'rgba(255,255,255,.05)',border:'1px solid rgba(255,255,255,.1)',borderRadius:10,padding:'6px 12px'}}>
+            <div style={{display:'flex',alignItems:'center',gap:9,background:'rgba(56,198,255,0.06)',border:'1px solid rgba(56,198,255,0.2)',borderRadius:10,padding:'6px 12px'}}>
               <div style={{width:28,height:28,borderRadius:'50%',background:'linear-gradient(135deg, #38C6FF 0%, #2D2B7A 100%)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:800,color:'#fff',flexShrink:0}}>{user.full_name?.charAt(0) || 'S'}</div>
-              <div><div style={{fontSize:12,fontWeight:700,color:'#fff'}}>{user.full_name}</div><div style={{fontSize:10,color:'#38C6FF',marginTop:1}}>SFDA</div></div>
+              <div><div style={{fontSize:13,fontWeight:700,color:'#fff'}}>{user.full_name}</div><div style={{fontSize:10,color:'#38C6FF',marginTop:1}}>SFDA</div></div>
             </div>
           )}
           <button onClick={onLogout} style={{background:'rgba(255,84,112,.12)',border:'1px solid rgba(255,84,112,.25)',color:'#FF5470',fontSize:11,fontWeight:700,padding:'7px 14px',borderRadius:8,cursor:'pointer',fontFamily:'inherit'}}>Sign Out</button>
@@ -443,7 +443,7 @@ export default function SFDAObserverPortal({ user, token, onLogout }) {
               const color = TONES[n.tone][0];
               return (
                 <button key={n.id} onClick={() => setActiveTab(n.id)} style={{width:'100%',display:'flex',alignItems:'center',gap:10,padding:'9px 12px',borderRadius:9,cursor:'pointer',marginBottom:3,fontFamily:'inherit',fontSize:12,fontWeight:on?700:500,
-                  background:on?tint(n.tone,.12):'transparent',color:on?color:'rgba(255,255,255,.45)',border:on?`1px solid ${color}33`:'1px solid transparent',transition:'all .15s',textAlign:'left'}}>
+                  ...(on ? {background:'rgba(56,198,255,0.12)',color:'#38C6FF',borderLeft:'3px solid #38C6FF'} : {background:'transparent',color:'rgba(255,255,255,0.55)',borderLeft:'3px solid transparent'}),transition:'all .15s',textAlign:'left'}}>
                   <span style={{fontSize:15}}>{n.icon}</span>
                   <span style={{flex:1}}>{n.label}</span>
                   {n.count != null && n.count > 0 && (

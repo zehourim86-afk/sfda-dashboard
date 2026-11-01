@@ -581,9 +581,9 @@ export default function LabPortal({user:initUser,token,onLogout}) {
           </div>
           <NotificationBell token={token}/>
           {user&&(
-            <div style={{display:'flex',alignItems:'center',gap:9,background:'rgba(255,255,255,.05)',border:'1px solid rgba(255,255,255,.1)',borderRadius:10,padding:'6px 12px'}}>
+            <div style={{display:'flex',alignItems:'center',gap:9,background:'rgba(56,198,255,0.06)',border:'1px solid rgba(56,198,255,0.2)',borderRadius:10,padding:'6px 12px'}}>
               <div style={{width:28,height:28,borderRadius:'50%',background:'linear-gradient(135deg, #38C6FF 0%, #2D2B7A 100%)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:800,color:'#fff',flexShrink:0}}>{user.full_name?.charAt(0)||'L'}</div>
-              <div><div style={{fontSize:12,fontWeight:700,color:'#fff'}}>{user.full_name}</div><div style={{fontSize:10,color:'#38C6FF',marginTop:1}}>Lab Analyst</div></div>
+              <div><div style={{fontSize:13,fontWeight:700,color:'#fff'}}>{user.full_name}</div><div style={{fontSize:10,color:'#38C6FF',marginTop:1}}>Lab Analyst</div></div>
             </div>
           )}
           <button onClick={onLogout} style={{background:'rgba(255,84,112,.12)',border:'1px solid rgba(255,84,112,.25)',color:'#FF5470',fontSize:11,fontWeight:700,padding:'7px 14px',borderRadius:8,cursor:'pointer',fontFamily:'inherit'}}>Sign Out</button>
@@ -613,7 +613,7 @@ export default function LabPortal({user:initUser,token,onLogout}) {
           <div style={{padding:'12px 10px',flex:1}}>
             <div style={{fontSize:9,fontWeight:700,color:'rgba(255,255,255,.4)',textTransform:'uppercase',letterSpacing:'2px',marginBottom:10,paddingLeft:4}}>Navigation</div>
             {navItems.map(n=>(
-              <button key={n.id} onClick={()=>setTab(n.id)} style={{width:'100%',display:'flex',alignItems:'center',gap:10,padding:'9px 12px',borderRadius:9,cursor:'pointer',marginBottom:3,fontFamily:'inherit',fontSize:12,fontWeight:tab===n.id?700:500,background:tab===n.id?`rgba(${n.color==='#38C6FF'?'0,170,255':n.color==='#FF5470'?'255,84,112':n.color==='#00C896'?'0,200,150':n.color==='#a78bfa'?'124,92,252':'255,255,255'},.12)`:'transparent',color:tab===n.id?n.color:'rgba(255,255,255,.45)',border:tab===n.id?`1px solid ${n.color}33`:'1px solid transparent',transition:'all .15s',textAlign:'left'}}>
+              <button key={n.id} onClick={()=>setTab(n.id)} style={{width:'100%',display:'flex',alignItems:'center',gap:10,padding:'9px 12px',borderRadius:9,cursor:'pointer',marginBottom:3,fontFamily:'inherit',fontSize:12,fontWeight:tab===n.id?700:500,...(tab===n.id ? {background:'rgba(56,198,255,0.12)',color:'#38C6FF',borderLeft:'3px solid #38C6FF'} : {background:'transparent',color:'rgba(255,255,255,0.55)',borderLeft:'3px solid transparent'}),transition:'all .15s',textAlign:'left'}}>
                 <span style={{fontSize:15}}>{n.icon}</span>
                 <span style={{flex:1}}>{n.label}</span>
                 {n.count!=null&&n.count>0&&<span style={{fontSize:10,fontWeight:700,background:tab===n.id?n.color:'rgba(255,255,255,.1)',color:tab===n.id?'#252266':'rgba(255,255,255,.5)',padding:'1px 7px',borderRadius:10}}>{n.count}</span>}
@@ -683,10 +683,10 @@ export default function LabPortal({user:initUser,token,onLogout}) {
                   <div style={{fontSize:14}}>Loading shipments...</div>
                 </div>
               ):rows.length===0?(
-                <div style={{textAlign:'center',padding:'60px 0',color:'rgba(255,255,255,.2)'}}>
-                  <div style={{fontSize:36,marginBottom:12}}>🔬</div>
-                  <div style={{fontSize:16,fontWeight:600,marginBottom:6,color:'rgba(255,255,255,.4)'}}>No samples in this queue</div>
-                  <div style={{fontSize:12}}>{tab==='active'?'Samples appear here when assigned to your lab':tab==='declined'?'Declined assignments appear here':tab==='nc'?'Non-conforming shipments appear here':'Completed analyses appear here'}</div>
+                <div style={{textAlign:'center',padding:'60px 0'}}>
+                  <div style={{fontSize:32,marginBottom:12,opacity:.6}}>🔬</div>
+                  <div style={{fontSize:13,fontWeight:600,color:'rgba(255,255,255,0.4)'}}>No assignments in this queue</div>
+                  <div style={{fontSize:11,color:'rgba(255,255,255,0.25)',marginTop:6}}>{tab==='active'?'Samples appear here when assigned to your lab':tab==='declined'?'Declined assignments appear here':tab==='nc'?'Non-conforming shipments appear here':'Completed analyses appear here'}</div>
                 </div>
               ):(
                 <div style={{background:'rgba(255,255,255,0.04)',border:'1px solid rgba(0,170,255,.1)',borderRadius:14,overflow:'hidden'}}>

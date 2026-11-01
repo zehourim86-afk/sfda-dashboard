@@ -1300,7 +1300,7 @@ export default function AdminPanel({ user, token, onLogout }) {
   ];
 
   const navBtn = (on) => ({width:'100%',display:'flex',alignItems:'center',gap:10,padding:'9px 12px',borderRadius:9,cursor:'pointer',marginBottom:3,fontFamily:'inherit',fontSize:12,textAlign:'left',transition:'all .15s',
-    fontWeight:on ? 700 : 500,background:on ? 'rgba(0,170,255,.12)' : 'transparent',color:on ? '#38C6FF' : 'rgba(255,255,255,.5)',border:on ? '1px solid rgba(56,198,255,.3)' : '1px solid transparent'});
+    fontWeight:on ? 700 : 500,...(on ? {background:'rgba(56,198,255,0.12)',color:'#38C6FF',borderLeft:'3px solid #38C6FF'} : {background:'transparent',color:'rgba(255,255,255,0.55)',borderLeft:'3px solid transparent'})});
 
   return (
     <div style={{display:'flex',flexDirection:'column',height:'100vh',background:'#2D2B7A',fontFamily:'Inter,sans-serif',color:'#fff',overflow:'hidden'}}>
@@ -1319,9 +1319,9 @@ export default function AdminPanel({ user, token, onLogout }) {
             <span style={{width:6,height:6,borderRadius:'50%',background:'#00C896',animation:'pulse 2s infinite',display:'inline-block'}}></span>Live
           </div>
           {user && (
-            <div style={{display:'flex',alignItems:'center',gap:9,background:'rgba(255,255,255,.05)',border:'1px solid rgba(255,255,255,.1)',borderRadius:10,padding:'6px 12px'}}>
+            <div style={{display:'flex',alignItems:'center',gap:9,background:'rgba(56,198,255,0.06)',border:'1px solid rgba(56,198,255,0.2)',borderRadius:10,padding:'6px 12px'}}>
               <div style={{width:28,height:28,borderRadius:'50%',background:'linear-gradient(135deg, #38C6FF 0%, #2D2B7A 100%)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:800,color:'#fff',flexShrink:0}}>{user.full_name?.charAt(0) || 'D'}</div>
-              <div><div style={{fontSize:12,fontWeight:700,color:'#fff'}}>{user.full_name}</div><div style={{fontSize:10,color:'#38C6FF',marginTop:1}}>DEMARA Admin</div></div>
+              <div><div style={{fontSize:13,fontWeight:700,color:'#fff'}}>{user.full_name}</div><div style={{fontSize:10,color:'#38C6FF',marginTop:1}}>DEMARA Admin</div></div>
             </div>
           )}
           <button onClick={onLogout}

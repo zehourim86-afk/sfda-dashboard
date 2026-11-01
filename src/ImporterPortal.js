@@ -21,8 +21,8 @@ const tint = (tone, alpha) => `rgba(${TONES[tone][1]},${alpha})`;
 function badge(label, tone = 'grey') {
   const color = TONES[tone][0];
   return (
-    <span style={{display:'inline-flex',alignItems:'center',gap:5,padding:'4px 10px',borderRadius:20,fontSize:11,fontWeight:600,whiteSpace:'nowrap',background:tint(tone,.1),color,border:`1px solid ${tint(tone,.3)}`}}>
-      <span style={{width:5,height:5,borderRadius:'50%',background:color,flexShrink:0}}></span>
+    <span style={{display:'inline-flex',alignItems:'center',justifyContent:'center',gap:6,minWidth:120,padding:'4px 12px',borderRadius:20,fontSize:11,fontWeight:700,whiteSpace:'nowrap',background:tint(tone,.1),color,border:`1px solid ${tint(tone,.3)}`}}>
+      <span style={{width:6,height:6,borderRadius:'50%',background:color,flexShrink:0}}></span>
       {label}
     </span>
   );
@@ -2091,7 +2091,7 @@ export default function ImporterPortal({ user: initialUser, token, onLogout }) {
       backgroundImage:`linear-gradient(90deg,${TONES[KPI_TONE[ico]][0]},transparent)`,backgroundSize:'100% 2px',backgroundRepeat:'no-repeat'});
     const navSection = {fontSize:9,fontWeight:700,color:'rgba(255,255,255,.4)',textTransform:'uppercase',letterSpacing:'2px',margin:'14px 0 8px',paddingLeft:4};
     const navItem = (on, tone = 'cyan') => ({width:'100%',display:'flex',alignItems:'center',gap:10,padding:'9px 12px',borderRadius:9,cursor:'pointer',marginBottom:3,fontFamily:'inherit',fontSize:12,textAlign:'left',transition:'all .15s',
-      fontWeight:on ? 700 : 500,background:on ? tint(tone,.12) : 'transparent',color:on ? TONES[tone][0] : 'rgba(255,255,255,.5)',border:on ? `1px solid ${tint(tone,.3)}` : '1px solid transparent'});
+      fontWeight:on ? 700 : 500,...(on ? {background:'rgba(56,198,255,0.12)',color:'#38C6FF',borderLeft:'3px solid #38C6FF'} : {background:'transparent',color:'rgba(255,255,255,0.55)',borderLeft:'3px solid transparent'})});
     const navBadge = (tone) => ({fontSize:10,fontWeight:700,background:tint(tone,.18),color:TONES[tone][0],padding:'1px 7px',borderRadius:10});
     const alertBox = (tone) => ({display:'flex',gap:10,alignItems:'flex-start',background:tint(tone,.06),border:`1px solid ${tint(tone,.22)}`,borderRadius:10,padding:'10px 12px'});
     const alertTitleS = {fontSize:12,fontWeight:700,color:'#fff'};
@@ -2099,7 +2099,7 @@ export default function ImporterPortal({ user: initialUser, token, onLogout }) {
     const alertAction = {display:'inline-block',fontSize:11,fontWeight:700,color:'#38C6FF',marginTop:6,cursor:'pointer'};
     const tableSelect = {...S.ipt,width:'auto',padding:'6px 10px',fontSize:11,cursor:'pointer'};
     const th = {padding:'11px 16px',textAlign:'left',fontSize:10,fontWeight:700,color:'rgba(255,255,255,.3)',textTransform:'uppercase',letterSpacing:'1px',borderBottom:'1px solid rgba(0,170,255,.08)',whiteSpace:'nowrap'};
-    const td = {padding:'12px 16px',verticalAlign:'top'};
+    const td = {padding:'14px 16px',verticalAlign:'top'};
 
     return (
     <div style={{display:'flex',flexDirection:'column',height:'100vh',background:'#2D2B7A',fontFamily:'Inter,sans-serif',color:'#fff',overflow:'hidden'}}>
@@ -2131,9 +2131,9 @@ export default function ImporterPortal({ user: initialUser, token, onLogout }) {
           <button onClick={() => setShowNewForm(true)} style={{background:'linear-gradient(135deg,#38C6FF,#0088DD)',border:'none',color:'#252266',fontSize:12,fontWeight:800,padding:'8px 14px',borderRadius:8,cursor:'pointer',fontFamily:'inherit',boxShadow:'0 4px 14px rgba(0,170,255,.25)'}}>+ New Shipment</button>
           <NotificationBell token={token} />
           {user && (
-            <div style={{display:'flex',alignItems:'center',gap:9,background:'rgba(255,255,255,.05)',border:'1px solid rgba(255,255,255,.1)',borderRadius:10,padding:'6px 12px'}}>
+            <div style={{display:'flex',alignItems:'center',gap:9,background:'rgba(56,198,255,0.06)',border:'1px solid rgba(56,198,255,0.2)',borderRadius:10,padding:'6px 12px'}}>
               <div style={{width:28,height:28,borderRadius:'50%',background:'linear-gradient(135deg, #38C6FF 0%, #2D2B7A 100%)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:800,color:'#fff',flexShrink:0}}>{userInitials}</div>
-              <div><div style={{fontSize:12,fontWeight:700,color:'#fff'}}>{user.full_name}</div><div style={{fontSize:10,color:'#38C6FF',marginTop:1}}>Marketing Authorisation Holder</div></div>
+              <div><div style={{fontSize:13,fontWeight:700,color:'#fff'}}>{user.full_name}</div><div style={{fontSize:10,color:'#38C6FF',marginTop:1}}>Marketing Authorisation Holder</div></div>
             </div>
           )}
           <button onClick={onLogout} style={{background:'rgba(255,84,112,.12)',border:'1px solid rgba(255,84,112,.25)',color:'#FF5470',fontSize:11,fontWeight:700,padding:'7px 14px',borderRadius:8,cursor:'pointer',fontFamily:'inherit'}}>Sign Out</button>
@@ -2550,9 +2550,10 @@ export default function ImporterPortal({ user: initialUser, token, onLogout }) {
 
                     const dwellDays = s.total_dwell_minutes ? (s.total_dwell_minutes / 1440).toFixed(1) + 'd' : '—';
                     const dwellColor = s.total_dwell_minutes > 7200 ? '#FF5470' : s.total_dwell_minutes > 4320 ? '#F5A623' : '#00C896';
+                    const rowColor = ['LAB_ACCEPTED', 'LAB_RECEIVED', 'IN_ANALYSIS', 'ANALYSIS_COMPLETE'].includes(s.current_state) ? '#a78bfa' : TONES[badgeTone][0];
 
                     return (
-                      <tr key={s.id} className="row" style={{borderBottom:'1px solid rgba(255,255,255,.04)'}}>
+                      <tr key={s.id} className="row" style={{borderBottom:'1px solid rgba(255,255,255,.04)',borderLeft:`3px solid ${rowColor}`}}>
                         <td style={td}><span style={{fontFamily:S.mono,fontSize:12,fontWeight:700,color:'#38C6FF'}}>{s.faseh_request_number}</span></td>
                         <td style={td}>
                           <div style={{fontSize:13,fontWeight:600,color:'#fff'}}>{s.importer_name}</div>
@@ -2586,7 +2587,16 @@ export default function ImporterPortal({ user: initialUser, token, onLogout }) {
                             </>
                           ) : s.current_state === 'FINAL_CLEARANCE' ? (
                             <div style={{fontSize:'11px',color:'#00C896',fontWeight:600}}>Cleared ✓</div>
-                          ) : (
+                          ) : s.created_at ? (() => {
+                            const est = new Date(new Date(s.created_at).getTime() + 7 * 24 * 60 * 60 * 1000);
+                            const past = est < new Date();
+                            return (
+                              <>
+                                <div style={{fontSize:'11px',color: past ? '#F5A623' : '#38C6FF',fontWeight:600}}>~{est.toLocaleDateString('en-US',{month:'short',day:'numeric'})}</div>
+                                <div style={{fontSize:'10px',color:'rgba(255,255,255,.3)'}}>{past ? 'Past estimate' : 'Estimated'}</div>
+                              </>
+                            );
+                          })() : (
                             <div style={{fontSize:'10px',color:'rgba(255,255,255,.3)'}}>Pending</div>
                           )}
                         </td>
@@ -2594,7 +2604,7 @@ export default function ImporterPortal({ user: initialUser, token, onLogout }) {
                           <span style={{fontFamily:S.mono,fontSize:'11px',fontWeight:500,color:dwellColor}}>{dwellDays}</span>
                         </td>
                         <td style={td}>
-                          <button style={smallBtn('cyan')} onClick={() => setSelectedShipmentId(s.id)}>Track</button>
+                          <button style={{background:'#38C6FF',color:'#1E1A5E',fontWeight:700,borderRadius:6,padding:'5px 14px',border:'none',fontSize:11,cursor:'pointer',fontFamily:'inherit'}} onClick={() => setSelectedShipmentId(s.id)}>Track</button>
                         </td>
                       </tr>
                     );

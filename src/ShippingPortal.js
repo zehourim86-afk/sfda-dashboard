@@ -40,8 +40,8 @@ const COMPLETED_TONE = {
 function badge(label, tone) {
   const color = TONES[tone][0];
   return (
-    <span style={{display:'inline-flex',alignItems:'center',gap:5,padding:'4px 10px',borderRadius:20,fontSize:11,fontWeight:600,whiteSpace:'nowrap',background:tint(tone,.1),color,border:`1px solid ${tint(tone,.3)}`}}>
-      <span style={{width:5,height:5,borderRadius:'50%',background:color,flexShrink:0}}></span>
+    <span style={{display:'inline-flex',alignItems:'center',justifyContent:'center',gap:6,minWidth:120,padding:'4px 12px',borderRadius:20,fontSize:11,fontWeight:700,whiteSpace:'nowrap',background:tint(tone,.1),color,border:`1px solid ${tint(tone,.3)}`}}>
+      <span style={{width:6,height:6,borderRadius:'50%',background:color,flexShrink:0}}></span>
       {label}
     </span>
   );
@@ -710,9 +710,9 @@ export default function InspectorApp({ user: initialUser, token, onLogout }) {
           </div>
           <NotificationBell token={token} />
           {user && (
-            <div style={{display:'flex',alignItems:'center',gap:9,background:'rgba(255,255,255,.05)',border:'1px solid rgba(255,255,255,.1)',borderRadius:10,padding:'6px 12px'}}>
+            <div style={{display:'flex',alignItems:'center',gap:9,background:'rgba(56,198,255,0.06)',border:'1px solid rgba(56,198,255,0.2)',borderRadius:10,padding:'6px 12px'}}>
               <div style={{width:28,height:28,borderRadius:'50%',background:'linear-gradient(135deg, #38C6FF 0%, #2D2B7A 100%)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:800,color:'#fff',flexShrink:0}}>{user.full_name?.charAt(0) || 'S'}</div>
-              <div><div style={{fontSize:12,fontWeight:700,color:'#fff'}}>{user.full_name}</div><div style={{fontSize:10,color:'#38C6FF',marginTop:1}}>{isInspectorUser ? 'SFDA Inspector' : 'Shipping Agent'}</div></div>
+              <div><div style={{fontSize:13,fontWeight:700,color:'#fff'}}>{user.full_name}</div><div style={{fontSize:10,color:'#38C6FF',marginTop:1}}>{isInspectorUser ? 'SFDA Inspector' : 'Shipping Agent'}</div></div>
             </div>
           )}
           <button onClick={onLogout} style={{background:'rgba(255,84,112,.12)',border:'1px solid rgba(255,84,112,.25)',color:'#FF5470',fontSize:11,fontWeight:700,padding:'7px 14px',borderRadius:8,cursor:'pointer',fontFamily:'inherit'}}>Sign Out</button>
@@ -746,7 +746,7 @@ export default function InspectorApp({ user: initialUser, token, onLogout }) {
               const color = TONES[n.tone][0];
               return (
                 <button key={n.id} onClick={() => setActiveTab(n.id)} style={{width:'100%',display:'flex',alignItems:'center',gap:10,padding:'9px 12px',borderRadius:9,cursor:'pointer',marginBottom:3,fontFamily:'inherit',fontSize:12,fontWeight:on?700:500,
-                  background:on?tint(n.tone,.12):'transparent',color:on?color:'rgba(255,255,255,.45)',border:on?`1px solid ${color}33`:'1px solid transparent',transition:'all .15s',textAlign:'left'}}>
+                  ...(on ? {background:'rgba(56,198,255,0.12)',color:'#38C6FF',borderLeft:'3px solid #38C6FF'} : {background:'transparent',color:'rgba(255,255,255,0.55)',borderLeft:'3px solid transparent'}),transition:'all .15s',textAlign:'left'}}>
                   <span style={{fontSize:15}}>{n.icon}</span>
                   <span style={{flex:1}}>{n.label}</span>
                   {n.count != null && n.count > 0 && (
@@ -827,10 +827,10 @@ export default function InspectorApp({ user: initialUser, token, onLogout }) {
                   <div style={{fontSize:14}}>Loading...</div>
                 </div>
               ) : filtered.length === 0 ? (
-                <div style={{textAlign:'center',padding:'60px 0',color:'rgba(255,255,255,.2)'}}>
-                  <div style={{fontSize:36,marginBottom:12}}>🚚</div>
-                  <div style={{fontSize:16,fontWeight:600,marginBottom:6,color:'rgba(255,255,255,.4)'}}>No shipments in this queue</div>
-                  <div style={{fontSize:12}}>
+                <div style={{textAlign:'center',padding:'60px 0'}}>
+                  <div style={{fontSize:32,marginBottom:12,opacity:.6}}>🚚</div>
+                  <div style={{fontSize:13,fontWeight:600,color:'rgba(255,255,255,0.4)'}}>{activeTab === 'active' ? 'No active pickups assigned' : 'No completed pickups yet'}</div>
+                  <div style={{fontSize:11,color:'rgba(255,255,255,0.25)',marginTop:6}}>
                     {activeTab === 'active' ? 'Pickup requests will appear here when a shipment is ready for sample collection' : 'Completed pickup assignments will appear here'}
                   </div>
                 </div>
