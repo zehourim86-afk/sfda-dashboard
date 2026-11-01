@@ -138,92 +138,99 @@ export default function Login({ onLogin }) {
     organisation_type: ROLE_TO_ORG_TYPE[role] || registerForm.organisation_type
   });
 
-  return (
-    <div className="min-h-screen flex items-center justify-center" style={{background: 'linear-gradient(135deg, #2D2B7A 0%, #1a1854 100%)'}}>
-      <div className="w-full max-w-md">
+  // ── Dark theme styles ──
+  const ipt = {width:'100%',marginTop:6,background:'rgba(255,255,255,.05)',border:'1px solid rgba(255,255,255,.12)',borderRadius:10,padding:'11px 14px',fontSize:13,color:'#fff',fontFamily:'inherit',outline:'none',colorScheme:'dark',boxSizing:'border-box'};
+  const lbl = {display:'block',fontSize:10,fontWeight:700,color:'rgba(255,255,255,.45)',textTransform:'uppercase',letterSpacing:'1.2px'};
+  const tabBtn = (on) => ({flex:1,padding:'14px 0',fontSize:13,fontWeight:700,fontFamily:'inherit',cursor:'pointer',border:'none',transition:'all .15s',
+    background:on ? 'rgba(56,198,255,.1)' : 'transparent',color:on ? '#38C6FF' : 'rgba(255,255,255,.45)',borderBottom:`2px solid ${on ? '#38C6FF' : 'transparent'}`});
+  const primaryBtn = {width:'100%',padding:'13px 0',borderRadius:10,border:'none',fontSize:14,fontWeight:800,fontFamily:'inherit',cursor:'pointer',
+    color:'#0B1535',background:'linear-gradient(135deg,#38C6FF,#0088DD)',boxShadow:'0 6px 24px rgba(56,198,255,.3)',transition:'opacity .15s'};
+  const notice = (rgb, color) => ({background:`rgba(${rgb},.1)`,border:`1px solid rgba(${rgb},.3)`,borderRadius:10,padding:'11px 14px',marginBottom:16,fontSize:13,color});
+  const infoBox = {background:'rgba(56,198,255,.05)',border:'1px solid rgba(56,198,255,.15)',borderRadius:10,padding:'11px 14px'};
+  const dropZone = {marginTop:6,border:'2px dashed rgba(56,198,255,.25)',borderRadius:10,padding:'12px',textAlign:'center',background:'rgba(56,198,255,.03)'};
 
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <img src="/demara-logo.png" alt="DEMARA" className="mx-auto mb-4" style={{height: '100px', width: '250px', objectFit: 'contain'}} />
-          <h1 className="text-white text-xl font-bold">DEMARA Masaar</h1>
-          <p className="text-sm mt-1" style={{color: '#00B4D8'}}>Drug Import Traceability Platform · Powered by DEMARA</p>
+  return (
+    <div style={{minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center',padding:'40px 16px',boxSizing:'border-box',fontFamily:'Inter,sans-serif',color:'#fff',
+      background:'radial-gradient(900px 520px at 50% -8%, rgba(56,198,255,.16), transparent 65%), radial-gradient(700px 400px at 100% 110%, rgba(124,92,252,.10), transparent 60%), #0B1535'}}>
+      <style>{`
+        .login-root input::placeholder{color:rgba(255,255,255,.25)}
+        .login-root input:focus,.login-root select:focus{border-color:rgba(56,198,255,.6)!important;box-shadow:0 0 0 3px rgba(56,198,255,.12)}
+        .login-root select option{background:#0D1940;color:#fff}
+        .login-tab:hover{color:#fff!important}
+      `}</style>
+      <div className="login-root" style={{width:'100%',maxWidth:460}}>
+
+        {/* Logo / branding */}
+        <div style={{textAlign:'center',marginBottom:28}}>
+          <img src="/demara-logo.png" alt="DEMARA" style={{display:'block',margin:'0 auto 20px',height:'100px',width:'250px',objectFit:'contain',filter:'drop-shadow(0 8px 30px rgba(56,198,255,.25))'}} />
+          <div style={{display:'inline-block',fontSize:11,fontWeight:800,letterSpacing:'5px',color:'#38C6FF',textTransform:'uppercase',padding:'4px 12px',border:'1px solid rgba(56,198,255,.3)',borderRadius:20,background:'rgba(56,198,255,.08)',marginBottom:12}}>MASAAR</div>
+          <h1 style={{margin:0,fontSize:30,fontWeight:900,letterSpacing:'-.6px',color:'#fff'}}>DEMARA Masaar</h1>
+          <p style={{margin:'8px 0 0',fontSize:13,color:'rgba(255,255,255,.55)'}}>Drug Import Traceability Platform · Powered by DEMARA</p>
         </div>
 
         {/* Card */}
-        <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
+        <div style={{background:'#0D1940',border:'1px solid rgba(56,198,255,.15)',borderRadius:18,boxShadow:'0 30px 80px rgba(0,0,0,.55)',overflow:'hidden'}}>
 
           {/* Tabs */}
-          <div className="flex border-b border-gray-200">
+          <div style={{display:'flex',background:'#091230',borderBottom:'1px solid rgba(56,198,255,.12)'}}>
             <button
               onClick={() => { setMode('login'); setError(null); setSuccess(null); }}
-              className={`flex-1 py-3 text-sm font-semibold transition-colors ${
-                mode === 'login'
-                  ? 'text-white'
-                  : 'text-gray-500 hover:text-gray-700 bg-gray-50'
-              }`}
-              style={mode === 'login' ? {background: '#2D2B7A'} : {}}
+              className="login-tab" style={tabBtn(mode === 'login')}
             >
               Sign In
             </button>
             <button
               onClick={() => { setMode('register'); setError(null); setSuccess(null); }}
-              className={`flex-1 py-3 text-sm font-semibold transition-colors ${
-                mode === 'register'
-                  ? 'text-white'
-                  : 'text-gray-500 hover:text-gray-700 bg-gray-50'
-              }`}
-              style={mode === 'register' ? {background: '#2D2B7A'} : {}}
+              className="login-tab" style={tabBtn(mode === 'register')}
             >
               Request Access
             </button>
           </div>
 
-          <div className="p-6">
+          <div style={{padding:'24px 26px'}}>
             {/* Error */}
             {error && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4 text-red-700 text-sm">
+              <div style={notice('255,84,112', '#FF5470')}>
                 {error}
               </div>
             )}
 
             {/* Success */}
             {success && (
-              <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4 text-green-700 text-sm">
+              <div style={notice('0,200,150', '#00C896')}>
                 {success}
               </div>
             )}
 
             {/* Login Form */}
             {mode === 'login' && (
-              <form onSubmit={handleLogin} className="space-y-4">
+              <form onSubmit={handleLogin} style={{display:'flex',flexDirection:'column',gap:16}}>
                 <div>
-                  <label className="text-xs font-semibold text-gray-600 uppercase">Work Email</label>
+                  <label style={lbl}>Work Email</label>
                   <input
                     type="email"
                     required
                     value={loginForm.email}
                     onChange={e => setLoginForm({...loginForm, email: e.target.value})}
                     placeholder="you@organisation.com"
-                    className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2"
-                    style={{'--tw-ring-color': '#2D2B7A'}}
+                    style={ipt}
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-semibold text-gray-600 uppercase">Password</label>
+                  <label style={lbl}>Password</label>
                   <input
                     type="password"
                     required
                     value={loginForm.password}
                     onChange={e => setLoginForm({...loginForm, password: e.target.value})}
                     placeholder="••••••••"
-                    className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2"
+                    style={ipt}
                   />
                 </div>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full py-3 rounded-lg text-white font-semibold text-sm disabled:opacity-50 hover:opacity-90 transition-opacity"
-                  style={{background: '#2D2B7A'}}
+                  style={{...primaryBtn,marginTop:4,opacity: loading ? .5 : 1}}
                 >
                   {loading ? 'Signing in...' : 'Sign In'}
                 </button>
@@ -232,146 +239,145 @@ export default function Login({ onLogin }) {
 
             {/* Register Form */}
             {mode === 'register' && (
-              <form onSubmit={handleRegister} className="space-y-3">
+              <form onSubmit={handleRegister} style={{display:'flex',flexDirection:'column',gap:14}}>
                 <div>
-                  <label className="text-xs font-semibold text-gray-600 uppercase">Full Name</label>
+                  <label style={lbl}>Full Name</label>
                   <input
                     type="text"
                     required
                     value={registerForm.full_name}
                     onChange={e => setRegisterForm({...registerForm, full_name: e.target.value})}
                     placeholder="Your full name"
-                    className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2"
+                    style={ipt}
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-semibold text-gray-600 uppercase">Work Email</label>
+                  <label style={lbl}>Work Email</label>
                   <input
                     type="email"
                     required
                     value={registerForm.email}
                     onChange={e => setRegisterForm({...registerForm, email: e.target.value})}
                     placeholder="you@organisation.com"
-                    className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2"
+                    style={ipt}
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-semibold text-gray-600 uppercase">Password</label>
+                  <label style={lbl}>Password</label>
                   <input
                     type="password"
                     required
                     value={registerForm.password}
                     onChange={e => setRegisterForm({...registerForm, password: e.target.value})}
                     placeholder="Minimum 8 characters"
-                    className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2"
+                    style={ipt}
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-semibold text-gray-600 uppercase">Organisation Name</label>
+                  <label style={lbl}>Organisation Name</label>
                   <input
                     type="text"
                     required
                     value={registerForm.organisation_name}
                     onChange={e => setRegisterForm({...registerForm, organisation_name: e.target.value})}
                     placeholder="Your company or body name"
-                    className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2"
+                    style={ipt}
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-semibold text-gray-600 uppercase">GHAD CR Number</label>
+                  <label style={lbl}>GHAD CR Number</label>
                   <input
                     type="text"
                     value={registerForm.ghad_cr_number}
                     onChange={e => setRegisterForm({...registerForm, ghad_cr_number: e.target.value})}
                     placeholder="e.g. CR-1234567890"
-                    className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2"
+                    style={ipt}
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-semibold text-gray-600 uppercase">SFDA Facility Registration Number</label>
+                  <label style={lbl}>SFDA Facility Registration Number</label>
                   <input
                     type="text"
                     value={registerForm.sfda_facility_number}
                     onChange={e => setRegisterForm({...registerForm, sfda_facility_number: e.target.value})}
                     placeholder="e.g. SFDA-FAC-2024-00441"
-                    className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2"
+                    style={ipt}
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-semibold text-gray-600 uppercase">CR Document (PDF) *</label>
-                  <div className="mt-1 border-2 border-dashed border-gray-300 rounded-lg p-3 text-center">
-                    <input type="file" accept=".pdf" id="cr-doc" className="hidden"
+                  <label style={lbl}>CR Document (PDF) *</label>
+                  <div style={dropZone}>
+                    <input type="file" accept=".pdf" id="cr-doc" style={{display:'none'}}
                       onChange={e => setRegisterForm({...registerForm, cr_document: e.target.files[0]})} />
-                    <label htmlFor="cr-doc" className="cursor-pointer">
+                    <label htmlFor="cr-doc" style={{cursor:'pointer',display:'block'}}>
                       {registerForm.cr_document ? (
-                        <p className="text-xs text-green-600 font-medium">✓ {registerForm.cr_document.name}</p>
+                        <p style={{margin:0,fontSize:12,color:'#00C896',fontWeight:600}}>✓ {registerForm.cr_document.name}</p>
                       ) : (
-                        <p className="text-xs text-gray-500">📄 Click to upload CR document</p>
+                        <p style={{margin:0,fontSize:12,color:'rgba(255,255,255,.5)'}}>📄 Click to upload CR document</p>
                       )}
                     </label>
                   </div>
                 </div>
                 <div>
-                  <label className="text-xs font-semibold text-gray-600 uppercase">SFDA Facility Certificate (PDF)</label>
-                  <div className="mt-1 border-2 border-dashed border-gray-300 rounded-lg p-3 text-center">
-                    <input type="file" accept=".pdf" id="sfda-cert" className="hidden"
+                  <label style={lbl}>SFDA Facility Certificate (PDF)</label>
+                  <div style={dropZone}>
+                    <input type="file" accept=".pdf" id="sfda-cert" style={{display:'none'}}
                       onChange={e => setRegisterForm({...registerForm, sfda_certificate: e.target.files[0]})} />
-                    <label htmlFor="sfda-cert" className="cursor-pointer">
+                    <label htmlFor="sfda-cert" style={{cursor:'pointer',display:'block'}}>
                       {registerForm.sfda_certificate ? (
-                        <p className="text-xs text-green-600 font-medium">✓ {registerForm.sfda_certificate.name}</p>
+                        <p style={{margin:0,fontSize:12,color:'#00C896',fontWeight:600}}>✓ {registerForm.sfda_certificate.name}</p>
                       ) : (
-                        <p className="text-xs text-gray-500">📄 Click to upload SFDA facility certificate</p>
+                        <p style={{margin:0,fontSize:12,color:'rgba(255,255,255,.5)'}}>📄 Click to upload SFDA facility certificate</p>
                       )}
                     </label>
                   </div>
                 </div>
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                  <p className="text-xs text-blue-700 font-semibold">📋 Document Verification</p>
-                  <p className="text-xs text-blue-600 mt-1">Uploaded documents will be reviewed by the DEMARA team. Your account will be activated after verification — typically within 1 business day.</p>
+                <div style={infoBox}>
+                  <p style={{margin:0,fontSize:12,color:'#38C6FF',fontWeight:700}}>📋 Document Verification</p>
+                  <p style={{margin:'4px 0 0',fontSize:12,color:'rgba(255,255,255,.6)',lineHeight:1.5}}>Uploaded documents will be reviewed by the DEMARA team. Your account will be activated after verification — typically within 1 business day.</p>
                 </div>
-                <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
-                  <p className="text-xs text-gray-700 font-semibold">📧 Email Notification Consent</p>
-                  <p className="text-xs text-gray-600 mt-1">By registering, you consent to DEMARA receiving a copy of SFDA communications related to your shipments when CC'd to qc@demara.sa. DEMARA uses these emails solely to automate shipment tracking and notifications. SFDA systems are never accessed or modified by DEMARA.</p>
+                <div style={{...infoBox,background:'rgba(255,255,255,.03)',borderColor:'rgba(255,255,255,.08)'}}>
+                  <p style={{margin:0,fontSize:12,color:'rgba(255,255,255,.85)',fontWeight:700}}>📧 Email Notification Consent</p>
+                  <p style={{margin:'4px 0 0',fontSize:12,color:'rgba(255,255,255,.55)',lineHeight:1.5}}>By registering, you consent to DEMARA receiving a copy of SFDA communications related to your shipments when CC'd to qc@demara.sa. DEMARA uses these emails solely to automate shipment tracking and notifications. SFDA systems are never accessed or modified by DEMARA.</p>
                 </div>
                 <div>
-                  <label className="text-xs font-semibold text-gray-600 uppercase">Requested Role</label>
+                  <label style={lbl}>Requested Role</label>
                   <select
                     value={registerForm.requested_role}
                     onChange={e => selectRole(e.target.value)}
-                    className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2"
+                    style={{...ipt,cursor:'pointer'}}
                   >
                     {ROLE_OPTIONS.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="text-xs font-semibold text-gray-600 uppercase">Organisation Type</label>
+                  <label style={lbl}>Organisation Type</label>
                   <select
                     value={registerForm.organisation_type}
                     onChange={e => setRegisterForm({...registerForm, organisation_type: e.target.value})}
                     disabled={orgTypeAutoMatched}
-                    className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 disabled:bg-gray-100 disabled:text-gray-600"
+                    style={{...ipt,cursor:orgTypeAutoMatched ? 'not-allowed' : 'pointer',opacity:orgTypeAutoMatched ? .6 : 1}}
                   >
                     {orgTypeOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                   </select>
                   {orgTypeAutoMatched && (
-                    <p className="text-xs text-gray-400 mt-1">Auto-matched to your role</p>
+                    <p style={{margin:'6px 0 0',fontSize:11,color:'rgba(255,255,255,.4)'}}>Auto-matched to your role</p>
                   )}
                 </div>
                 <div>
-                  <label className="text-xs font-semibold text-gray-600 uppercase">CR Number (optional)</label>
+                  <label style={lbl}>CR Number (optional)</label>
                   <input
                     type="text"
                     value={registerForm.cr_number}
                     onChange={e => setRegisterForm({...registerForm, cr_number: e.target.value})}
                     placeholder="Commercial registration number"
-                    className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2"
+                    style={ipt}
                   />
                 </div>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full py-3 rounded-lg text-white font-semibold text-sm disabled:opacity-50 hover:opacity-90"
-                  style={{background: '#00B4D8'}}
+                  style={{...primaryBtn,marginTop:4,opacity: loading ? .5 : 1}}
                 >
                   {loading ? 'Submitting...' : 'Request Access'}
                 </button>
@@ -379,11 +385,11 @@ export default function Login({ onLogin }) {
             )}
 
             {/* Footer */}
-            <p className="text-center text-xs text-gray-400 mt-4">
+            <p style={{textAlign:'center',fontSize:11,color:'rgba(255,255,255,.4)',margin:'20px 0 0',lineHeight:1.5}}>
               Access is granted by DEMARA after verification · Sessions expire after 1 hour of inactivity
             </p>
-            <div className="flex items-center justify-center gap-1 mt-2">
-              <span className="text-xs text-gray-400">🇸🇦 Data hosted in Saudi Arabia · STC Cloud KSA</span>
+            <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:4,marginTop:8}}>
+              <span style={{fontSize:11,color:'rgba(255,255,255,.4)'}}>🇸🇦 Data hosted in Saudi Arabia · STC Cloud KSA</span>
             </div>
           </div>
         </div>

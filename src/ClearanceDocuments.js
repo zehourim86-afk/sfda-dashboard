@@ -57,22 +57,22 @@ export default function ClearanceDocuments({ shipmentId, token, onClose }) {
 
   return (
     <div style={{
-      position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',
+      position:'fixed',inset:0,background:'rgba(0,0,0,0.8)',
       display:'flex',alignItems:'center',justifyContent:'center',
       zIndex:1000,padding:'20px',fontFamily:'Inter,sans-serif'
     }}>
       <div style={{
-        background:'#FFFFFF',borderRadius:'16px',
+        background:'#0D1940',borderRadius:'16px',
         width:'100%',maxWidth:'760px',
         maxHeight:'90vh',overflow:'hidden',
         display:'flex',flexDirection:'column',
-        boxShadow:'0 20px 60px rgba(0,0,0,0.3)'
+        boxShadow:'0 20px 60px rgba(0,0,0,0.6)'
       }}>
 
         {/* Header */}
         <div style={{
           padding:'18px 24px',
-          background:'linear-gradient(135deg, #27306E 0%, #1C2460 100%)',
+          background:'linear-gradient(135deg, #0F1E4D 0%, #091230 100%)',
           display:'flex',alignItems:'center',gap:'12px',
           flexShrink:0
         }}>
@@ -81,7 +81,7 @@ export default function ClearanceDocuments({ shipmentId, token, onClose }) {
               📁 Shared Documents
             </div>
             {data?.shipment && (
-              <div style={{fontSize:'12px',color:'#44C8F5'}}>
+              <div style={{fontSize:'12px',color:'#38C6FF'}}>
                 {data.shipment.faseh_request_number} · {data.shipment.importer_name} · Shared {data.shipment.documents_shared_at ? new Date(data.shipment.documents_shared_at).toLocaleDateString('en-SA', {day:'2-digit',month:'short',year:'numeric'}) : ''}
               </div>
             )}
@@ -98,7 +98,7 @@ export default function ClearanceDocuments({ shipmentId, token, onClose }) {
         <div style={{flex:1,overflowY:'auto',padding:'20px 24px'}}>
 
           {loading && (
-            <div style={{textAlign:'center',padding:'40px',color:'#808285'}}>
+            <div style={{textAlign:'center',padding:'40px',color:'rgba(255,255,255,0.45)'}}>
               Loading shared documents...
             </div>
           )}
@@ -117,11 +117,11 @@ export default function ClearanceDocuments({ shipmentId, token, onClose }) {
                   {label:'Documents',value:data.documents.length + ' shared'},
                 ].map(({label,value}) => (
                   <div key={label} style={{
-                    background:'#F8F9FF',border:'1px solid rgba(39,48,110,0.08)',
+                    background:'rgba(0,170,255,0.04)',border:'1px solid rgba(255,255,255,0.08)',
                     borderRadius:'8px',padding:'10px 12px'
                   }}>
-                    <div style={{fontSize:'9px',fontWeight:700,color:'#808285',textTransform:'uppercase',letterSpacing:'0.8px',marginBottom:'3px'}}>{label}</div>
-                    <div style={{fontSize:'11px',fontWeight:600,color:'#27306E'}}>{value}</div>
+                    <div style={{fontSize:'9px',fontWeight:700,color:'rgba(255,255,255,0.45)',textTransform:'uppercase',letterSpacing:'0.8px',marginBottom:'3px'}}>{label}</div>
+                    <div style={{fontSize:'11px',fontWeight:600,color:'#FFFFFF'}}>{value}</div>
                   </div>
                 ))}
               </div>
@@ -129,32 +129,32 @@ export default function ClearanceDocuments({ shipmentId, token, onClose }) {
               {/* Progress */}
               {data.documents.length > 0 && (
                 <div style={{
-                  background:'rgba(68,200,245,0.06)',border:'1px solid rgba(68,200,245,0.15)',
+                  background:'rgba(56,198,255,0.06)',border:'1px solid rgba(56,198,255,0.15)',
                   borderRadius:'10px',padding:'12px 16px',marginBottom:'16px',
                   display:'flex',alignItems:'center',gap:'12px'
                 }}>
                   <div style={{flex:1}}>
-                    <div style={{fontSize:'12px',fontWeight:700,color:'#27306E',marginBottom:'4px'}}>
+                    <div style={{fontSize:'12px',fontWeight:700,color:'#FFFFFF',marginBottom:'4px'}}>
                       Review Progress
                     </div>
-                    <div style={{height:'6px',background:'rgba(39,48,110,0.08)',borderRadius:'3px',overflow:'hidden'}}>
+                    <div style={{height:'6px',background:'rgba(255,255,255,0.08)',borderRadius:'3px',overflow:'hidden'}}>
                       <div style={{
                         height:'100%',
                         width:`${Math.round((data.documents.filter(d=>d.clearance_reviewed).length / data.documents.length) * 100)}%`,
-                        background:'#44C8F5',borderRadius:'3px',transition:'width 0.3s'
+                        background:'#38C6FF',borderRadius:'3px',transition:'width 0.3s'
                       }}></div>
                     </div>
                   </div>
-                  <div style={{fontSize:'22px',fontWeight:800,color:'#27306E',flexShrink:0}}>
+                  <div style={{fontSize:'22px',fontWeight:800,color:'#FFFFFF',flexShrink:0}}>
                     {data.documents.filter(d=>d.clearance_reviewed).length}/{data.documents.length}
                   </div>
                 </div>
               )}
 
               {data.documents.length === 0 && (
-                <div style={{textAlign:'center',padding:'40px',color:'#808285'}}>
+                <div style={{textAlign:'center',padding:'40px',color:'rgba(255,255,255,0.45)'}}>
                   <div style={{fontSize:'32px',marginBottom:'8px'}}>📭</div>
-                  <div style={{fontSize:'14px',fontWeight:600,color:'#27306E',marginBottom:'4px'}}>No documents shared yet</div>
+                  <div style={{fontSize:'14px',fontWeight:600,color:'#FFFFFF',marginBottom:'4px'}}>No documents shared yet</div>
                   <div style={{fontSize:'12px'}}>The MAH has not shared any documents for this shipment</div>
                 </div>
               )}
@@ -170,15 +170,15 @@ export default function ClearanceDocuments({ shipmentId, token, onClose }) {
 
                   return (
                     <div key={doc.document_type} style={{
-                      background:'#FFFFFF',
-                      border:`1px solid ${isReviewed ? 'rgba(0,200,150,0.2)' : 'rgba(39,48,110,0.08)'}`,
+                      background:'rgba(255,255,255,0.03)',
+                      border:`1px solid ${isReviewed ? 'rgba(0,200,150,0.2)' : 'rgba(255,255,255,0.08)'}`,
                       borderRadius:'10px',overflow:'hidden'
                     }}>
                       {/* Row */}
                       <div style={{
                         display:'flex',alignItems:'center',gap:'12px',
                         padding:'14px 16px',cursor:'pointer',
-                        background: isReviewed ? 'rgba(0,200,150,0.04)' : '#FFFFFF'
+                        background: isReviewed ? 'rgba(0,200,150,0.04)' : 'transparent'
                       }} onClick={() => setExpanded(isExpanded ? null : doc.document_type)}>
 
                         {/* Status icon */}
@@ -193,7 +193,7 @@ export default function ClearanceDocuments({ shipmentId, token, onClose }) {
                         {/* Info */}
                         <div style={{flex:1,minWidth:0}}>
                           <div style={{display:'flex',alignItems:'center',gap:'8px'}}>
-                            <span style={{fontSize:'13px',fontWeight:600,color:'#27306E'}}>{doc.label}</span>
+                            <span style={{fontSize:'13px',fontWeight:600,color:'#FFFFFF'}}>{doc.label}</span>
                             <span style={{
                               fontSize:'10px',fontWeight:600,
                               color:cfg.color,background:cfg.bg,
@@ -202,13 +202,13 @@ export default function ClearanceDocuments({ shipmentId, token, onClose }) {
                             {isReviewed && (
                               <span style={{
                                 fontSize:'10px',fontWeight:600,
-                                color:'#00875A',background:'rgba(0,200,150,0.1)',
+                                color:'#00C896',background:'rgba(0,200,150,0.1)',
                                 padding:'2px 8px',borderRadius:'10px',
                                 border:'1px solid rgba(0,200,150,0.2)'
                               }}>✓ Reviewed</span>
                             )}
                           </div>
-                          <div style={{fontSize:'11px',color:'#808285',marginTop:'2px'}}>
+                          <div style={{fontSize:'11px',color:'rgba(255,255,255,0.45)',marginTop:'2px'}}>
                             {doc.file_name} · Shared {doc.shared_at ? new Date(doc.shared_at).toLocaleDateString('en-SA',{day:'2-digit',month:'short'}) : ''}
                             {doc.clearance_notes && <span style={{marginLeft:'8px',fontStyle:'italic'}}>"{doc.clearance_notes}"</span>}
                           </div>
@@ -220,20 +220,20 @@ export default function ClearanceDocuments({ shipmentId, token, onClose }) {
                             <button onClick={() => setReviewing(doc.document_type)}
                               style={{
                                 padding:'5px 12px',borderRadius:'6px',fontSize:'11px',fontWeight:600,
-                                cursor:'pointer',border:'1px solid rgba(68,200,245,0.3)',
-                                background:'rgba(68,200,245,0.08)',color:'#27306E'
+                                cursor:'pointer',border:'1px solid rgba(56,198,255,0.3)',
+                                background:'rgba(56,198,255,0.08)',color:'#38C6FF'
                               }}>
                               ✓ Mark Reviewed
                             </button>
                           )}
-                          <span style={{color:'#808285',fontSize:'14px',padding:'5px'}}>{isExpanded ? '▲' : '▼'}</span>
+                          <span style={{color:'rgba(255,255,255,0.45)',fontSize:'14px',padding:'5px'}}>{isExpanded ? '▲' : '▼'}</span>
                         </div>
                       </div>
 
                       {/* Review notes input */}
                       {reviewing === doc.document_type && (
-                        <div style={{padding:'12px 16px',borderTop:'1px solid rgba(39,48,110,0.06)',background:'#F8F9FF'}}>
-                          <div style={{fontSize:'11px',fontWeight:600,color:'#27306E',marginBottom:'6px'}}>
+                        <div style={{padding:'12px 16px',borderTop:'1px solid rgba(255,255,255,0.06)',background:'#0B1535'}}>
+                          <div style={{fontSize:'11px',fontWeight:600,color:'#FFFFFF',marginBottom:'6px'}}>
                             Add a note (optional) before marking as reviewed:
                           </div>
                           <textarea
@@ -242,9 +242,9 @@ export default function ClearanceDocuments({ shipmentId, token, onClose }) {
                             rows={2}
                             placeholder="e.g. Document verified — matches shipment details"
                             style={{
-                              width:'100%',border:'1px solid rgba(39,48,110,0.15)',
+                              width:'100%',border:'1px solid rgba(255,255,255,0.15)',
                               borderRadius:'8px',padding:'8px 12px',
-                              fontSize:'12px',color:'#27306E',
+                              fontSize:'12px',color:'#FFFFFF',background:'#0D1940',
                               fontFamily:'Inter,sans-serif',outline:'none',resize:'none'
                             }}
                           />
@@ -253,15 +253,15 @@ export default function ClearanceDocuments({ shipmentId, token, onClose }) {
                               style={{
                                 padding:'6px 14px',borderRadius:'6px',fontSize:'12px',fontWeight:700,
                                 cursor:'pointer',border:'none',
-                                background:'#27306E',color:'#FFFFFF'
+                                background:'#38C6FF',color:'#0D1940'
                               }}>
                               ✓ Confirm Review
                             </button>
                             <button onClick={() => { setReviewing(null); setReviewNotes(''); }}
                               style={{
                                 padding:'6px 12px',borderRadius:'6px',fontSize:'12px',fontWeight:500,
-                                cursor:'pointer',border:'1px solid rgba(39,48,110,0.15)',
-                                background:'#FFFFFF',color:'#808285'
+                                cursor:'pointer',border:'1px solid rgba(255,255,255,0.15)',
+                                background:'rgba(255,255,255,0.05)',color:'rgba(255,255,255,0.45)'
                               }}>
                               Cancel
                             </button>
@@ -271,7 +271,7 @@ export default function ClearanceDocuments({ shipmentId, token, onClose }) {
 
                       {/* AI Validation results */}
                       {isExpanded && validation && (
-                        <div style={{borderTop:'1px solid rgba(39,48,110,0.06)',padding:'16px',background:'#FAFBFF'}}>
+                        <div style={{borderTop:'1px solid rgba(255,255,255,0.06)',padding:'16px',background:'#0B1535'}}>
 
                           {/* Summary */}
                           <div style={{
@@ -281,23 +281,23 @@ export default function ClearanceDocuments({ shipmentId, token, onClose }) {
                             <div style={{fontSize:'11px',fontWeight:700,color:cfg.color,marginBottom:'2px'}}>
                               🤖 AI Validation — {cfg.label}
                             </div>
-                            <div style={{fontSize:'12px',color:'#3A4080'}}>{validation.summary}</div>
+                            <div style={{fontSize:'12px',color:'rgba(255,255,255,0.7)'}}>{validation.summary}</div>
                           </div>
 
                           {/* Checks */}
                           {validation.checks && validation.checks.length > 0 && (
                             <div style={{marginBottom:'12px'}}>
-                              <div style={{fontSize:'10px',fontWeight:700,color:'#808285',textTransform:'uppercase',letterSpacing:'0.8px',marginBottom:'6px'}}>Validation Checks</div>
+                              <div style={{fontSize:'10px',fontWeight:700,color:'rgba(255,255,255,0.45)',textTransform:'uppercase',letterSpacing:'0.8px',marginBottom:'6px'}}>Validation Checks</div>
                               <div style={{display:'flex',flexDirection:'column',gap:'3px'}}>
                                 {validation.checks.map((check, i) => {
                                   const checkColor = check.status === 'PASS' ? '#00C896' : check.status === 'WARN' ? '#F5A623' : check.status === 'FAIL' ? '#FF5470' : '#808285';
                                   const checkIcon = check.status === 'PASS' ? '✓' : check.status === 'WARN' ? '⚠' : check.status === 'FAIL' ? '✕' : '○';
                                   return (
-                                    <div key={i} style={{display:'flex',alignItems:'flex-start',gap:'8px',padding:'6px 10px',background:'#FFFFFF',borderRadius:'6px',border:'1px solid rgba(39,48,110,0.06)'}}>
+                                    <div key={i} style={{display:'flex',alignItems:'flex-start',gap:'8px',padding:'6px 10px',background:'#0D1940',borderRadius:'6px',border:'1px solid rgba(255,255,255,0.06)'}}>
                                       <span style={{color:checkColor,fontWeight:700,flexShrink:0}}>{checkIcon}</span>
                                       <div>
-                                        <span style={{fontSize:'11px',fontWeight:600,color:'#27306E'}}>{check.item}</span>
-                                        <span style={{fontSize:'11px',color:'#808285',marginLeft:'6px'}}>— {check.message}</span>
+                                        <span style={{fontSize:'11px',fontWeight:600,color:'#FFFFFF'}}>{check.item}</span>
+                                        <span style={{fontSize:'11px',color:'rgba(255,255,255,0.45)',marginLeft:'6px'}}>— {check.message}</span>
                                       </div>
                                     </div>
                                   );
@@ -314,7 +314,7 @@ export default function ClearanceDocuments({ shipmentId, token, onClose }) {
                               {validation.issues.map((issue, i) => (
                                 <div key={i} style={{display:'flex',gap:'8px',padding:'6px 10px',background:'rgba(255,84,112,0.04)',borderRadius:'6px',marginBottom:'4px',border:'1px solid rgba(255,84,112,0.1)'}}>
                                   <span style={{color:'#FF5470',flexShrink:0}}>✕</span>
-                                  <span style={{fontSize:'12px',color:'#3A4080'}}>{issue}</span>
+                                  <span style={{fontSize:'12px',color:'rgba(255,255,255,0.7)'}}>{issue}</span>
                                 </div>
                               ))}
                             </div>

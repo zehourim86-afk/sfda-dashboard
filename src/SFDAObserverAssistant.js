@@ -55,19 +55,19 @@ export default function SFDAObserverAssistant({ token }) {
   };
 
   return (
-    <div style={{display:'flex',flexDirection:'column',height:'100%',fontFamily:'Inter,sans-serif',background:'#FFFFFF',borderRadius:'14px',border:'1px solid rgba(39,48,110,0.1)',overflow:'hidden'}}>
+    <div style={{display:'flex',flexDirection:'column',height:'100%',fontFamily:'Inter,sans-serif',background:'#0D1940',borderRadius:'14px',border:'1px solid rgba(0,170,255,0.12)',overflow:'hidden'}}>
 
       {/* Header */}
-      <div style={{padding:'14px 18px',background:'linear-gradient(135deg, #1C2460 0%, #27306E 100%)',display:'flex',alignItems:'center',gap:'10px'}}>
-        <div style={{width:'36px',height:'36px',borderRadius:'10px',background:'rgba(68,200,245,0.2)',border:'1px solid rgba(68,200,245,0.3)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'18px',flexShrink:0}}>🔍</div>
+      <div style={{padding:'14px 18px',background:'linear-gradient(135deg, #091230 0%, #0F1E4D 100%)',display:'flex',alignItems:'center',gap:'10px'}}>
+        <div style={{width:'36px',height:'36px',borderRadius:'10px',background:'rgba(56,198,255,0.2)',border:'1px solid rgba(56,198,255,0.3)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'18px',flexShrink:0}}>🔍</div>
         <div>
           <div style={{fontSize:'14px',fontWeight:700,color:'#FFFFFF'}}>Masaar Intelligence</div>
-          <div style={{fontSize:'11px',color:'#44C8F5'}}>Real-time import data · SFDA Observer</div>
+          <div style={{fontSize:'11px',color:'#38C6FF'}}>Real-time import data · SFDA Observer</div>
         </div>
         {snapshot && (
           <div style={{marginLeft:'auto',display:'flex',gap:'12px'}}>
             {[
-              {label:'Total',value:snapshot.total,color:'#44C8F5'},
+              {label:'Total',value:snapshot.total,color:'#38C6FF'},
               {label:'Conformity',value:snapshot.conformity_rate+'%',color:'#00C896'},
               {label:'Stuck',value:snapshot.stuck_count,color: snapshot.stuck_count > 0 ? '#F5A623' : '#00C896'},
             ].map(({label,value,color}) => (
@@ -82,14 +82,14 @@ export default function SFDAObserverAssistant({ token }) {
 
       {/* Quick questions */}
       {messages.length === 1 && (
-        <div style={{padding:'12px 16px',borderBottom:'1px solid rgba(39,48,110,0.06)',background:'#FAFBFF'}}>
-          <div style={{fontSize:'10px',fontWeight:700,color:'#808285',textTransform:'uppercase',letterSpacing:'0.8px',marginBottom:'8px'}}>Intelligence Queries</div>
+        <div style={{padding:'12px 16px',borderBottom:'1px solid rgba(255,255,255,0.06)',background:'#0B1535'}}>
+          <div style={{fontSize:'10px',fontWeight:700,color:'rgba(255,255,255,0.45)',textTransform:'uppercase',letterSpacing:'0.8px',marginBottom:'8px'}}>Intelligence Queries</div>
           <div style={{display:'flex',flexWrap:'wrap',gap:'6px'}}>
             {OBSERVER_QUESTIONS.map((q,i) => (
               <button key={i} onClick={() => sendMessage(q)}
-                style={{padding:'5px 10px',borderRadius:'20px',fontSize:'11px',fontWeight:500,cursor:'pointer',border:'1px solid rgba(39,48,110,0.12)',background:'#FFFFFF',color:'#27306E',transition:'all 0.15s',textAlign:'left'}}
-                onMouseOver={e => {e.target.style.borderColor='#44C8F5';e.target.style.color='#44C8F5';}}
-                onMouseOut={e => {e.target.style.borderColor='rgba(39,48,110,0.12)';e.target.style.color='#27306E';}}>
+                style={{padding:'5px 10px',borderRadius:'20px',fontSize:'11px',fontWeight:500,cursor:'pointer',border:'1px solid rgba(255,255,255,0.12)',background:'rgba(255,255,255,0.04)',color:'rgba(255,255,255,0.75)',transition:'all 0.15s',textAlign:'left'}}
+                onMouseOver={e => {e.target.style.borderColor='#38C6FF';e.target.style.color='#38C6FF';}}
+                onMouseOut={e => {e.target.style.borderColor='rgba(255,255,255,0.12)';e.target.style.color='rgba(255,255,255,0.75)';}}>
                 {q}
               </button>
             ))}
@@ -102,14 +102,14 @@ export default function SFDAObserverAssistant({ token }) {
         {messages.map((msg,i) => (
           <div key={i} style={{display:'flex',justifyContent:msg.role==='user'?'flex-end':'flex-start',gap:'8px',alignItems:'flex-start'}}>
             {msg.role === 'assistant' && (
-              <div style={{width:'28px',height:'28px',borderRadius:'8px',background:'linear-gradient(135deg,#1C2460,#27306E)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'13px',flexShrink:0,marginTop:'2px'}}>🔍</div>
+              <div style={{width:'28px',height:'28px',borderRadius:'8px',background:'linear-gradient(135deg,#1E3A8A,#091230)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'13px',flexShrink:0,marginTop:'2px'}}>🔍</div>
             )}
             <div style={{
               maxWidth:'82%',padding:'10px 14px',
               borderRadius:msg.role==='user'?'14px 14px 4px 14px':'14px 14px 14px 4px',
-              background:msg.role==='user'?'#27306E':'#F5F7FF',
-              border:msg.role==='user'?'none':'1px solid rgba(39,48,110,0.08)',
-              color:msg.role==='user'?'#FFFFFF':'#27306E',
+              background:msg.role==='user'?'#38C6FF':'rgba(255,255,255,0.05)',
+              border:msg.role==='user'?'none':'1px solid rgba(255,255,255,0.08)',
+              color:msg.role==='user'?'#0D1940':'rgba(255,255,255,0.88)',
               fontSize:'13px',lineHeight:1.6,
               whiteSpace:'pre-wrap'
             }}>
@@ -123,16 +123,16 @@ export default function SFDAObserverAssistant({ token }) {
               ) : msg.content}
             </div>
             {msg.role === 'user' && (
-              <div style={{width:'28px',height:'28px',borderRadius:'50%',background:'#44C8F5',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'11px',fontWeight:700,color:'#27306E',flexShrink:0,marginTop:'2px'}}>S</div>
+              <div style={{width:'28px',height:'28px',borderRadius:'50%',background:'#38C6FF',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'11px',fontWeight:700,color:'#0D1940',flexShrink:0,marginTop:'2px'}}>S</div>
             )}
           </div>
         ))}
         {loading && (
           <div style={{display:'flex',gap:'8px',alignItems:'flex-start'}}>
-            <div style={{width:'28px',height:'28px',borderRadius:'8px',background:'linear-gradient(135deg,#1C2460,#27306E)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'13px',flexShrink:0}}>🔍</div>
-            <div style={{padding:'10px 14px',borderRadius:'14px 14px 14px 4px',background:'#F5F7FF',border:'1px solid rgba(39,48,110,0.08)',display:'flex',gap:'4px',alignItems:'center'}}>
+            <div style={{width:'28px',height:'28px',borderRadius:'8px',background:'linear-gradient(135deg,#1E3A8A,#091230)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'13px',flexShrink:0}}>🔍</div>
+            <div style={{padding:'10px 14px',borderRadius:'14px 14px 14px 4px',background:'rgba(255,255,255,0.05)',border:'1px solid rgba(255,255,255,0.08)',display:'flex',gap:'4px',alignItems:'center'}}>
               {[0,1,2].map(i => (
-                <div key={i} style={{width:'6px',height:'6px',borderRadius:'50%',background:'#44C8F5',animation:`bounce 1.2s ease-in-out ${i*0.2}s infinite`}}></div>
+                <div key={i} style={{width:'6px',height:'6px',borderRadius:'50%',background:'#38C6FF',animation:`bounce 1.2s ease-in-out ${i*0.2}s infinite`}}></div>
               ))}
             </div>
           </div>
@@ -141,7 +141,7 @@ export default function SFDAObserverAssistant({ token }) {
       </div>
 
       {/* Input */}
-      <div style={{padding:'12px 16px',borderTop:'1px solid rgba(39,48,110,0.08)',background:'#FFFFFF'}}>
+      <div style={{padding:'12px 16px',borderTop:'1px solid rgba(255,255,255,0.08)',background:'#0B1535'}}>
         <div style={{display:'flex',gap:'8px',alignItems:'flex-end'}}>
           <textarea
             value={input}
@@ -149,14 +149,14 @@ export default function SFDAObserverAssistant({ token }) {
             onKeyDown={e => {if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();}}}
             placeholder="Query the platform data — conformity rates, stuck shipments, lab performance..."
             rows={2}
-            style={{flex:1,border:'1px solid rgba(39,48,110,0.15)',borderRadius:'10px',padding:'10px 12px',fontSize:'13px',color:'#27306E',fontFamily:'Inter,sans-serif',outline:'none',resize:'none',lineHeight:1.5,background:'#FAFBFF'}}
+            style={{flex:1,border:'1px solid rgba(255,255,255,0.15)',borderRadius:'10px',padding:'10px 12px',fontSize:'13px',color:'#FFFFFF',fontFamily:'Inter,sans-serif',outline:'none',resize:'none',lineHeight:1.5,background:'rgba(255,255,255,0.04)'}}
           />
           <button onClick={() => sendMessage()} disabled={!input.trim()||loading}
-            style={{width:'40px',height:'40px',borderRadius:'10px',background:input.trim()&&!loading?'#27306E':'#808285',border:'none',cursor:input.trim()&&!loading?'pointer':'not-allowed',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'16px',color:'white',flexShrink:0}}>
+            style={{width:'40px',height:'40px',borderRadius:'10px',background:input.trim()&&!loading?'#38C6FF':'rgba(255,255,255,0.1)',border:'none',cursor:input.trim()&&!loading?'pointer':'not-allowed',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'16px',color:'white',flexShrink:0}}>
             {loading?'⟳':'↑'}
           </button>
         </div>
-        <div style={{fontSize:'10px',color:'#808285',marginTop:'6px',textAlign:'center'}}>
+        <div style={{fontSize:'10px',color:'rgba(255,255,255,0.45)',marginTop:'6px',textAlign:'center'}}>
           Powered by DEMARA Masaar Intelligence · Real-time data
         </div>
       </div>
