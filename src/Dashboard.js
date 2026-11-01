@@ -3,33 +3,52 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, LineChart, Line, Legend
 } from 'recharts';
+// Dark theme helpers: hover / disabled / divider states can't be inline styles
+const DARK_CSS = `
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+  *{box-sizing:border-box}
+  ::-webkit-scrollbar{width:4px;height:4px}
+  ::-webkit-scrollbar-track{background:transparent}
+  ::-webkit-scrollbar-thumb{background:rgba(0,170,255,.2);border-radius:2px}
+  input:focus,textarea:focus,select:focus{border-color:rgba(0,170,255,.5)!important;outline:none}
+  input::placeholder,textarea::placeholder{color:rgba(255,255,255,.25)}
+  select option{background:#0D1940;color:#fff}
+  .dv>*+*{border-top:1px solid rgba(255,255,255,.05)}
+  .hv-bg{transition:background .15s}
+  .hv-bg:hover{background:rgba(0,170,255,.06)!important}
+  .hv-op:hover{opacity:.9}
+  .hv-dk:hover{filter:brightness(.9)}
+  .hv-tx:hover{color:#fff!important}
+  .hv-ul:hover{text-decoration:underline}
+  .ds:disabled{opacity:.5;cursor:not-allowed}
+`;
 
 const API_URL = 'http://localhost:3000/api/v1';
 
 const STATE_COLORS = {
-  SUBMITTED: 'bg-blue-100 text-blue-800',
-  ROUTING: 'bg-blue-100 text-blue-800',
-  GOODS_HELD: 'bg-orange-100 text-orange-800',
-  LAB_ASSIGNED: 'bg-orange-100 text-orange-800',
-  SAMPLING: 'bg-orange-100 text-orange-800',
-  SAMPLE_B_STORED: 'bg-orange-100 text-orange-800',
-  SAMPLING_HANDOVER: 'bg-orange-100 text-orange-800',
-  IN_TRANSIT: 'bg-yellow-100 text-yellow-800',
-  LAB_RECEIVED: 'bg-purple-100 text-purple-800',
-  IN_ANALYSIS: 'bg-purple-100 text-purple-800',
-  RESULT_READY: 'bg-green-100 text-green-800',
-  UNDER_REVIEW: 'bg-red-100 text-red-800',
-  DECISION_PASS: 'bg-green-100 text-green-800',
-  DECISION_FAIL: 'bg-red-100 text-red-800',
-  INVOICE_ISSUED: 'bg-indigo-100 text-indigo-800',
-  PAYMENT_PENDING: 'bg-yellow-100 text-yellow-800',
-  PAYMENT_CONFIRMED: 'bg-green-100 text-green-800',
-  RELEASE_TRIGGERED: 'bg-green-100 text-green-800',
-  RELEASED: 'bg-gray-100 text-gray-800',
-  RE_EXPORT_INITIATED: 'bg-red-100 text-red-800',
+  SUBMITTED: {background:'rgba(0,170,255,.14)',color:'#38C6FF'},
+  ROUTING: {background:'rgba(0,170,255,.14)',color:'#38C6FF'},
+  GOODS_HELD: {background:'rgba(245,166,35,.14)',color:'#F5A623'},
+  LAB_ASSIGNED: {background:'rgba(245,166,35,.14)',color:'#F5A623'},
+  SAMPLING: {background:'rgba(245,166,35,.14)',color:'#F5A623'},
+  SAMPLE_B_STORED: {background:'rgba(245,166,35,.14)',color:'#F5A623'},
+  SAMPLING_HANDOVER: {background:'rgba(245,166,35,.14)',color:'#F5A623'},
+  IN_TRANSIT: {background:'rgba(245,166,35,.14)',color:'#F5A623'},
+  LAB_RECEIVED: {background:'rgba(124,92,252,.14)',color:'#a78bfa'},
+  IN_ANALYSIS: {background:'rgba(124,92,252,.14)',color:'#a78bfa'},
+  RESULT_READY: {background:'rgba(0,200,150,.14)',color:'#00C896'},
+  UNDER_REVIEW: {background:'rgba(255,84,112,.14)',color:'#FF5470'},
+  DECISION_PASS: {background:'rgba(0,200,150,.14)',color:'#00C896'},
+  DECISION_FAIL: {background:'rgba(255,84,112,.14)',color:'#FF5470'},
+  INVOICE_ISSUED: {background:'rgba(124,92,252,.14)',color:'#a78bfa'},
+  PAYMENT_PENDING: {background:'rgba(245,166,35,.14)',color:'#F5A623'},
+  PAYMENT_CONFIRMED: {background:'rgba(0,200,150,.14)',color:'#00C896'},
+  RELEASE_TRIGGERED: {background:'rgba(0,200,150,.14)',color:'#00C896'},
+  RELEASED: {background:'rgba(255,255,255,.07)',color:'#fff'},
+  RE_EXPORT_INITIATED: {background:'rgba(255,84,112,.14)',color:'#FF5470'},
 };
 
-const CHART_COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4'];
+const CHART_COLORS = ['#38C6FF', '#00C896', '#F5A623', '#FF5470', '#a78bfa', '#22D3EE'];
 
 function formatDate(dateStr) {
   if (!dateStr) return '—';
@@ -41,63 +60,63 @@ function formatDate(dateStr) {
 
 function getSLAStatus(slaDeadline, slaBreached) {
   if (!slaDeadline) return null;
-  if (slaBreached) return { label: 'BREACHED', color: 'text-red-600 font-bold' };
+  if (slaBreached) return { label: 'BREACHED', color: {color:'#FF5470',fontWeight:700} };
   const remaining = new Date(slaDeadline) - new Date();
-  if (remaining < 0) return { label: 'BREACHED', color: 'text-red-600 font-bold' };
+  if (remaining < 0) return { label: 'BREACHED', color: {color:'#FF5470',fontWeight:700} };
   const minutes = Math.floor(remaining / 60000);
-  if (minutes < 60) return { label: `${minutes}m left`, color: 'text-red-500' };
+  if (minutes < 60) return { label: `${minutes}m left`, color: {color:'#FF5470'} };
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return { label: `${hours}h left`, color: 'text-yellow-600' };
-  return { label: `${Math.floor(hours / 24)}d left`, color: 'text-green-600' };
+  if (hours < 24) return { label: `${hours}h left`, color: {color:'#F5A623'} };
+  return { label: `${Math.floor(hours / 24)}d left`, color: {color:'#00C896'} };
 }
 
 function TraceModal({ trace, onClose }) {
   if (!trace) return null;
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-screen overflow-y-auto">
-        <div className="flex items-center justify-between p-6 border-b">
+    <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,.8)',backdropFilter:'blur(6px)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:100,padding:16}}>
+      <div style={{background:'#0D1940',borderRadius:12,boxShadow:'0 32px 80px rgba(0,0,0,.8)',border:'1px solid rgba(0,170,255,.18)',width:'100%',maxWidth:768,maxHeight:'92vh',overflowY:'auto'}}>
+        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',borderColor:'rgba(255,255,255,.08)',borderBottomWidth:1,padding:24}}>
           <div>
-            <h2 className="text-xl font-bold text-gray-900">{trace.trace_number}</h2>
-            <p className="text-sm text-gray-500 mt-1">{trace.importer_name}</p>
+            <h2 style={{fontSize:20,fontWeight:700,color:'#fff'}}>{trace.trace_number}</h2>
+            <p style={{fontSize:14,color:'rgba(255,255,255,.5)',marginTop:4}}>{trace.importer_name}</p>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl font-bold">×</button>
+          <button onClick={onClose} className="hv-tx" style={{color:'rgba(255,255,255,.35)',fontSize:24,fontWeight:700}}>×</button>
         </div>
-        <div className="p-6 space-y-6">
-          <div className="flex items-center gap-3">
-            <span className={`px-3 py-1 rounded-full text-sm font-semibold ${STATE_COLORS[trace.current_state]}`}>
+        <div style={{display:'flex',flexDirection:'column',gap:24,padding:24}}>
+          <div style={{display:'flex',alignItems:'center',gap:12}}>
+            <span style={{borderRadius:9999,fontSize:14,fontWeight:600,paddingLeft:12,paddingRight:12,paddingTop:4,paddingBottom:4,...(STATE_COLORS[trace.current_state])}}>
               {trace.current_state}
             </span>
-            <span className="text-sm text-gray-500">Since {formatDate(trace.state_entered_at)}</span>
+            <span style={{fontSize:14,color:'rgba(255,255,255,.5)'}}>Since {formatDate(trace.state_entered_at)}</span>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div style={{display:'grid',gridTemplateColumns:'repeat(2,minmax(0,1fr))',gap:16}}>
             <div>
-              <p className="text-xs text-gray-500 uppercase font-semibold">FASEH Request</p>
-              <p className="text-sm font-medium text-gray-900">{trace.faseh_request_no}</p>
+              <p style={{fontSize:12,color:'rgba(255,255,255,.5)',textTransform:'uppercase',letterSpacing:'.6px',fontWeight:600}}>FASEH Request</p>
+              <p style={{fontSize:14,fontWeight:500,color:'#fff'}}>{trace.faseh_request_no}</p>
             </div>
             <div>
-              <p className="text-xs text-gray-500 uppercase font-semibold">Port of Entry</p>
-              <p className="text-sm font-medium text-gray-900">{trace.port_of_entry}</p>
+              <p style={{fontSize:12,color:'rgba(255,255,255,.5)',textTransform:'uppercase',letterSpacing:'.6px',fontWeight:600}}>Port of Entry</p>
+              <p style={{fontSize:14,fontWeight:500,color:'#fff'}}>{trace.port_of_entry}</p>
             </div>
             <div>
-              <p className="text-xs text-gray-500 uppercase font-semibold">Shipment Country</p>
-              <p className="text-sm font-medium text-gray-900">{trace.shipment_country}</p>
+              <p style={{fontSize:12,color:'rgba(255,255,255,.5)',textTransform:'uppercase',letterSpacing:'.6px',fontWeight:600}}>Shipment Country</p>
+              <p style={{fontSize:14,fontWeight:500,color:'#fff'}}>{trace.shipment_country}</p>
             </div>
             <div>
-              <p className="text-xs text-gray-500 uppercase font-semibold">Ghad Account</p>
-              <p className="text-sm font-medium text-gray-900">{trace.ghad_account_no}</p>
+              <p style={{fontSize:12,color:'rgba(255,255,255,.5)',textTransform:'uppercase',letterSpacing:'.6px',fontWeight:600}}>Ghad Account</p>
+              <p style={{fontSize:14,fontWeight:500,color:'#fff'}}>{trace.ghad_account_no}</p>
             </div>
           </div>
           {trace.line_items && trace.line_items.length > 0 && (
             <div>
-              <h3 className="text-sm font-semibold text-gray-700 mb-3">Products</h3>
-              <div className="space-y-2">
+              <h3 style={{fontSize:14,fontWeight:600,color:'rgba(255,255,255,.8)',marginBottom:12}}>Products</h3>
+              <div style={{display:'flex',flexDirection:'column',gap:8}}>
                 {trace.line_items.map((item) => (
-                  <div key={item.id} className="bg-gray-50 rounded-lg p-3">
-                    <p className="font-medium text-gray-900 text-sm">{item.product_name_en}</p>
-                    <div className="flex gap-4 mt-1">
-                      <span className="text-xs text-gray-500">Batch: {item.batch_number}</span>
-                      <span className="text-xs text-gray-500">Qty: {item.quantity} {item.quantity_unit}</span>
+                  <div key={item.id} style={{background:'rgba(255,255,255,.03)',borderRadius:8,padding:12}}>
+                    <p style={{fontWeight:500,color:'#fff',fontSize:14}}>{item.product_name_en}</p>
+                    <div style={{display:'flex',gap:16,marginTop:4}}>
+                      <span style={{fontSize:12,color:'rgba(255,255,255,.5)'}}>Batch: {item.batch_number}</span>
+                      <span style={{fontSize:12,color:'rgba(255,255,255,.5)'}}>Qty: {item.quantity} {item.quantity_unit}</span>
                     </div>
                   </div>
                 ))}
@@ -106,15 +125,15 @@ function TraceModal({ trace, onClose }) {
           )}
           {trace.audit_log && trace.audit_log.length > 0 && (
             <div>
-              <h3 className="text-sm font-semibold text-gray-700 mb-3">Audit Trail</h3>
-              <div className="space-y-2">
+              <h3 style={{fontSize:14,fontWeight:600,color:'rgba(255,255,255,.8)',marginBottom:12}}>Audit Trail</h3>
+              <div style={{display:'flex',flexDirection:'column',gap:8}}>
                 {trace.audit_log.map((log) => (
-                  <div key={log.id} className={`flex items-start gap-3 p-2 rounded-lg ${log.was_valid ? 'bg-green-50' : 'bg-red-50'}`}>
-                    <span className={`mt-0.5 w-2 h-2 rounded-full flex-shrink-0 ${log.was_valid ? 'bg-green-500' : 'bg-red-500'}`}></span>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium text-gray-900">{log.from_state} → {log.to_state}</p>
-                      <p className="text-xs text-gray-500">{log.trigger_event}</p>
-                      <p className="text-xs text-gray-400">{log.actor_role} · {formatDate(log.occurred_at)}</p>
+                  <div key={log.id} style={{display:'flex',alignItems:'flex-start',gap:12,borderRadius:8,padding:8,...(log.was_valid ? {background:'rgba(0,200,150,.06)'} : {background:'rgba(255,84,112,.06)'})}}>
+                    <span style={{width:8,height:8,borderRadius:9999,flexShrink:0,marginTop:2,...(log.was_valid ? {background:'#00C896'} : {background:'#FF5470'})}}></span>
+                    <div style={{flex:1,minWidth:0}}>
+                      <p style={{fontSize:12,fontWeight:500,color:'#fff'}}>{log.from_state} → {log.to_state}</p>
+                      <p style={{fontSize:12,color:'rgba(255,255,255,.5)'}}>{log.trigger_event}</p>
+                      <p style={{fontSize:12,color:'rgba(255,255,255,.35)'}}>{log.actor_role} · {formatDate(log.occurred_at)}</p>
                     </div>
                   </div>
                 ))}
@@ -206,108 +225,125 @@ export default function Dashboard({ user, token, onLogout }) {
     'RELEASE_TRIGGERED','RELEASED','RE_EXPORT_INITIATED'
   ];
 
+  const navBtn = (on) => ({width:'100%',display:'flex',alignItems:'center',gap:10,padding:'9px 12px',borderRadius:9,cursor:'pointer',marginBottom:3,fontFamily:'inherit',fontSize:12,textAlign:'left',transition:'all .15s',
+    fontWeight:on ? 700 : 500,background:on ? 'rgba(0,170,255,.12)' : 'transparent',color:on ? '#38C6FF' : 'rgba(255,255,255,.5)',border:on ? '1px solid rgba(56,198,255,.3)' : '1px solid transparent'});
+  const kpis = [
+    { label: 'Total Shipments', value: traces.length, color: '#fff', icon: '📦' },
+    { label: 'Active', value: activeCount, color: '#38C6FF', icon: '⚡' },
+    { label: 'Released', value: releasedCount, color: '#00C896', icon: '✅' },
+    { label: 'SLA Breached', value: slaBreachedCount, color: '#FF5470', icon: '⏱' },
+  ];
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div style={{background: 'linear-gradient(135deg, #2D2B7A 0%, #1a1854 100%)'}} className="px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <img src="/demara-logo.png" alt="DEMARA" style={{height: '80px', width: '200px', objectFit: 'contain'}} />
-            <div>
-              <h1 className="text-lg font-bold text-white">Drug Import Traceability Platform</h1>
-              <p className="text-xs mt-0.5" style={{color: '#00B4D8'}}>SFDA Reviewer Dashboard · Live</p>
-            </div>
+    <div style={{display:'flex',flexDirection:'column',height:'100vh',background:'#0B1535',fontFamily:'Inter,sans-serif',color:'#fff',overflow:'hidden'}}>
+      <style>{DARK_CSS}</style>
+
+      {/* ── Topbar ── */}
+      <div style={{height:58,background:'#091230',borderBottom:'1px solid rgba(0,170,255,.1)',display:'flex',alignItems:'center',padding:'0 24px',gap:14,flexShrink:0,zIndex:10}}>
+        <div style={{width:78,height:44,borderRadius:8,overflow:'hidden',position:'relative',flexShrink:0,background:'#2E2C70',boxShadow:'0 0 0 1px rgba(56,198,255,.15)'}}><img src="/demara-logo.png" alt="DEMARA" style={{position:'absolute',width:'300%',height:'300%',left:'-100%',top:'-100%'}}/></div>
+        <div style={{width:1,height:28,background:'rgba(255,255,255,.08)'}}></div>
+        <div>
+          <div style={{fontSize:14,fontWeight:800,color:'#fff',letterSpacing:'-.3px'}}>Drug Import Traceability Platform</div>
+          <div style={{fontSize:10,color:'#38C6FF',fontWeight:600,letterSpacing:'.3px'}}>SFDA Reviewer Dashboard · Live</div>
+        </div>
+        <div style={{marginLeft:'auto',display:'flex',alignItems:'center',gap:10}}>
+          <div style={{display:'flex',alignItems:'center',gap:5,fontSize:11,fontWeight:600,color:'#00C896',background:'rgba(0,200,150,.08)',border:'1px solid rgba(0,200,150,.2)',borderRadius:20,padding:'4px 10px'}}>
+            <span style={{width:6,height:6,borderRadius:'50%',background:'#00C896',animation:'pulse 2s infinite',display:'inline-block'}}></span>Connected
           </div>
-          <div className="flex items-center gap-3">
-            <span className="flex items-center gap-1.5 text-xs text-green-400 font-medium">
-              <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-              Connected
-            </span>
-            {user && (
-              <div className="flex items-center gap-2 bg-white bg-opacity-10 rounded-lg px-3 py-1.5">
-                <div className="text-right">
-                  <p className="text-white text-xs font-semibold">{user.full_name}</p>
-                  <p className="text-xs" style={{color: '#00B4D8'}}>{user.role.replace(/_/g, ' ')}</p>
-                </div>
-              </div>
-            )}
-            <button onClick={fetchTraces} style={{background: '#00B4D8'}} className="px-3 py-1.5 text-white text-sm rounded-lg hover:opacity-90">
-              Refresh
+          {user && (
+            <div style={{display:'flex',alignItems:'center',gap:9,background:'rgba(255,255,255,.05)',border:'1px solid rgba(255,255,255,.1)',borderRadius:10,padding:'6px 12px'}}>
+              <div style={{width:28,height:28,borderRadius:'50%',background:'linear-gradient(135deg,#38C6FF,#1E3A8A)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:800,color:'#fff',flexShrink:0}}>{user.full_name?.charAt(0) || 'S'}</div>
+              <div><div style={{fontSize:12,fontWeight:700,color:'#fff'}}>{user.full_name}</div><div style={{fontSize:10,color:'#38C6FF',marginTop:1}}>{user.role.replace(/_/g, ' ')}</div></div>
+            </div>
+          )}
+          {onLogout && (
+            <button onClick={onLogout} style={{background:'rgba(255,84,112,.12)',border:'1px solid rgba(255,84,112,.25)',color:'#FF5470',fontSize:11,fontWeight:700,padding:'7px 14px',borderRadius:8,cursor:'pointer',fontFamily:'inherit'}}>
+              Sign Out
             </button>
-            {onLogout && (
-              <button onClick={onLogout} className="px-3 py-1.5 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600">
-                Sign Out
-              </button>
-            )}
+          )}
+        </div>
+      </div>
+
+      {/* ── Body ── */}
+      <div style={{display:'flex',flex:1,overflow:'hidden'}}>
+
+        {/* ── Sidebar ── */}
+        <div style={{width:220,background:'#0D1940',borderRight:'1px solid rgba(0,170,255,.08)',display:'flex',flexDirection:'column',flexShrink:0,overflowY:'auto'}}>
+          <div style={{padding:'16px 14px',borderBottom:'1px solid rgba(0,170,255,.06)'}}>
+            <div style={{fontSize:9,fontWeight:700,color:'rgba(255,255,255,.4)',textTransform:'uppercase',letterSpacing:'2px',marginBottom:12}}>Overview</div>
+            <div style={{display:'flex',flexDirection:'column',gap:6}}>
+              {kpis.map(k => (
+                <div key={k.label} style={{display:'flex',alignItems:'center',gap:10,padding:'8px 10px',borderRadius:9,background:'rgba(255,255,255,.03)',border:'1px solid rgba(255,255,255,.05)'}}>
+                  <span style={{fontSize:14,flexShrink:0}}>{k.icon}</span>
+                  <span style={{fontSize:11,color:'rgba(255,255,255,.5)',flex:1}}>{k.label}</span>
+                  <span style={{fontSize:16,fontWeight:900,color:k.color,letterSpacing:'-0.5px'}}>{k.value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div style={{padding:'12px 10px',flex:1}}>
+            <div style={{fontSize:9,fontWeight:700,color:'rgba(255,255,255,.4)',textTransform:'uppercase',letterSpacing:'2px',marginBottom:10,paddingLeft:4}}>Navigation</div>
+            <button
+            onClick={() => setActiveTab('dashboard')}
+              style={navBtn(activeTab === 'dashboard')}
+            >
+              <span style={{fontSize:15}}>📊</span><span style={{flex:1}}>Dashboard</span>
+            </button>
+            <button
+            onClick={() => setActiveTab('shipments')}
+              style={navBtn(activeTab === 'shipments')}
+            >
+              <span style={{fontSize:15}}>📦</span><span style={{flex:1}}>Shipments</span>
+            </button>
+          </div>
+          <div style={{padding:'12px 14px',borderTop:'1px solid rgba(0,170,255,.06)'}}>
+            <button onClick={fetchTraces} style={{width:'100%',padding:'9px',background:'rgba(0,170,255,.1)',border:'1px solid rgba(0,170,255,.2)',color:'#38C6FF',fontSize:12,fontWeight:700,borderRadius:9,cursor:'pointer',fontFamily:'inherit'}}>↻ Refresh</button>
           </div>
         </div>
-      </div>
 
-      {/* Tabs */}
-      <div className="bg-white border-b border-gray-200 px-6">
-        <div className="flex gap-2">
-          <button
-            onClick={() => setActiveTab('dashboard')}
-            className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
-              activeTab === 'dashboard' ? 'border-b-2 text-white' : 'border-transparent text-gray-500'
-            }`}
-            style={activeTab === 'dashboard' ? {borderColor: '#2D2B7A', color: '#2D2B7A'} : {}}
-          >
-            Dashboard
-          </button>
-          <button
-            onClick={() => setActiveTab('shipments')}
-            className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
-              activeTab === 'shipments' ? 'border-b-2' : 'border-transparent text-gray-500'
-            }`}
-            style={activeTab === 'shipments' ? {borderColor: '#2D2B7A', color: '#2D2B7A'} : {}}
-          >
-            Shipments
-          </button>
-        </div>
-      </div>
-
+        {/* ── Main content ── */}
+        <div key={activeTab} style={{flex:1,overflowY:'auto',background:'#0B1535'}}>
       {activeTab === 'dashboard' && (
-        <div className="p-6 space-y-6">
+        <div style={{display:'flex',flexDirection:'column',gap:24,padding:24}}>
           {/* KPI cards */}
-          <div className="grid grid-cols-4 gap-4">
-            <div className="bg-white rounded-xl border border-gray-200 p-4">
-              <p className="text-xs text-gray-500 uppercase font-semibold">Total Shipments</p>
-              <p className="text-3xl font-bold text-gray-900 mt-1">{traces.length}</p>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(4,minmax(0,1fr))',gap:16}}>
+            <div style={{background:'rgba(255,255,255,.03)',borderRadius:12,borderColor:'rgba(0,170,255,.1)',borderWidth:1,padding:16}}>
+              <p style={{fontSize:12,color:'rgba(255,255,255,.5)',textTransform:'uppercase',letterSpacing:'.6px',fontWeight:600}}>Total Shipments</p>
+              <p style={{fontSize:30,fontWeight:700,color:'#fff',marginTop:4}}>{traces.length}</p>
             </div>
-            <div className="bg-white rounded-xl border border-gray-200 p-4">
-              <p className="text-xs text-gray-500 uppercase font-semibold">Active</p>
-              <p className="text-3xl font-bold text-blue-600 mt-1">{activeCount}</p>
+            <div style={{background:'rgba(255,255,255,.03)',borderRadius:12,borderColor:'rgba(0,170,255,.1)',borderWidth:1,padding:16}}>
+              <p style={{fontSize:12,color:'rgba(255,255,255,.5)',textTransform:'uppercase',letterSpacing:'.6px',fontWeight:600}}>Active</p>
+              <p style={{fontSize:30,fontWeight:700,color:'#38C6FF',marginTop:4}}>{activeCount}</p>
             </div>
-            <div className="bg-white rounded-xl border border-gray-200 p-4">
-              <p className="text-xs text-gray-500 uppercase font-semibold">Released</p>
-              <p className="text-3xl font-bold text-green-600 mt-1">{releasedCount}</p>
+            <div style={{background:'rgba(255,255,255,.03)',borderRadius:12,borderColor:'rgba(0,170,255,.1)',borderWidth:1,padding:16}}>
+              <p style={{fontSize:12,color:'rgba(255,255,255,.5)',textTransform:'uppercase',letterSpacing:'.6px',fontWeight:600}}>Released</p>
+              <p style={{fontSize:30,fontWeight:700,color:'#00C896',marginTop:4}}>{releasedCount}</p>
             </div>
-            <div className="bg-white rounded-xl border border-gray-200 p-4">
-              <p className="text-xs text-gray-500 uppercase font-semibold">SLA Compliance</p>
-              <p className="text-3xl font-bold text-indigo-600 mt-1">{slaCompliance}%</p>
+            <div style={{background:'rgba(255,255,255,.03)',borderRadius:12,borderColor:'rgba(0,170,255,.1)',borderWidth:1,padding:16}}>
+              <p style={{fontSize:12,color:'rgba(255,255,255,.5)',textTransform:'uppercase',letterSpacing:'.6px',fontWeight:600}}>SLA Compliance</p>
+              <p style={{fontSize:30,fontWeight:700,color:'#a78bfa',marginTop:4}}>{slaCompliance}%</p>
             </div>
           </div>
 
           {/* Charts row 1 */}
-          <div className="grid grid-cols-2 gap-4">
+          <div style={{display:'grid',gridTemplateColumns:'repeat(2,minmax(0,1fr))',gap:16}}>
             {/* Shipments by state */}
-            <div className="bg-white rounded-xl border border-gray-200 p-4">
-              <h3 className="text-sm font-semibold text-gray-700 mb-4">Shipments by State</h3>
+            <div style={{background:'rgba(255,255,255,.03)',borderRadius:12,borderColor:'rgba(0,170,255,.1)',borderWidth:1,padding:16}}>
+              <h3 style={{fontSize:14,fontWeight:600,color:'rgba(255,255,255,.8)',marginBottom:16}}>Shipments by State</h3>
               <ResponsiveContainer width="100%" height={200}>
                 <BarChart data={stateData} margin={{ top: 0, right: 0, left: -20, bottom: 40 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis dataKey="state" tick={{ fontSize: 9 }} angle={-45} textAnchor="end" />
-                  <YAxis tick={{ fontSize: 10 }} allowDecimals={false} />
-                  <Tooltip />
-                  <Bar dataKey="count" fill="#3B82F6" radius={[4, 4, 0, 0]} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+                  <XAxis dataKey="state" tick={{fontSize: 9, fill: 'rgba(255,255,255,0.45)'}} angle={-45} textAnchor="end" />
+                  <YAxis tick={{fontSize: 10, fill: 'rgba(255,255,255,0.45)'}} allowDecimals={false} />
+                  <Tooltip contentStyle={{background:'#0D1940',border:'1px solid rgba(0,170,255,.2)',borderRadius:8,color:'#fff'}} itemStyle={{color:'#fff'}} labelStyle={{color:'rgba(255,255,255,.6)'}} cursor={{fill:'rgba(0,170,255,.06)'}} />
+                  <Bar dataKey="count" fill="#38C6FF" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
 
             {/* Shipments by port */}
-            <div className="bg-white rounded-xl border border-gray-200 p-4">
-              <h3 className="text-sm font-semibold text-gray-700 mb-4">Shipments by Port</h3>
+            <div style={{background:'rgba(255,255,255,.03)',borderRadius:12,borderColor:'rgba(0,170,255,.1)',borderWidth:1,padding:16}}>
+              <h3 style={{fontSize:14,fontWeight:600,color:'rgba(255,255,255,.8)',marginBottom:16}}>Shipments by Port</h3>
               <ResponsiveContainer width="100%" height={200}>
                 <PieChart>
                   <Pie
@@ -323,31 +359,31 @@ export default function Dashboard({ user, token, onLogout }) {
                       <Cell key={index} fill={CHART_COLORS[index % CHART_COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip />
+                  <Tooltip contentStyle={{background:'#0D1940',border:'1px solid rgba(0,170,255,.2)',borderRadius:8,color:'#fff'}} itemStyle={{color:'#fff'}} labelStyle={{color:'rgba(255,255,255,.6)'}} cursor={{fill:'rgba(0,170,255,.06)'}} />
                 </PieChart>
               </ResponsiveContainer>
             </div>
           </div>
 
           {/* Charts row 2 */}
-          <div className="grid grid-cols-2 gap-4">
+          <div style={{display:'grid',gridTemplateColumns:'repeat(2,minmax(0,1fr))',gap:16}}>
             {/* Shipments by country */}
-            <div className="bg-white rounded-xl border border-gray-200 p-4">
-              <h3 className="text-sm font-semibold text-gray-700 mb-4">Shipments by Country</h3>
+            <div style={{background:'rgba(255,255,255,.03)',borderRadius:12,borderColor:'rgba(0,170,255,.1)',borderWidth:1,padding:16}}>
+              <h3 style={{fontSize:14,fontWeight:600,color:'rgba(255,255,255,.8)',marginBottom:16}}>Shipments by Country</h3>
               <ResponsiveContainer width="100%" height={200}>
                 <BarChart data={countryData} margin={{ top: 0, right: 0, left: -20, bottom: 20 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis dataKey="country" tick={{ fontSize: 10 }} />
-                  <YAxis tick={{ fontSize: 10 }} allowDecimals={false} />
-                  <Tooltip />
-                  <Bar dataKey="count" fill="#10B981" radius={[4, 4, 0, 0]} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+                  <XAxis dataKey="country" tick={{fontSize: 10, fill: 'rgba(255,255,255,0.45)'}} />
+                  <YAxis tick={{fontSize: 10, fill: 'rgba(255,255,255,0.45)'}} allowDecimals={false} />
+                  <Tooltip contentStyle={{background:'#0D1940',border:'1px solid rgba(0,170,255,.2)',borderRadius:8,color:'#fff'}} itemStyle={{color:'#fff'}} labelStyle={{color:'rgba(255,255,255,.6)'}} cursor={{fill:'rgba(0,170,255,.06)'}} />
+                  <Bar dataKey="count" fill="#00C896" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
 
             {/* Pass/Fail ratio */}
-            <div className="bg-white rounded-xl border border-gray-200 p-4">
-              <h3 className="text-sm font-semibold text-gray-700 mb-4">Decision Summary</h3>
+            <div style={{background:'rgba(255,255,255,.03)',borderRadius:12,borderColor:'rgba(0,170,255,.1)',borderWidth:1,padding:16}}>
+              <h3 style={{fontSize:14,fontWeight:600,color:'rgba(255,255,255,.8)',marginBottom:16}}>Decision Summary</h3>
               <ResponsiveContainer width="100%" height={200}>
                 <PieChart>
                   <Pie
@@ -363,11 +399,11 @@ export default function Dashboard({ user, token, onLogout }) {
                     label={({ name, value }) => `${name}: ${value}`}
                     labelLine={false}
                   >
-                    <Cell fill="#10B981" />
-                    <Cell fill="#3B82F6" />
-                    <Cell fill="#EF4444" />
+                    <Cell fill="#00C896" />
+                    <Cell fill="#38C6FF" />
+                    <Cell fill="#FF5470" />
                   </Pie>
-                  <Tooltip />
+                  <Tooltip contentStyle={{background:'#0D1940',border:'1px solid rgba(0,170,255,.2)',borderRadius:8,color:'#fff'}} itemStyle={{color:'#fff'}} labelStyle={{color:'rgba(255,255,255,.6)'}} cursor={{fill:'rgba(0,170,255,.06)'}} />
                 </PieChart>
               </ResponsiveContainer>
             </div>
@@ -376,109 +412,109 @@ export default function Dashboard({ user, token, onLogout }) {
       )}
 
       {activeTab === 'shipments' && (
-        <div className="p-6">
+        <div style={{padding:24}}>
           {/* Stats bar */}
-          <div className="bg-white border border-gray-200 rounded-xl p-4 mb-4">
-            <div className="flex gap-6">
-              <div className="text-center">
-                <p className="text-2xl font-bold text-gray-900">{traces.length}</p>
-                <p className="text-xs text-gray-500">Total shown</p>
+          <div style={{background:'rgba(255,255,255,.03)',borderColor:'rgba(0,170,255,.1)',borderRadius:12,borderWidth:1,padding:16,marginBottom:16}}>
+            <div style={{display:'flex',gap:24}}>
+              <div style={{textAlign:'center'}}>
+                <p style={{fontSize:24,fontWeight:700,color:'#fff'}}>{traces.length}</p>
+                <p style={{fontSize:12,color:'rgba(255,255,255,.5)'}}>Total shown</p>
               </div>
-              <div className="text-center">
-                <p className="text-2xl font-bold text-red-600">
+              <div style={{textAlign:'center'}}>
+                <p style={{fontSize:24,fontWeight:700,color:'#FF5470'}}>
                   {traces.filter(t => t.current_state === 'UNDER_REVIEW').length}
                 </p>
-                <p className="text-xs text-gray-500">Under review</p>
+                <p style={{fontSize:12,color:'rgba(255,255,255,.5)'}}>Under review</p>
               </div>
-              <div className="text-center">
-                <p className="text-2xl font-bold text-purple-600">
+              <div style={{textAlign:'center'}}>
+                <p style={{fontSize:24,fontWeight:700,color:'#a78bfa'}}>
                   {traces.filter(t => ['IN_ANALYSIS', 'LAB_RECEIVED'].includes(t.current_state)).length}
                 </p>
-                <p className="text-xs text-gray-500">In lab</p>
+                <p style={{fontSize:12,color:'rgba(255,255,255,.5)'}}>In lab</p>
               </div>
-              <div className="text-center">
-                <p className="text-2xl font-bold text-green-600">
+              <div style={{textAlign:'center'}}>
+                <p style={{fontSize:24,fontWeight:700,color:'#00C896'}}>
                   {traces.filter(t => t.current_state === 'RELEASED').length}
                 </p>
-                <p className="text-xs text-gray-500">Released</p>
+                <p style={{fontSize:12,color:'rgba(255,255,255,.5)'}}>Released</p>
               </div>
-              <div className="text-center">
-                <p className="text-2xl font-bold text-orange-600">{slaBreachedCount}</p>
-                <p className="text-xs text-gray-500">SLA breached</p>
+              <div style={{textAlign:'center'}}>
+                <p style={{fontSize:24,fontWeight:700,color:'#F5A623'}}>{slaBreachedCount}</p>
+                <p style={{fontSize:12,color:'rgba(255,255,255,.5)'}}>SLA breached</p>
               </div>
             </div>
           </div>
 
           {/* Filter */}
-          <div className="flex items-center gap-3 mb-4">
-            <label className="text-sm font-medium text-gray-700">Filter by state:</label>
+          <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:16}}>
+            <label style={{fontSize:14,fontWeight:500,color:'rgba(255,255,255,.8)'}}>Filter by state:</label>
             <select
               value={selectedState}
               onChange={(e) => setSelectedState(e.target.value)}
-              className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              style={{borderColor:'rgba(255,255,255,.14)',borderRadius:8,fontSize:14,borderWidth:1,paddingLeft:12,paddingRight:12,paddingTop:6,paddingBottom:6,background:'rgba(255,255,255,.05)',color:'#fff',colorScheme:'dark'}}
             >
               <option value="">All states</option>
               {states.map(s => <option key={s} value={s}>{s}</option>)}
             </select>
             {selectedState && (
-              <button onClick={() => setSelectedState('')} className="text-sm text-blue-600 hover:underline">
+              <button onClick={() => setSelectedState('')} className="hv-ul" style={{fontSize:14,color:'#38C6FF'}}>
                 Clear filter
               </button>
             )}
           </div>
 
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4 text-red-700 text-sm">{error}</div>
+            <div style={{background:'rgba(255,84,112,.06)',borderColor:'rgba(255,84,112,.25)',borderRadius:8,color:'#FF5470',fontSize:14,borderWidth:1,padding:16,marginBottom:16}}>{error}</div>
           )}
 
           {loading ? (
-            <div className="text-center py-12 text-gray-500">Loading shipments...</div>
+            <div style={{textAlign:'center',color:'rgba(255,255,255,.5)',paddingTop:48,paddingBottom:48}}>Loading shipments...</div>
           ) : traces.length === 0 ? (
-            <div className="text-center py-12 text-gray-500">No shipments found.</div>
+            <div style={{textAlign:'center',color:'rgba(255,255,255,.5)',paddingTop:48,paddingBottom:48}}>No shipments found.</div>
           ) : (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-              <table className="w-full">
+            <div style={{background:'rgba(255,255,255,.03)',borderRadius:12,borderColor:'rgba(0,170,255,.1)',overflow:'hidden',borderWidth:1}}>
+              <table style={{width:'100%'}}>
                 <thead>
-                  <tr className="bg-gray-50 border-b border-gray-200">
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Trace No.</th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Importer</th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Port</th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">State</th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">SLA</th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Created</th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Action</th>
+                  <tr style={{background:'rgba(255,255,255,.03)',borderColor:'rgba(0,170,255,.1)',borderBottomWidth:1}}>
+                    <th style={{textAlign:'left',fontSize:12,fontWeight:600,color:'rgba(255,255,255,.5)',textTransform:'uppercase',letterSpacing:'.6px',paddingLeft:16,paddingRight:16,paddingTop:12,paddingBottom:12}}>Trace No.</th>
+                    <th style={{textAlign:'left',fontSize:12,fontWeight:600,color:'rgba(255,255,255,.5)',textTransform:'uppercase',letterSpacing:'.6px',paddingLeft:16,paddingRight:16,paddingTop:12,paddingBottom:12}}>Importer</th>
+                    <th style={{textAlign:'left',fontSize:12,fontWeight:600,color:'rgba(255,255,255,.5)',textTransform:'uppercase',letterSpacing:'.6px',paddingLeft:16,paddingRight:16,paddingTop:12,paddingBottom:12}}>Port</th>
+                    <th style={{textAlign:'left',fontSize:12,fontWeight:600,color:'rgba(255,255,255,.5)',textTransform:'uppercase',letterSpacing:'.6px',paddingLeft:16,paddingRight:16,paddingTop:12,paddingBottom:12}}>State</th>
+                    <th style={{textAlign:'left',fontSize:12,fontWeight:600,color:'rgba(255,255,255,.5)',textTransform:'uppercase',letterSpacing:'.6px',paddingLeft:16,paddingRight:16,paddingTop:12,paddingBottom:12}}>SLA</th>
+                    <th style={{textAlign:'left',fontSize:12,fontWeight:600,color:'rgba(255,255,255,.5)',textTransform:'uppercase',letterSpacing:'.6px',paddingLeft:16,paddingRight:16,paddingTop:12,paddingBottom:12}}>Created</th>
+                    <th style={{textAlign:'left',fontSize:12,fontWeight:600,color:'rgba(255,255,255,.5)',textTransform:'uppercase',letterSpacing:'.6px',paddingLeft:16,paddingRight:16,paddingTop:12,paddingBottom:12}}>Action</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100">
+                <tbody className="dv" style={{}}>
                   {traces.map((trace) => {
                     const sla = getSLAStatus(trace.sla_deadline, trace.sla_breached);
                     return (
-                      <tr key={trace.id} className="hover:bg-gray-50 transition-colors">
-                        <td className="px-4 py-3">
-                          <span className="font-mono text-sm font-semibold text-blue-600">{trace.trace_number}</span>
+                      <tr key={trace.id} className="hv-bg" style={{transition:'all .15s'}}>
+                        <td style={{paddingLeft:16,paddingRight:16,paddingTop:12,paddingBottom:12}}>
+                          <span style={{fontFamily:'JetBrains Mono,monospace',fontSize:14,fontWeight:600,color:'#38C6FF'}}>{trace.trace_number}</span>
                         </td>
-                        <td className="px-4 py-3">
-                          <p className="text-sm font-medium text-gray-900">{trace.importer_name}</p>
-                          <p className="text-xs text-gray-500">{trace.shipment_country}</p>
+                        <td style={{paddingLeft:16,paddingRight:16,paddingTop:12,paddingBottom:12}}>
+                          <p style={{fontSize:14,fontWeight:500,color:'#fff'}}>{trace.importer_name}</p>
+                          <p style={{fontSize:12,color:'rgba(255,255,255,.5)'}}>{trace.shipment_country}</p>
                         </td>
-                        <td className="px-4 py-3 text-sm text-gray-600">{trace.port_of_entry}</td>
-                        <td className="px-4 py-3">
-                          <span className={`px-2 py-1 rounded-full text-xs font-semibold ${STATE_COLORS[trace.current_state] || 'bg-gray-100 text-gray-800'}`}>
+                        <td style={{fontSize:14,color:'rgba(255,255,255,.65)',paddingLeft:16,paddingRight:16,paddingTop:12,paddingBottom:12}}>{trace.port_of_entry}</td>
+                        <td style={{paddingLeft:16,paddingRight:16,paddingTop:12,paddingBottom:12}}>
+                          <span style={{borderRadius:9999,fontSize:12,fontWeight:600,paddingLeft:8,paddingRight:8,paddingTop:4,paddingBottom:4,...(STATE_COLORS[trace.current_state] || {background:'rgba(255,255,255,.07)',color:'#fff'})}}>
                             {trace.current_state}
                           </span>
                         </td>
-                        <td className="px-4 py-3">
+                        <td style={{paddingLeft:16,paddingRight:16,paddingTop:12,paddingBottom:12}}>
                           {sla ? (
-                            <span className={`text-xs font-medium ${sla.color}`}>{sla.label}</span>
+                            <span style={{fontSize:12,fontWeight:500,...(sla.color)}}>{sla.label}</span>
                           ) : (
-                            <span className="text-xs text-gray-400">—</span>
+                            <span style={{fontSize:12,color:'rgba(255,255,255,.35)'}}>—</span>
                           )}
                         </td>
-                        <td className="px-4 py-3 text-xs text-gray-500">{formatDate(trace.created_at)}</td>
-                        <td className="px-4 py-3">
+                        <td style={{fontSize:12,color:'rgba(255,255,255,.5)',paddingLeft:16,paddingRight:16,paddingTop:12,paddingBottom:12}}>{formatDate(trace.created_at)}</td>
+                        <td style={{paddingLeft:16,paddingRight:16,paddingTop:12,paddingBottom:12}}>
                           <button
                             onClick={() => openTrace(trace.id)}
-                            className="px-3 py-1 bg-blue-50 text-blue-700 text-xs font-medium rounded-lg hover:bg-blue-100"
+                            className="hv-bg" style={{background:'rgba(0,170,255,.06)',color:'#38C6FF',fontSize:12,fontWeight:500,borderRadius:8,paddingLeft:12,paddingRight:12,paddingTop:4,paddingBottom:4}}
                           >
                             View
                           </button>
@@ -492,6 +528,8 @@ export default function Dashboard({ user, token, onLogout }) {
           )}
         </div>
       )}
+        </div>
+      </div>
 
       {modalTrace && <TraceModal trace={modalTrace} onClose={() => setModalTrace(null)} />}
     </div>
