@@ -162,7 +162,7 @@ export default function Login({ onLogin }) {
 
         {/* Logo / branding */}
         <div style={{textAlign:'center',marginBottom:28}}>
-          <img src="/demara-logo.png" alt="DEMARA" style={{display:'block',margin:'0 auto 20px',height:'100px',width:'250px',objectFit:'contain',filter:'drop-shadow(0 8px 30px rgba(56,198,255,.25))'}} />
+          <div style={{width:224,height:126,margin:'0 auto 20px',borderRadius:18,overflow:'hidden',position:'relative',background:'#2E2C70',boxShadow:'0 12px 40px rgba(56,198,255,.18), 0 0 0 1px rgba(56,198,255,.2)'}}><img src="/demara-logo.png" alt="DEMARA" style={{position:'absolute',width:'300%',height:'300%',left:'-100%',top:'-100%'}} /></div>
           <div style={{display:'inline-block',fontSize:11,fontWeight:800,letterSpacing:'5px',color:'#38C6FF',textTransform:'uppercase',padding:'4px 12px',border:'1px solid rgba(56,198,255,.3)',borderRadius:20,background:'rgba(56,198,255,.08)',marginBottom:12}}>MASAAR</div>
           <h1 style={{margin:0,fontSize:30,fontWeight:900,letterSpacing:'-.6px',color:'#fff'}}>DEMARA Masaar</h1>
           <p style={{margin:'8px 0 0',fontSize:13,color:'rgba(255,255,255,.55)'}}>Drug Import Traceability Platform · Powered by DEMARA</p>

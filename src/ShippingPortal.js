@@ -698,7 +698,7 @@ export default function InspectorApp({ user: initialUser, token, onLogout }) {
 
       {/* ── Topbar ── */}
       <div style={{height:58,background:'#091230',borderBottom:'1px solid rgba(0,170,255,.1)',display:'flex',alignItems:'center',padding:'0 24px',gap:14,flexShrink:0,zIndex:10}}>
-        <img src="/demara-logo.png" alt="DEMARA" style={{height:34,objectFit:'contain'}}/>
+        <div style={{width:78,height:44,borderRadius:8,overflow:'hidden',position:'relative',flexShrink:0,background:'#2E2C70',boxShadow:'0 0 0 1px rgba(56,198,255,.15)'}}><img src="/demara-logo.png" alt="DEMARA" style={{position:'absolute',width:'300%',height:'300%',left:'-100%',top:'-100%'}}/></div>
         <div style={{width:1,height:28,background:'rgba(255,255,255,.08)'}}></div>
         <div>
           <div style={{fontSize:14,fontWeight:800,color:'#fff',letterSpacing:'-.3px'}}>DEMARA Platform</div>
@@ -726,7 +726,7 @@ export default function InspectorApp({ user: initialUser, token, onLogout }) {
         <div style={{width:220,background:'#0D1940',borderRight:'1px solid rgba(0,170,255,.08)',display:'flex',flexDirection:'column',flexShrink:0,overflowY:'auto'}}>
           {/* KPI section */}
           <div style={{padding:'16px 14px',borderBottom:'1px solid rgba(0,170,255,.06)'}}>
-            <div style={{fontSize:9,fontWeight:700,color:'rgba(255,255,255,.2)',textTransform:'uppercase',letterSpacing:'2px',marginBottom:12}}>Overview</div>
+            <div style={{fontSize:9,fontWeight:700,color:'rgba(255,255,255,.4)',textTransform:'uppercase',letterSpacing:'2px',marginBottom:12}}>Overview</div>
             <div style={{display:'flex',flexDirection:'column',gap:6}}>
               {kpis.map(k => (
                 <div key={k.label} style={{display:'flex',alignItems:'center',gap:10,padding:'8px 10px',borderRadius:9,background:'rgba(255,255,255,.03)',border:'1px solid rgba(255,255,255,.05)'}}>
@@ -740,7 +740,7 @@ export default function InspectorApp({ user: initialUser, token, onLogout }) {
 
           {/* Nav */}
           <div style={{padding:'12px 10px',flex:1}}>
-            <div style={{fontSize:9,fontWeight:700,color:'rgba(255,255,255,.2)',textTransform:'uppercase',letterSpacing:'2px',marginBottom:10,paddingLeft:4}}>Navigation</div>
+            <div style={{fontSize:9,fontWeight:700,color:'rgba(255,255,255,.4)',textTransform:'uppercase',letterSpacing:'2px',marginBottom:10,paddingLeft:4}}>Navigation</div>
             {navItems.map(n => {
               const on = activeTab === n.id;
               const color = TONES[n.tone][0];
@@ -764,7 +764,7 @@ export default function InspectorApp({ user: initialUser, token, onLogout }) {
         </div>
 
         {/* ── Main content ── */}
-        <div style={{flex:1,overflowY:'auto',background:'#0B1535'}}>
+        <div key={activeTab} style={{flex:1,overflowY:'auto',background:'#0B1535'}}>
 
           {/* Work queues: pending pickups, plus re-export loading and destruction witness for inspectors */}
           <div style={{display:'flex',flexDirection:'column',gap:12,padding:'16px 20px 0'}}>

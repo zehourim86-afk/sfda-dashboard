@@ -129,14 +129,14 @@ export default function DocumentReadiness({ shipmentId, token, shipment, onDataL
               strokeDasharray={`${data.overall_score * 2.01} 201`}
               strokeDashoffset="50" strokeLinecap="round"
               style={{transition:'stroke-dasharray 0.5s ease'}}/>
-            <text x="40" y="36" textAnchor="middle" fill="#FFFFFF" fontSize="16" fontWeight="800" fontFamily="Inter">{data.overall_score}</text>
-            <text x="40" y="50" textAnchor="middle" fill="rgba(255,255,255,0.45)" fontSize="8" fontFamily="Inter">/ 100</text>
+            <text x="40" y="36" textAnchor="middle" fill="#FFFFFF" fontSize="16" fontWeight="800" fontFamily="Inter, sans-serif">{data.overall_score}</text>
+            <text x="40" y="50" textAnchor="middle" fill="rgba(255,255,255,0.45)" fontSize="8" fontFamily="Inter, sans-serif">/ 100</text>
           </svg>
         </div>
 
         {/* Status text */}
         <div style={{flex:1}}>
-          <div style={{fontSize:'18px',fontWeight:800,color:'#FFFFFF',marginBottom:'4px'}}>
+          <div style={{fontSize:'16px',fontWeight:800,color:'#FFFFFF',marginBottom:'4px',whiteSpace:'nowrap'}}>
             Document Readiness Report
           </div>
           <div style={{

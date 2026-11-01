@@ -395,7 +395,7 @@ export default function SFDAObserverPortal({ user, token, onLogout }) {
 
       {/* ── Topbar ── */}
       <div style={{height:58,background:'#091230',borderBottom:'1px solid rgba(0,170,255,.1)',display:'flex',alignItems:'center',padding:'0 24px',gap:14,flexShrink:0,zIndex:10}}>
-        <img src="/demara-logo.png" alt="DEMARA" style={{height:34,objectFit:'contain'}}/>
+        <div style={{width:78,height:44,borderRadius:8,overflow:'hidden',position:'relative',flexShrink:0,background:'#2E2C70',boxShadow:'0 0 0 1px rgba(56,198,255,.15)'}}><img src="/demara-logo.png" alt="DEMARA" style={{position:'absolute',width:'300%',height:'300%',left:'-100%',top:'-100%'}}/></div>
         <div style={{width:1,height:28,background:'rgba(255,255,255,.08)'}}></div>
         <div>
           <div style={{fontSize:14,fontWeight:800,color:'#fff',letterSpacing:'-.3px'}}>DEMARA Platform</div>
@@ -423,7 +423,7 @@ export default function SFDAObserverPortal({ user, token, onLogout }) {
         <div style={{width:220,background:'#0D1940',borderRight:'1px solid rgba(0,170,255,.08)',display:'flex',flexDirection:'column',flexShrink:0,overflowY:'auto'}}>
           {/* KPI section */}
           <div style={{padding:'16px 14px',borderBottom:'1px solid rgba(0,170,255,.06)'}}>
-            <div style={{fontSize:9,fontWeight:700,color:'rgba(255,255,255,.2)',textTransform:'uppercase',letterSpacing:'2px',marginBottom:12}}>Overview</div>
+            <div style={{fontSize:9,fontWeight:700,color:'rgba(255,255,255,.4)',textTransform:'uppercase',letterSpacing:'2px',marginBottom:12}}>Overview</div>
             <div style={{display:'flex',flexDirection:'column',gap:6}}>
               {kpis.map(k => (
                 <div key={k.label} style={{display:'flex',alignItems:'center',gap:10,padding:'8px 10px',borderRadius:9,background:'rgba(255,255,255,.03)',border:'1px solid rgba(255,255,255,.05)'}}>
@@ -437,7 +437,7 @@ export default function SFDAObserverPortal({ user, token, onLogout }) {
 
           {/* Nav */}
           <div style={{padding:'12px 10px',flex:1}}>
-            <div style={{fontSize:9,fontWeight:700,color:'rgba(255,255,255,.2)',textTransform:'uppercase',letterSpacing:'2px',marginBottom:10,paddingLeft:4}}>Navigation</div>
+            <div style={{fontSize:9,fontWeight:700,color:'rgba(255,255,255,.4)',textTransform:'uppercase',letterSpacing:'2px',marginBottom:10,paddingLeft:4}}>Navigation</div>
             {navItems.map(n => {
               const on = activeTab === n.id;
               const color = TONES[n.tone][0];
@@ -465,7 +465,7 @@ export default function SFDAObserverPortal({ user, token, onLogout }) {
         </div>
 
         {/* ── Main content ── */}
-        <div style={{flex:1,overflowY:'auto',background:'#0B1535'}}>
+        <div key={activeTab} style={{flex:1,overflowY:'auto',background:'#0B1535'}}>
 
           {/* Overview Tab */}
           {activeTab === 'overview' && (
@@ -492,9 +492,9 @@ export default function SFDAObserverPortal({ user, token, onLogout }) {
                 <div style={S.card}>
                   <div style={S.cardTitle}>Clearance Status Distribution</div>
                   <div style={S.cardSub}>Cleared vs in progress vs non-conforming</div>
-                  <ResponsiveContainer width="100%" height={180}>
+                  <ResponsiveContainer width="100%" height={220}>
                     <PieChart>
-                      <Pie data={stateData} cx="50%" cy="50%" outerRadius={70} stroke="#0B1535"
+                      <Pie data={stateData} cx="50%" cy="50%" outerRadius={64} stroke="#0B1535"
                         dataKey="value" label={({name, value}) => `${name}: ${value}`}>
                         {stateData.map((entry, i) => (
                           <Cell key={i} fill={PIE_COLOR[entry.color] || entry.color} />
@@ -507,10 +507,10 @@ export default function SFDAObserverPortal({ user, token, onLogout }) {
                 <div style={S.card}>
                   <div style={S.cardTitle}>Shipments by Port</div>
                   <div style={S.cardSub}>Entry points across the Kingdom</div>
-                  <ResponsiveContainer width="100%" height={180}>
-                    <BarChart data={portData} margin={{bottom: 20}}>
+                  <ResponsiveContainer width="100%" height={220}>
+                    <BarChart data={portData} margin={{top: 8, right: 16, left: 0, bottom: 8}}>
                       <CartesianGrid strokeDasharray="3 3" stroke={CHART.grid} />
-                      <XAxis dataKey="name" tick={CHART.tick} angle={-20} textAnchor="end" stroke={CHART.grid} />
+                      <XAxis dataKey="name" tick={CHART.tick} angle={-25} textAnchor="end" height={64} interval={0} stroke={CHART.grid} />
                       <YAxis tick={CHART.tick} allowDecimals={false} stroke={CHART.grid} />
                       <Tooltip {...CHART.tooltip} />
                       <Bar dataKey="value" fill="#38C6FF" radius={[4,4,0,0]} />
@@ -729,7 +729,7 @@ export default function SFDAObserverPortal({ user, token, onLogout }) {
                           <td style={td}><span style={{fontSize:11,color:'rgba(255,255,255,.4)'}}>{s.port_of_entry}</span></td>
                           <td style={td}><span style={{fontSize:11,color:'rgba(255,255,255,.4)'}}>{s.lab_name || '—'}</span></td>
                           <td style={td}>{badge(s.current_state)}</td>
-                          <td style={td}><span style={{fontSize:11,color:'rgba(255,255,255,.35)'}}>{formatDate(s.updated_at)}</span></td>
+                          <td style={td}><span style={{fontSize:11,color:'rgba(255,255,255,.35)',whiteSpace:'nowrap'}}>{formatDate(s.updated_at)}</span></td>
                           <td style={td}>
                             <button onClick={() => setSelectedShipment(s)}
                               style={smallBtn('cyan')}>

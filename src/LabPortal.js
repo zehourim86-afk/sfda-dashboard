@@ -107,7 +107,7 @@ function Donut({data,size=130}) {
             strokeDasharray={`${dash} ${gap}`} transform={`rotate(${rot} ${cx} ${cy})`}/>;
         })}
         <text x={cx} y={cy-5} textAnchor="middle" fontSize={20} fontWeight={900} fill="#fff">{total}</text>
-        <text x={cx} y={cy+12} textAnchor="middle" fontSize={9} fill="rgba(255,255,255,.3)" fontFamily="Inter">TOTAL</text>
+        <text x={cx} y={cy+12} textAnchor="middle" fontSize={9} fill="rgba(255,255,255,.3)" fontFamily="Inter, sans-serif">TOTAL</text>
       </svg>
       <div style={{display:'flex',flexDirection:'column',gap:7}}>
         {data.filter(d=>d.value>0).map((d,i)=>(
@@ -569,7 +569,7 @@ export default function LabPortal({user:initUser,token,onLogout}) {
 
       {/* ── Topbar ── */}
       <div style={{height:58,background:'#091230',borderBottom:'1px solid rgba(0,170,255,.1)',display:'flex',alignItems:'center',padding:'0 24px',gap:14,flexShrink:0,zIndex:10}}>
-        <img src="/demara-logo.png" alt="DEMARA" style={{height:34,objectFit:'contain'}}/>
+        <div style={{width:78,height:44,borderRadius:8,overflow:'hidden',position:'relative',flexShrink:0,background:'#2E2C70',boxShadow:'0 0 0 1px rgba(56,198,255,.15)'}}><img src="/demara-logo.png" alt="DEMARA" style={{position:'absolute',width:'300%',height:'300%',left:'-100%',top:'-100%'}}/></div>
         <div style={{width:1,height:28,background:'rgba(255,255,255,.08)'}}></div>
         <div>
           <div style={{fontSize:14,fontWeight:800,color:'#fff',letterSpacing:'-.3px'}}>DEMARA Platform</div>
@@ -597,7 +597,7 @@ export default function LabPortal({user:initUser,token,onLogout}) {
         <div style={{width:220,background:'#0D1940',borderRight:'1px solid rgba(0,170,255,.08)',display:'flex',flexDirection:'column',flexShrink:0,overflowY:'auto'}}>
           {/* KPI section */}
           <div style={{padding:'16px 14px',borderBottom:'1px solid rgba(0,170,255,.06)'}}>
-            <div style={{fontSize:9,fontWeight:700,color:'rgba(255,255,255,.2)',textTransform:'uppercase',letterSpacing:'2px',marginBottom:12}}>Overview</div>
+            <div style={{fontSize:9,fontWeight:700,color:'rgba(255,255,255,.4)',textTransform:'uppercase',letterSpacing:'2px',marginBottom:12}}>Overview</div>
             <div style={{display:'flex',flexDirection:'column',gap:6}}>
               {kpis.map((k,i)=>(
                 <div key={i} style={{display:'flex',alignItems:'center',gap:10,padding:'8px 10px',borderRadius:9,background:'rgba(255,255,255,.03)',border:'1px solid rgba(255,255,255,.05)'}}>
@@ -611,7 +611,7 @@ export default function LabPortal({user:initUser,token,onLogout}) {
 
           {/* Nav */}
           <div style={{padding:'12px 10px',flex:1}}>
-            <div style={{fontSize:9,fontWeight:700,color:'rgba(255,255,255,.2)',textTransform:'uppercase',letterSpacing:'2px',marginBottom:10,paddingLeft:4}}>Navigation</div>
+            <div style={{fontSize:9,fontWeight:700,color:'rgba(255,255,255,.4)',textTransform:'uppercase',letterSpacing:'2px',marginBottom:10,paddingLeft:4}}>Navigation</div>
             {navItems.map(n=>(
               <button key={n.id} onClick={()=>setTab(n.id)} style={{width:'100%',display:'flex',alignItems:'center',gap:10,padding:'9px 12px',borderRadius:9,cursor:'pointer',marginBottom:3,fontFamily:'inherit',fontSize:12,fontWeight:tab===n.id?700:500,background:tab===n.id?`rgba(${n.color==='#38C6FF'?'0,170,255':n.color==='#FF5470'?'255,84,112':n.color==='#00C896'?'0,200,150':n.color==='#a78bfa'?'124,92,252':'255,255,255'},.12)`:'transparent',color:tab===n.id?n.color:'rgba(255,255,255,.45)',border:tab===n.id?`1px solid ${n.color}33`:'1px solid transparent',transition:'all .15s',textAlign:'left'}}>
                 <span style={{fontSize:15}}>{n.icon}</span>
@@ -628,7 +628,7 @@ export default function LabPortal({user:initUser,token,onLogout}) {
         </div>
 
         {/* ── Main content ── */}
-        <div style={{flex:1,overflowY:'auto',background:'#0B1535'}}>
+        <div key={tab} style={{flex:1,overflowY:'auto',background:'#0B1535'}}>
 
           {/* Alert cards */}
           {(awaiting.length>0||inAnalysis.length>0)&&tab!=='analytics'&&(

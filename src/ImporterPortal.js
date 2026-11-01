@@ -2089,7 +2089,7 @@ export default function ImporterPortal({ user: initialUser, token, onLogout }) {
     const kpiCard = (ico, on) => ({...S.card,padding:'16px 18px',position:'relative',overflow:'hidden',cursor:'pointer',transition:'all .15s',
       border:`1px solid ${on ? '#38C6FF' : 'rgba(0,170,255,.1)'}`,boxShadow: on ? '0 0 0 3px rgba(56,198,255,.15)' : 'none',
       backgroundImage:`linear-gradient(90deg,${TONES[KPI_TONE[ico]][0]},transparent)`,backgroundSize:'100% 2px',backgroundRepeat:'no-repeat'});
-    const navSection = {fontSize:9,fontWeight:700,color:'rgba(255,255,255,.2)',textTransform:'uppercase',letterSpacing:'2px',margin:'14px 0 8px',paddingLeft:4};
+    const navSection = {fontSize:9,fontWeight:700,color:'rgba(255,255,255,.4)',textTransform:'uppercase',letterSpacing:'2px',margin:'14px 0 8px',paddingLeft:4};
     const navItem = (on, tone = 'cyan') => ({width:'100%',display:'flex',alignItems:'center',gap:10,padding:'9px 12px',borderRadius:9,cursor:'pointer',marginBottom:3,fontFamily:'inherit',fontSize:12,textAlign:'left',transition:'all .15s',
       fontWeight:on ? 700 : 500,background:on ? tint(tone,.12) : 'transparent',color:on ? TONES[tone][0] : 'rgba(255,255,255,.5)',border:on ? `1px solid ${tint(tone,.3)}` : '1px solid transparent'});
     const navBadge = (tone) => ({fontSize:10,fontWeight:700,background:tint(tone,.18),color:TONES[tone][0],padding:'1px 7px',borderRadius:10});
@@ -2118,7 +2118,7 @@ export default function ImporterPortal({ user: initialUser, token, onLogout }) {
 
       {/* ── Topbar ── */}
       <div style={{height:58,background:'#091230',borderBottom:'1px solid rgba(0,170,255,.1)',display:'flex',alignItems:'center',padding:'0 24px',gap:14,flexShrink:0,zIndex:10}}>
-        <img src="/demara-logo.png" alt="DEMARA" style={{height:34,objectFit:'contain'}}/>
+        <div style={{width:78,height:44,borderRadius:8,overflow:'hidden',position:'relative',flexShrink:0,background:'#2E2C70',boxShadow:'0 0 0 1px rgba(56,198,255,.15)'}}><img src="/demara-logo.png" alt="DEMARA" style={{position:'absolute',width:'300%',height:'300%',left:'-100%',top:'-100%'}}/></div>
         <div style={{width:1,height:28,background:'rgba(255,255,255,.08)'}}></div>
         <div>
           <div style={{fontSize:14,fontWeight:800,color:'#fff',letterSpacing:'-.3px'}}>DEMARA Platform</div>
@@ -2192,7 +2192,7 @@ export default function ImporterPortal({ user: initialUser, token, onLogout }) {
         </div>
 
         {/* ── Main content ── */}
-        <div style={{flex:1,overflowY:'auto',background:'#0B1535',padding:'20px 24px'}}>
+        <div key={activeTab} style={{flex:1,overflowY:'auto',background:'#0B1535',padding:'20px 24px'}}>
 
           {/* Load error (set by fetchData) */}
           {error && (
@@ -2306,7 +2306,7 @@ export default function ImporterPortal({ user: initialUser, token, onLogout }) {
                     <path d="M0,130 C70,115 140,120 210,90 C280,105 350,75 420,55 C490,45 530,38 560,32" fill="none" stroke="#00C896" strokeWidth="1.5" strokeDasharray="5,3"/>
                     <path d="M0,152 C70,150 140,151 210,148 C280,150 350,147 420,145 C490,143 530,142 560,140" fill="none" stroke="#FF5470" strokeWidth="1.5" strokeDasharray="5,3"/>
                     {['Aug 1','Aug 8','Aug 15','Aug 22','Sep 1'].map((label, i) => (
-                      <text key={label} x={i * 140} y="158" fill="rgba(255,255,255,0.35)" fontSize="8" fontFamily="Inter">{label}</text>
+                      <text key={label} x={i * 140} y="158" fill="rgba(255,255,255,0.35)" fontSize="8" fontFamily="Inter, sans-serif">{label}</text>
                     ))}
                   </svg>
                   <div style={{display:'flex',gap:'14px',marginTop:'10px',flexWrap:'wrap'}}>
@@ -2335,8 +2335,8 @@ export default function ImporterPortal({ user: initialUser, token, onLogout }) {
                         <circle cx="45" cy="45" r="30" fill="none" stroke="#FF5470" strokeWidth="12"
                           strokeDasharray={`${(nonConformingCount/Math.max(shipments.length,1)*100)*1.885} 188.5`}
                           strokeDashoffset={`${-(conformityRate*1.885)+47}`} strokeLinecap="round"/>
-                        <text x="45" y="41" textAnchor="middle" fill="#fff" fontSize="13" fontWeight="800" fontFamily="Inter">{conformityRate}%</text>
-                        <text x="45" y="52" textAnchor="middle" fill="rgba(255,255,255,0.4)" fontSize="6" fontFamily="Inter">Conformity</text>
+                        <text x="45" y="41" textAnchor="middle" fill="#fff" fontSize="13" fontWeight="800" fontFamily="Inter, sans-serif">{conformityRate}%</text>
+                        <text x="45" y="52" textAnchor="middle" fill="rgba(255,255,255,0.4)" fontSize="6" fontFamily="Inter, sans-serif">Conformity</text>
                       </svg>
                       <div style={{flex:1,display:'flex',flexDirection:'column',gap:'7px'}}>
                         {[
