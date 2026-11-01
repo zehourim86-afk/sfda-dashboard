@@ -80,48 +80,60 @@ export default function NotificationBell({ token }) {
   };
 
   return (
-    <div className="relative" ref={dropdownRef}>
-      <button onClick={handleOpen}
-        className="relative p-2 rounded-lg bg-white bg-opacity-10 hover:bg-opacity-20 transition-colors">
-        <span className="text-white text-lg">🔔</span>
+    <div style={{position:'relative',fontFamily:'Inter,sans-serif'}} ref={dropdownRef}>
+      {/* Hover states can't be inline styles; scoped to the nb- class names */}
+      <style>{`
+        .nb-bell:hover{background:rgba(255,255,255,.1)!important}
+        .nb-item{transition:background .15s}
+        .nb-item:hover{background:rgba(56,198,255,.05)}
+        .nb-item.nb-unread{background:rgba(56,198,255,.08)}
+        .nb-close:hover{color:#fff!important}
+      `}</style>
+      <button onClick={handleOpen} className="nb-bell"
+        style={{position:'relative',width:38,height:38,borderRadius:9,background:'rgba(255,255,255,.05)',border:'1px solid rgba(255,255,255,.1)',
+          display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',transition:'background .15s',padding:0}}>
+        <span style={{fontSize:17,lineHeight:1}}>🔔</span>
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold">
+          <span style={{position:'absolute',top:-6,right:-6,minWidth:18,height:18,padding:'0 4px',borderRadius:9,background:'#FF5470',color:'#fff',
+            fontSize:10,fontWeight:800,display:'flex',alignItems:'center',justifyContent:'center',border:'2px solid #091230'}}>
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}
       </button>
 
       {open && (
-        <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 overflow-hidden">
-          <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between"
-            style={{background: 'linear-gradient(135deg, #2D2B7A, #1a1854)'}}>
-            <p className="text-white text-sm font-semibold">Notifications</p>
-            <span className="text-xs text-blue-300">{notifications.length} recent</span>
+        <div style={{position:'absolute',right:0,marginTop:8,width:320,background:'#0D1940',border:'1px solid rgba(56,198,255,0.12)',borderRadius:12,
+          boxShadow:'0 20px 60px rgba(0,0,0,.6)',zIndex:50,overflow:'hidden'}}>
+          <div style={{padding:'12px 16px',background:'#091230',borderBottom:'1px solid rgba(56,198,255,0.12)',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+            <div style={{fontSize:13,fontWeight:700,color:'#fff'}}>Notifications</div>
+            <span style={{fontSize:11,color:'#38C6FF'}}>{notifications.length} recent</span>
           </div>
 
           {notifications.length === 0 ? (
-            <div className="py-8 text-center text-gray-400 text-sm">
+            <div style={{padding:'32px 0',textAlign:'center',fontSize:13,color:'rgba(255,255,255,0.4)'}}>
               No notifications yet
             </div>
           ) : (
-            <div className="max-h-80 overflow-y-auto divide-y divide-gray-50">
+            <div style={{maxHeight:320,overflowY:'auto'}}>
               {notifications.map(n => {
                 const isUnread = new Date(n.created_at) > new Date(lastSeen);
                 return (
-                  <div key={n.id} className={`px-4 py-3 hover:bg-gray-50 transition-colors ${isUnread ? 'bg-blue-50' : ''}`}>
-                    <div className="flex items-start gap-3">
-                      <span className="text-lg flex-shrink-0">
+                  <div key={n.id} className={`nb-item${isUnread ? ' nb-unread' : ''}`}
+                    style={{padding:'12px 16px',borderBottom:'1px solid rgba(255,255,255,0.04)'}}>
+                    <div style={{display:'flex',alignItems:'flex-start',gap:12}}>
+                      <span style={{fontSize:17,flexShrink:0,lineHeight:1.2}}>
                         {STATE_ICONS[n.notification_type] || '📌'}
                       </span>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-semibold text-gray-900 truncate">
+                      <div style={{flex:1,minWidth:0}}>
+                        <div style={{fontSize:12,fontWeight:700,color:'#fff',fontFamily:'JetBrains Mono,monospace',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>
                           {n.faseh_request_number || 'DEMARA Notification'}
-                        </p>
-                        <p className="text-xs text-gray-600 mt-0.5 line-clamp-2">{n.subject}</p>
-                        <p className="text-xs text-gray-400 mt-1">{formatDate(n.created_at)}</p>
+                        </div>
+                        <div style={{fontSize:12,color:'rgba(255,255,255,0.65)',marginTop:2,lineHeight:1.45,
+                          display:'-webkit-box',WebkitLineClamp:2,WebkitBoxOrient:'vertical',overflow:'hidden'}}>{n.subject}</div>
+                        <div style={{fontSize:11,color:'rgba(255,255,255,0.35)',marginTop:4}}>{formatDate(n.created_at)}</div>
                       </div>
                       {isUnread && (
-                        <span className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-1"></span>
+                        <span style={{width:8,height:8,borderRadius:'50%',background:'#38C6FF',flexShrink:0,marginTop:4,boxShadow:'0 0 6px rgba(56,198,255,.6)'}}></span>
                       )}
                     </div>
                   </div>
@@ -130,9 +142,9 @@ export default function NotificationBell({ token }) {
             </div>
           )}
 
-          <div className="px-4 py-2 border-t border-gray-100 text-center">
-            <button onClick={() => setOpen(false)}
-              className="text-xs text-gray-400 hover:text-gray-600">
+          <div style={{padding:'8px 16px',borderTop:'1px solid rgba(56,198,255,0.12)',textAlign:'center'}}>
+            <button onClick={() => setOpen(false)} className="nb-close"
+              style={{background:'none',border:'none',fontSize:12,color:'rgba(255,255,255,0.45)',cursor:'pointer',fontFamily:'inherit',transition:'color .15s'}}>
               Close
             </button>
           </div>
