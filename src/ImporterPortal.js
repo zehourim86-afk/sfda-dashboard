@@ -5,12 +5,6 @@ import OrgAdminPanel from './OrgAdminPanel';
 import DocumentReadiness from './DocumentReadiness';
 import AIAssistant from './AIAssistant';
 import PreShipmentCheck from './PreShipmentCheck';
-import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell
-} from 'recharts';
-
-const CHART_COLORS = ['#2D2B7A', '#00B4D8', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
 
 // ── Dark theme ───────────────────────────────────────────────────
 // Each tone: [text colour, rgb triplet for tinted backgrounds and borders]
@@ -2199,6 +2193,16 @@ export default function ImporterPortal({ user: initialUser, token, onLogout }) {
 
         {/* ── Main content ── */}
         <div style={{flex:1,overflowY:'auto',background:'#0B1535',padding:'20px 24px'}}>
+
+          {/* Load error (set by fetchData) */}
+          {error && (
+            <div role="alert" style={{display:'flex',alignItems:'center',gap:12,background:'rgba(255,84,112,0.1)',border:'1px solid rgba(255,84,112,0.3)',borderRadius:10,padding:'12px 16px',marginBottom:16}}>
+              <span style={{fontSize:15,flexShrink:0}}>⚠️</span>
+              <span style={{flex:1,fontSize:13,fontWeight:600,color:'#FF5470'}}>Unable to load shipments. Please refresh or contact support.</span>
+              <button onClick={() => setError(null)} aria-label="Dismiss"
+                style={{width:26,height:26,borderRadius:7,background:'transparent',border:'1px solid rgba(255,84,112,0.3)',color:'#FF5470',fontSize:16,lineHeight:1,cursor:'pointer',fontFamily:'inherit',flexShrink:0}}>×</button>
+            </div>
+          )}
 
           {/* AI Assistant */}
           {activeTab === 'assistant' && (
