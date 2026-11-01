@@ -165,11 +165,11 @@ export default function Login({ onLogin }) {
           <img src="/demara-logo-transparent.png" alt="DEMARA" style={{height:'72px', width:'auto', display:'block', objectFit:'contain', margin:'0 auto 20px'}} />
           <div style={{display:'inline-block',fontSize:11,fontWeight:800,letterSpacing:'5px',color:'#38C6FF',textTransform:'uppercase',padding:'4px 12px',border:'1px solid rgba(56,198,255,.3)',borderRadius:20,background:'rgba(56,198,255,.08)',marginBottom:12}}>MASAAR</div>
           <h1 style={{margin:0,fontSize:30,fontWeight:900,letterSpacing:'-.6px',color:'#fff'}}>DEMARA Masaar</h1>
-          <p style={{margin:'8px 0 0',fontSize:13,color:'rgba(255,255,255,.55)'}}>Drug Import Traceability Platform · Powered by DEMARA</p>
+          <p style={{margin:'8px 0 0',fontSize:13,color:'rgba(255,255,255,.55)'}}>Food &amp; Cosmetic Import Clearance Platform · Powered by DEMARA</p>
         </div>
 
         {/* Card */}
-        <div style={{background:'#332E8A',border:'1px solid rgba(56,198,255,.15)',borderRadius:18,boxShadow:'0 30px 80px rgba(0,0,0,.55)',overflow:'hidden'}}>
+        <div style={{background:'rgba(255,255,255,0.06)',border:'1px solid rgba(56,198,255,.15)',borderRadius:18,boxShadow:'0 30px 80px rgba(0,0,0,.55)',overflow:'hidden'}}>
 
           {/* Tabs */}
           <div style={{display:'flex',background:'#1E1A5E',borderBottom:'1px solid rgba(56,198,255,0.2)'}}>
@@ -230,7 +230,7 @@ export default function Login({ onLogin }) {
                 <button
                   type="submit"
                   disabled={loading}
-                  style={{...primaryBtn,marginTop:4,opacity: loading ? .5 : 1}}
+                  style={{...primaryBtn,background:'#38C6FF',color:'#0B1535',fontWeight:800,marginTop:4,opacity: loading ? .5 : 1}}
                 >
                   {loading ? 'Signing in...' : 'Sign In'}
                 </button>
