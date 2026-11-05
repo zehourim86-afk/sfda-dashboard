@@ -38,7 +38,7 @@ export default function MahIntelligence({ suppliers }) {
     <div className="mah-page">
       <div className="mah-page-head">
         <div>
-          <h1>My Insights</h1>
+          <h1>My Performance</h1>
           <p className="mah-muted">How your imports perform, and how the Saudi market behaves</p>
         </div>
       </div>

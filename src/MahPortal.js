@@ -10,6 +10,7 @@ import MahProducts from './MahProducts';
 import MahSuppliers from './MahSuppliers';
 import MahNetwork from './MahNetwork';
 import MahIntelligence from './MahIntelligence';
+import MahMarketIntelligence from './MahMarketIntelligence';
 import MahSettings from './MahSettings';
 
 const NAV = [
@@ -18,7 +19,8 @@ const NAV = [
   { page: 'products', label: 'Products & Registrations', icon: 'flask' },
   { page: 'suppliers', label: 'Suppliers', icon: 'factory' },
   { page: 'network', label: 'Network & Accounts', icon: 'link' },
-  { page: 'intelligence', label: 'My Insights', icon: 'star' },
+  { page: 'intelligence', label: 'My Performance', icon: 'star' },
+  { page: 'market-intelligence', label: 'Market Intelligence', icon: 'globe' },
   { page: 'settings', label: 'Settings', icon: 'gear' },
 ];
 
@@ -29,7 +31,8 @@ const PAGE_TITLES = {
   products: 'Products & Registrations',
   suppliers: 'Suppliers',
   network: 'Network & Accounts',
-  intelligence: 'My Insights',
+  intelligence: 'My Performance',
+  'market-intelligence': 'Market Intelligence',
   settings: 'Settings',
 };
 
@@ -117,6 +120,7 @@ export default function MahPortal({ user, token: tokenProp, onLogout }) {
       case 'suppliers': return <MahSuppliers {...shared} />;
       case 'network': return <MahNetwork {...shared} />;
       case 'intelligence': return <MahIntelligence {...shared} />;
+      case 'market-intelligence': return <MahMarketIntelligence {...shared} />;
       case 'settings': return <MahSettings {...shared} org={myOrg} />;
       default: return <MahOverview {...shared} />;
     }
