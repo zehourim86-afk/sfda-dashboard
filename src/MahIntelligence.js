@@ -1,4 +1,4 @@
-// MAH portal — My Insights. Performance and market figures are demo data for now;
+// MAH portal — My Performance. Performance figures are demo data for now;
 // supplier health rings use real compliance scores.
 import { useState } from 'react';
 import { Tabs, Ring, BarList, DemoBanner, Empty, scoreTone } from './mahShared';
@@ -14,23 +14,6 @@ const REJECTION_CAUSES = [
   { label: 'Registration mismatch', value: 2 },
   { label: 'Lab non-conformity', value: 1 },
 ];
-const MARKET_REJECTIONS = [
-  { label: 'Labelling non-compliance', value: 31, display: '31%' },
-  { label: 'Unregistered product', value: 22, display: '22%' },
-  { label: 'Lab result failure', value: 18, display: '18%' },
-  { label: 'Missing certificates', value: 16, display: '16%' },
-  { label: 'Expired shelf life', value: 13, display: '13%' },
-];
-const DWELL = [
-  { label: 'Food', value: 4.2, display: '4.2 d', tone: 'green' },
-  { label: 'Cosmetics', value: 6.8, display: '6.8 d', tone: 'amber' },
-  { label: 'Food Supplement', value: 8.1, display: '8.1 d', tone: 'red' },
-];
-const COUNTRIES = [
-  { name: 'China', share: '18%' }, { name: 'United States', share: '12%' }, { name: 'Germany', share: '9%' },
-  { name: 'India', share: '8%' }, { name: 'UAE', share: '7%' }, { name: 'France', share: '6%' },
-  { name: 'Italy', share: '5%' }, { name: 'South Korea', share: '4%' },
-];
 
 export default function MahIntelligence({ suppliers }) {
   const [tab, setTab] = useState('performance');
@@ -39,17 +22,15 @@ export default function MahIntelligence({ suppliers }) {
       <div className="mah-page-head">
         <div>
           <h1>My Performance</h1>
-          <p className="mah-muted">How your imports perform, and how the Saudi market behaves</p>
+          <p className="mah-muted">How your imports and suppliers perform</p>
         </div>
       </div>
       <Tabs active={tab} onChange={setTab} tabs={[
         { key: 'performance', label: 'My Performance' },
         { key: 'suppliers', label: 'My Suppliers' },
-        { key: 'market', label: 'Saudi Market' },
       ]} />
       {tab === 'performance' && <Performance />}
       {tab === 'suppliers' && <SupplierHealth suppliers={suppliers} />}
-      {tab === 'market' && <Market />}
     </div>
   );
 }
@@ -127,36 +108,6 @@ function SupplierHealth({ suppliers }) {
             : 'Your suppliers are in good shape. '}
           Pre-checked documents cut first-submission rejections by roughly a third.
         </p>
-      </section>
-    </div>
-  );
-}
-
-function Market() {
-  return (
-    <div className="mah-stack">
-      <DemoBanner>Saudi market figures are illustrative sample data, not official SFDA statistics</DemoBanner>
-      <div className="mah-card-grid">
-        <section className="mah-card">
-          <div className="mah-card-head"><h2>Top rejection reasons</h2></div>
-          <BarList items={MARKET_REJECTIONS} tone="red" />
-        </section>
-        <section className="mah-card">
-          <div className="mah-card-head"><h2>Faseh dwell time by sector</h2></div>
-          <BarList items={DWELL} />
-        </section>
-      </div>
-      <section className="mah-card">
-        <div className="mah-card-head"><h2>Top import countries</h2></div>
-        <div className="mah-country-grid">
-          {COUNTRIES.map((c, i) => (
-            <div key={c.name} className="mah-country">
-              <span className="mah-country-rank">{i + 1}</span>
-              <span className="mah-grow">{c.name}</span>
-              <strong>{c.share}</strong>
-            </div>
-          ))}
-        </div>
       </section>
     </div>
   );
