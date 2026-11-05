@@ -4,7 +4,7 @@ import Dashboard from './Dashboard';
 import LabPortal from './LabPortal';
 import ShippingPortal from './ShippingPortal';
 import BillingModule from './BillingModule';
-import ImporterPortal from './ImporterPortal';
+import MahPortal from './MahPortal';
 import AdminPanel from './AdminPanel';
 import NotifiedBodyPortal from './NotifiedBodyPortal';
 import GMPPortal from './GMPPortal';
@@ -98,7 +98,7 @@ function App() {
       case 'SHIPPING_COMPANY':
         return <ShippingPortal user={user} token={token} onLogout={handleLogout} />;
       case 'IMPORTER':
-        return <ImporterPortal user={user} token={token} onLogout={handleLogout} />;
+        return <MahPortal user={user} token={token} onLogout={handleLogout} />;
       case 'NOTIFIED_BODY':
         return <NotifiedBodyPortal user={user} token={token} onLogout={handleLogout} />;
       case 'GMP_AUDITOR':
