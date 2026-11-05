@@ -128,13 +128,16 @@ export default function MahPortal({ user, token: tokenProp, onLogout }) {
   return (
     <div className={`mah-app${sidebarCollapsed ? ' is-collapsed' : ''}`}>
       <header className="mah-topbar">
-        <div className="mah-logo-area">
+        {/* The logo doubles as the sidebar collapse/expand toggle */}
+        <button className="mah-logo-area" onClick={() => setSidebarCollapsed(c => !c)}
+          title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'} aria-expanded={!sidebarCollapsed}>
           {sidebarCollapsed ? (
             <span className="mah-logo-mark"><img src="/demara-logo-transparent.png" alt="DEMARA" /></span>
           ) : (
-            <img src="/demara-logo-transparent.png" alt="DEMARA" style={{ height: '32px', width: 'auto' }} />
+            <img src="/demara-logo-transparent.png" alt="DEMARA" style={{ height: '40px', width: 'auto' }} />
           )}
-        </div>
+        </button>
         {!sidebarCollapsed && <span className="mah-portal-label">MAH Portal</span>}
         <div className="mah-topbar-title"><strong>{PAGE_TITLES[currentPage]}</strong></div>
         <div className="mah-topbar-right">
@@ -162,11 +165,6 @@ export default function MahPortal({ user, token: tokenProp, onLogout }) {
               </button>
             ))}
           </nav>
-          <button className="mah-collapse-btn" onClick={() => setSidebarCollapsed(c => !c)}
-            aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}>
-            <Icon name={sidebarCollapsed ? 'forward' : 'back'} size={16} />
-          </button>
           <div className="mah-sidebar-foot">
             <div className="mah-sidebar-org">{myOrg?.name_en || 'MAH account'}</div>
             <div className="mah-sidebar-role">Marketing Authorisation Holder</div>

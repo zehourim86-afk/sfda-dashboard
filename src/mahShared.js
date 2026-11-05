@@ -288,7 +288,6 @@ const ICON_PATHS = {
   plus: 'M12 5v14M5 12h14',
   logout: 'M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9',
   back: 'M15 18l-6-6 6-6',
-  forward: 'M9 18l6-6-6-6',
   check: 'M5 12l5 5L20 7',
   upload: 'M12 16V4M7 9l5-5 5 5M4 20h16',
   snow: 'M12 2v20M4.9 4.9l14.2 14.2M2 12h20M4.9 19.1L19.1 4.9',

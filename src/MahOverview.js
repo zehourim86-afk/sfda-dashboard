@@ -1,4 +1,5 @@
 // MAH portal — Overview: pipeline, action items, in-progress list, live metrics.
+import { useState } from 'react';
 import {
   PIPELINE, ACTION_STATES, stateOf, needsAction, isInProgress, StateBadge, SectorBadge,
   shipmentName, shipmentRef, shipmentSector, objectionDeadline, daysUntil, fmtDate, timeAgo,
@@ -9,10 +10,33 @@ import {
 const FIRST_TIME_RIGHT_PCT = 78;
 const AVG_CYCLE_DAYS = 18;
 
+const ACTIONS_PER_PAGE = 5;
+const ACTION_FILTERS = [
+  { key: 'all', label: 'All', states: null },
+  { key: 'rejected', label: 'Rejected', states: ['SFDA_REJECTED'] },
+  // Everything blocked on the MAH's own work: validation issues, drafts, SFDA info requests
+  { key: 'fix', label: 'Fix needed', states: ['PREPARING', 'DRAFT', 'SFDA_INFO_REQUESTED'] },
+  { key: 'ready', label: 'Ready', states: ['READY_TO_SUBMIT'] },
+];
+
 export default function MahOverview({ shipments, products, productsById, openShipment, navigate, onNewShipment }) {
+  const [actionSearch, setActionSearch] = useState('');
+  const [actionFilter, setActionFilter] = useState('all');
+  const [actionPage, setActionPage] = useState(1);
+
   const counts = PIPELINE.map(col => ({ ...col, count: shipments.filter(s => col.states.includes(stateOf(s))).length }));
   const actions = shipments.filter(needsAction)
     .sort((a, b) => Object.keys(ACTION_STATES).indexOf(stateOf(a)) - Object.keys(ACTION_STATES).indexOf(stateOf(b)));
+  const q = actionSearch.trim().toLowerCase();
+  const filterStates = ACTION_FILTERS.find(f => f.key === actionFilter).states;
+  const filteredActions = actions
+    .filter(s => !filterStates || filterStates.includes(stateOf(s)))
+    .filter(s => !q || shipmentName(s, productsById).toLowerCase().includes(q) || (s.masaar_id || '').toLowerCase().includes(q));
+  const pageCount = Math.max(1, Math.ceil(filteredActions.length / ACTIONS_PER_PAGE));
+  const page = Math.min(actionPage, pageCount);
+  const pageStart = (page - 1) * ACTIONS_PER_PAGE;
+  const visibleActions = filteredActions.slice(pageStart, pageStart + ACTIONS_PER_PAGE);
+
   const inProgress = shipments.filter(isInProgress)
     .sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
 
@@ -57,9 +81,25 @@ export default function MahOverview({ shipments, products, productsById, openShi
               <h2>Action items</h2>
               <span className="mah-count-pill mah-tone-red">{actions.length}</span>
             </div>
+            {actions.length > 0 && (
+              <div className="mah-action-tools">
+                <input className="mah-action-search" placeholder="Search by shipment name or ID..." value={actionSearch}
+                  onChange={e => { setActionSearch(e.target.value); setActionPage(1); }} aria-label="Search action items" />
+                <div className="mah-action-chips">
+                  {ACTION_FILTERS.map(f => (
+                    <button key={f.key} className={`mah-action-chip${actionFilter === f.key ? ' is-active' : ''}`}
+                      onClick={() => { setActionFilter(f.key); setActionPage(1); }} aria-pressed={actionFilter === f.key}>
+                      {f.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
             {actions.length === 0
               ? <Empty title="Nothing needs your action">New shipments and SFDA decisions will appear here.</Empty>
-              : actions.map(s => {
+              : filteredActions.length === 0
+                ? <Empty title="No action items match">Try a different search or filter.</Empty>
+                : visibleActions.map(s => {
                 const a = ACTION_STATES[stateOf(s)];
                 const deadline = stateOf(s) === 'SFDA_REJECTED' ? objectionDeadline(s) : null;
                 return (
@@ -76,6 +116,15 @@ export default function MahOverview({ shipments, products, productsById, openShi
                   </div>
                 );
               })}
+            {filteredActions.length > 0 && (
+              <div className="mah-pager">
+                <span>Showing {pageStart + 1}–{pageStart + visibleActions.length} of {filteredActions.length}</span>
+                <span className="mah-pager-links">
+                  <button className="mah-link-btn" disabled={page <= 1} onClick={() => setActionPage(page - 1)}>← Previous</button>
+                  <button className="mah-link-btn" disabled={page >= pageCount} onClick={() => setActionPage(page + 1)}>Next →</button>
+                </span>
+              </div>
+            )}
           </section>
 
           <section className="mah-card">
