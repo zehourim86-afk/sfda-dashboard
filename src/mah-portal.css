@@ -19,7 +19,7 @@
   --border: #E2E8F0;
   --radius: 12px;
   --shadow: 0 1px 2px rgba(15, 26, 74, 0.04), 0 1px 3px rgba(15, 26, 74, 0.06);
-  --sidebar-w: 224px;
+  --sidebar-w: 240px;
 
   display: flex;
   flex-direction: column;
@@ -42,7 +42,7 @@
 .mah-app.is-collapsed { --sidebar-w: 56px; }
 .mah-topbar { height: 52px; flex-shrink: 0; background: #fff; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 16px; padding-right: 20px; }
 /* Navy block so the white logo lettering is visible */
-.mah-app .mah-logo-area { width: var(--sidebar-w); height: 100%; flex-shrink: 0; background: var(--navy); display: flex; align-items: center; justify-content: center; overflow: hidden; cursor: pointer; transition: width 0.2s ease, opacity 0.15s; }
+.mah-app .mah-logo-area { width: var(--sidebar-w); height: 100%; flex-shrink: 0; background: var(--navy); display: flex; align-items: center; justify-content: center; overflow: hidden; cursor: pointer; transition: width 0.15s ease, opacity 0.15s; }
 .mah-app .mah-logo-area:hover { opacity: 0.85; }
 .mah-app .mah-logo-area:focus-visible { outline-offset: -3px; }
 /* Collapsed: crop the logo to its "D" mark (x 197-322, y 8-134 of the 520x300 image) */
@@ -63,13 +63,13 @@
 .mah-loading { padding: 40px; text-align: center; color: var(--text-3); }
 
 /* ── Sidebar ─────────────────────────────── */
-.mah-sidebar { width: var(--sidebar-w); flex-shrink: 0; background: var(--navy); color: #C7D0F0; display: flex; flex-direction: column; overflow: hidden; transition: width 0.2s ease; }
+.mah-sidebar { width: var(--sidebar-w); flex-shrink: 0; background: var(--navy); color: #C7D0F0; display: flex; flex-direction: column; overflow: hidden; transition: width 0.15s ease; }
 .mah-nav { padding: 12px 8px; display: flex; flex-direction: column; gap: 2px; flex: 1; overflow-y: auto; overflow-x: hidden; }
-.mah-app .mah-nav-item { display: flex; align-items: center; gap: 11px; padding: 9px 11px; border-radius: 8px; color: #C7D0F0; font-size: 13.5px; font-weight: 500; white-space: nowrap; transition: background 0.15s, color 0.15s; }
+.mah-app .mah-nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 8px; color: #C7D0F0; font-size: 13px; font-weight: 500; white-space: nowrap; transition: background 0.15s, color 0.15s; }
 .mah-app .mah-nav-item svg { flex-shrink: 0; }
 .mah-app .mah-nav-item:hover { background: rgba(255,255,255,0.06); color: #fff; }
 .mah-app .mah-nav-item.is-active { background: var(--navy-2); color: #fff; box-shadow: inset 3px 0 0 var(--blue); }
-.mah-nav-label { flex: 1; overflow: hidden; text-overflow: ellipsis; }
+.mah-nav-label { flex: 1; min-width: 0; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .mah-nav-badge { min-width: 20px; height: 20px; padding: 0 6px; border-radius: 10px; font-size: 11px; font-weight: 700; color: #fff; display: grid; place-items: center; }
 .mah-badge-red { background: var(--red); }
 .mah-badge-blue { background: var(--blue); }

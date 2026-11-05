@@ -42,7 +42,10 @@ export default function MahPortal({ user, token: tokenProp, onLogout }) {
   const [currentShipment, setCurrentShipment] = useState(null);
   const [detailTab, setDetailTab] = useState('timeline');
   const [showNewShipment, setShowNewShipment] = useState(false);
+  // sidebarCollapsed = locked closed (logo click); hovering a collapsed sidebar expands it temporarily
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarHovered, setSidebarHovered] = useState(false);
+  const showCollapsed = sidebarCollapsed && !sidebarHovered;
   // App passes a new onLogout each render; a ref keeps the data-loading effect from re-running
   const logoutRef = useRef(onLogout);
   logoutRef.current = onLogout;
@@ -130,19 +133,19 @@ export default function MahPortal({ user, token: tokenProp, onLogout }) {
   const initials = (user?.full_name || user?.email || '?').split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase();
 
   return (
-    <div className={`mah-app${sidebarCollapsed ? ' is-collapsed' : ''}`}>
+    <div className={`mah-app${showCollapsed ? ' is-collapsed' : ''}`}>
       <header className="mah-topbar">
         {/* The logo doubles as the sidebar collapse/expand toggle */}
         <button className="mah-logo-area" onClick={() => setSidebarCollapsed(c => !c)}
           title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'} aria-expanded={!sidebarCollapsed}>
-          {sidebarCollapsed ? (
+          {showCollapsed ? (
             <span className="mah-logo-mark"><img src="/demara-logo-transparent.png" alt="DEMARA" /></span>
           ) : (
             <img src="/demara-logo-transparent.png" alt="DEMARA" style={{ height: '40px', width: 'auto' }} />
           )}
         </button>
-        {!sidebarCollapsed && <span className="mah-portal-label">MAH Portal</span>}
+        {!showCollapsed && <span className="mah-portal-label">MAH Portal</span>}
         <div className="mah-topbar-title"><strong>{PAGE_TITLES[currentPage]}</strong></div>
         <div className="mah-topbar-right">
           <div className="mah-user-chip">
@@ -156,12 +159,12 @@ export default function MahPortal({ user, token: tokenProp, onLogout }) {
       </header>
 
       <div className="mah-body">
-        <aside className="mah-sidebar">
+        <aside className="mah-sidebar" onMouseEnter={() => setSidebarHovered(true)} onMouseLeave={() => setSidebarHovered(false)}>
           <nav className="mah-nav">
             {NAV.map(item => (
               <button key={item.page} className={`mah-nav-item${activeNav === item.page ? ' is-active' : ''}`}
                 onClick={() => navigate(item.page)} aria-current={activeNav === item.page ? 'page' : undefined}
-                title={sidebarCollapsed ? item.label : undefined}>
+                title={showCollapsed ? item.label : undefined}>
                 <Icon name={item.icon} />
                 <span className="mah-nav-label">{item.label}</span>
                 {item.page === 'overview' && actionCount > 0 && <span className="mah-nav-badge mah-badge-red">{actionCount}</span>}

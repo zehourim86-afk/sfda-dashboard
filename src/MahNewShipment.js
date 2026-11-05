@@ -157,7 +157,7 @@ export default function MahNewShipment({ token, products, suppliers, organisatio
                 </div>
               </div>
               <label className="mah-field">
-                <span>ETA</span>
+                <span>Expected Arrival Date (ETA)</span>
                 <input type="date" className="mah-input" value={info.eta} onChange={setField('eta')} disabled={locked} />
               </label>
               <label className="mah-field">
@@ -252,7 +252,7 @@ export default function MahNewShipment({ token, products, suppliers, organisatio
               <div><span>Supplier</span><strong>{supplier?.name || '—'}</strong></div>
               <div><span>Port of entry</span><strong>{info.port_of_entry}</strong></div>
               <div><span>Transport</span><strong>{TRANSPORT.find(t => t.value === info.transport_mode)?.label}</strong></div>
-              <div><span>ETA</span><strong>{fmtDate(info.eta)}</strong></div>
+              <div><span>Expected Arrival Date (ETA)</span><strong>{fmtDate(info.eta)}</strong></div>
               <div><span>B/L / AWB</span><strong>{info.bl_awb_number || '—'}</strong></div>
               <div><span>Clearance company</span><strong>{broker?.name_en || 'Decide later'}</strong></div>
               <div className="mah-summary-wide">
