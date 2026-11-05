@@ -1,5 +1,5 @@
 // MAH (importer) portal shell: sidebar, topbar and the active page.
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import './mah-portal.css';
 import { apiFetch, Icon, needsAction, isClosed } from './mahShared';
 import MahOverview from './MahOverview';
@@ -39,6 +39,10 @@ export default function MahPortal({ user, token: tokenProp, onLogout }) {
   const [currentShipment, setCurrentShipment] = useState(null);
   const [detailTab, setDetailTab] = useState('timeline');
   const [showNewShipment, setShowNewShipment] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  // App passes a new onLogout each render; a ref keeps the data-loading effect from re-running
+  const logoutRef = useRef(onLogout);
+  logoutRef.current = onLogout;
 
   const [shipments, setShipments] = useState([]);
   const [products, setProducts] = useState([]);
@@ -70,6 +74,10 @@ export default function MahPortal({ user, token: tokenProp, onLogout }) {
       ]);
       if (cancelled) return;
       const failed = results.filter(r => r.status === 'rejected');
+      if (failed.some(r => r.reason?.status === 401)) {
+        logoutRef.current();
+        return;
+      }
       setLoadError(failed.length ? `Some data could not be loaded: ${failed[0].reason.message}` : null);
       setLoading(false);
     })();
@@ -118,52 +126,60 @@ export default function MahPortal({ user, token: tokenProp, onLogout }) {
   const initials = (user?.full_name || user?.email || '?').split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase();
 
   return (
-    <div className="mah-app">
-      <aside className="mah-sidebar">
-        <div className="mah-sidebar-brand">
-          <span className="mah-brand-mark">M</span>
-          <span>MASAAR</span>
+    <div className={`mah-app${sidebarCollapsed ? ' is-collapsed' : ''}`}>
+      <header className="mah-topbar">
+        <div className="mah-logo-area">
+          {sidebarCollapsed ? (
+            <span className="mah-logo-mark"><img src="/demara-logo-transparent.png" alt="DEMARA" /></span>
+          ) : (
+            <img src="/demara-logo-transparent.png" alt="DEMARA" style={{ height: '32px', width: 'auto' }} />
+          )}
         </div>
-        <nav className="mah-nav">
-          {NAV.map(item => (
-            <button key={item.page} className={`mah-nav-item${activeNav === item.page ? ' is-active' : ''}`}
-              onClick={() => navigate(item.page)} aria-current={activeNav === item.page ? 'page' : undefined}>
-              <Icon name={item.icon} />
-              <span className="mah-nav-label">{item.label}</span>
-              {item.page === 'overview' && actionCount > 0 && <span className="mah-nav-badge mah-badge-red">{actionCount}</span>}
-              {item.page === 'shipments' && activeCount > 0 && <span className="mah-nav-badge mah-badge-blue">{activeCount}</span>}
-            </button>
-          ))}
-        </nav>
-        <div className="mah-sidebar-foot">
-          <div className="mah-sidebar-org">{myOrg?.name_en || 'MAH account'}</div>
-          <div className="mah-sidebar-role">Marketing Authorisation Holder</div>
+        {!sidebarCollapsed && <span className="mah-portal-label">MAH Portal</span>}
+        <div className="mah-topbar-title"><strong>{PAGE_TITLES[currentPage]}</strong></div>
+        <div className="mah-topbar-right">
+          <div className="mah-user-chip">
+            <span className="mah-avatar">{initials}</span>
+            <span className="mah-user-name">{user?.full_name || user?.email}</span>
+          </div>
+          <button className="mah-icon-btn" onClick={onLogout} title="Sign out" aria-label="Sign out">
+            <Icon name="logout" />
+          </button>
         </div>
-      </aside>
+      </header>
 
-      <div className="mah-main">
-        <header className="mah-topbar">
-          <img src="/demara-logo-transparent.png" alt="DEMARA" className="mah-logo" />
-          <div className="mah-topbar-title">
-            <strong>{PAGE_TITLES[currentPage]}</strong>
-            <span>MAH Portal</span>
+      <div className="mah-body">
+        <aside className="mah-sidebar">
+          <nav className="mah-nav">
+            {NAV.map(item => (
+              <button key={item.page} className={`mah-nav-item${activeNav === item.page ? ' is-active' : ''}`}
+                onClick={() => navigate(item.page)} aria-current={activeNav === item.page ? 'page' : undefined}
+                title={sidebarCollapsed ? item.label : undefined}>
+                <Icon name={item.icon} />
+                <span className="mah-nav-label">{item.label}</span>
+                {item.page === 'overview' && actionCount > 0 && <span className="mah-nav-badge mah-badge-red">{actionCount}</span>}
+                {item.page === 'shipments' && activeCount > 0 && <span className="mah-nav-badge mah-badge-blue">{activeCount}</span>}
+              </button>
+            ))}
+          </nav>
+          <button className="mah-collapse-btn" onClick={() => setSidebarCollapsed(c => !c)}
+            aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}>
+            <Icon name={sidebarCollapsed ? 'forward' : 'back'} size={16} />
+          </button>
+          <div className="mah-sidebar-foot">
+            <div className="mah-sidebar-org">{myOrg?.name_en || 'MAH account'}</div>
+            <div className="mah-sidebar-role">Marketing Authorisation Holder</div>
           </div>
-          <div className="mah-topbar-right">
-            <div className="mah-user-chip">
-              <span className="mah-avatar">{initials}</span>
-              <span className="mah-user-name">{user?.full_name || user?.email}</span>
-            </div>
-            <button className="mah-icon-btn" onClick={onLogout} title="Sign out" aria-label="Sign out">
-              <Icon name="logout" />
-            </button>
-          </div>
-        </header>
+        </aside>
 
         <main className="mah-content">
           {loadError && <div className="mah-alert mah-alert-amber">{loadError}</div>}
           {loading ? <div className="mah-loading">Loading your shipments…</div> : renderPage()}
         </main>
       </div>
+
+      <MahAssistant token={token} actionCount={actionCount} activeCount={activeCount} />
 
       {showNewShipment && (
         <MahNewShipment
@@ -177,5 +193,85 @@ export default function MahPortal({ user, token: tokenProp, onLogout }) {
         />
       )}
     </div>
+  );
+}
+
+// ── Floating AI assistant ─────────────────────────────
+const QUICK_PROMPTS = [
+  { label: "What's missing?", text: 'What documents are missing for my active shipments?' },
+  { label: 'Explain rejection', text: 'Explain the rejection reasons for my latest rejected shipment' },
+  { label: 'Deadline check', text: 'What is my closest objection deadline?' },
+  { label: 'SFDA timing', text: 'How long does SFDA typically take to decide?' },
+];
+const GREETING = "Hello! I'm your MASAAR AI assistant. I can help you understand validation findings, explain SFDA regulations, track deadlines, and guide you through the objection process.";
+const ASSISTANT_UNAVAILABLE = 'AI assistant is being configured. Please try again shortly.';
+
+function MahAssistant({ token, actionCount, activeCount }) {
+  const [open, setOpen] = useState(false);
+  const [messages, setMessages] = useState([{ role: 'assistant', content: GREETING }]);
+  const [input, setInput] = useState('');
+  const [sending, setSending] = useState(false);
+  const scrollRef = useRef(null);
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+  }, [messages, open]);
+
+  async function send(e) {
+    e.preventDefault();
+    const text = input.trim();
+    if (!text || sending) return;
+    // Earlier turns (without the greeting) give the assistant context
+    const history = messages.slice(1).map(m => ({ role: m.role, content: m.content }));
+    setMessages(prev => [...prev, { role: 'user', content: text }]);
+    setInput('');
+    setSending(true);
+    try {
+      const data = await apiFetch(token, '/assistant/chat', {
+        method: 'POST', body: { message: text, history, context: { shipments: activeCount } },
+      });
+      setMessages(prev => [...prev, { role: 'assistant', content: data?.answer || ASSISTANT_UNAVAILABLE }]);
+    } catch {
+      setMessages(prev => [...prev, { role: 'assistant', content: ASSISTANT_UNAVAILABLE }]);
+    } finally {
+      setSending(false);
+    }
+  }
+
+  return (
+    <>
+      {open && (
+        <div className="mah-ai-panel" role="dialog" aria-label="MASAAR AI Assistant">
+          <div className="mah-ai-head">
+            <span className="mah-ai-spark">✦</span>
+            <strong>MASAAR AI Assistant</strong>
+            <button className="mah-ai-close" onClick={() => setOpen(false)} aria-label="Close assistant">×</button>
+          </div>
+          <div className="mah-ai-chips">
+            {QUICK_PROMPTS.map(q => (
+              <button key={q.label} className="mah-ai-chip" onClick={() => { setInput(q.text); inputRef.current?.focus(); }}>
+                {q.label}
+              </button>
+            ))}
+          </div>
+          <div className="mah-ai-messages" ref={scrollRef}>
+            {messages.map((m, i) => (
+              <div key={i} className={`mah-ai-msg mah-ai-${m.role === 'user' ? 'user' : 'bot'}`}>{m.content}</div>
+            ))}
+            {sending && <div className="mah-ai-msg mah-ai-bot mah-ai-typing">Thinking…</div>}
+          </div>
+          <form className="mah-ai-input" onSubmit={send}>
+            <input ref={inputRef} className="mah-input" value={input} onChange={e => setInput(e.target.value)}
+              placeholder="Ask about your shipments…" aria-label="Message" maxLength={2000} />
+            <button type="submit" className="mah-btn mah-btn-primary" disabled={!input.trim() || sending}>Send</button>
+          </form>
+        </div>
+      )}
+      <button className="mah-ai-fab" onClick={() => setOpen(o => !o)} aria-label="Open MASAAR AI Assistant" aria-expanded={open}>
+        ✦
+        {actionCount > 0 && <span className="mah-ai-badge">{actionCount > 9 ? '9+' : actionCount}</span>}
+      </button>
+    </>
   );
 }
