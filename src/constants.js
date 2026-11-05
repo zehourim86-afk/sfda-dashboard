@@ -13,10 +13,49 @@ export const PRODUCT_CATEGORIES = [
   'Cosmetic Device',
 ];
 
-// Display labels for every shipment state.
-// Matches VALID_STATES in sfda-platform/src/routes/shipments.js,
-// plus a few older states the frontend still shows.
+// Display labels for the 18 shipment states (SFDA track).
+// Matches SHIPMENT_STATES in sfda-platform/src/constants.js and the
+// CHECK constraint from migration 006.
 export const STATE_LABELS = {
+  DRAFT: 'Draft',
+  PREPARING: 'Preparing',
+  READY_TO_SUBMIT: 'Ready to Submit',
+  WITH_BROKER: 'With Broker',
+  SUBMITTED: 'Submitted to SFDA',
+  SFDA_INFO_REQUESTED: 'SFDA Info Requested',
+  SAMPLING: 'Sampling',
+  CONDITIONALLY_RELEASED: 'Conditionally Released',
+  SFDA_RELEASED: 'SFDA Released',
+  PARTIALLY_RELEASED: 'Partially Released',
+  SFDA_REJECTED: 'SFDA Rejected',
+  OBJECTION_FILED: 'Objection Filed',
+  DISPOSITION_PENDING: 'Disposition Pending',
+  CUSTOMS_RELEASED: 'Customs Released',
+  CLOSED_RELEASED: 'Closed — Released',
+  CLOSED_REEXPORTED: 'Closed — Re-exported',
+  CLOSED_DESTROYED: 'Closed — Destroyed',
+  WITHDRAWN: 'Withdrawn',
+};
+
+export const SHIPMENT_STATES = Object.keys(STATE_LABELS);
+
+export const SECTORS = {
+  FOOD_SUPPLEMENT: 'food_supplement',
+  COSMETIC: 'cosmetic',
+  FOOD: 'food',
+};
+
+// Customs (ZATCA) track — shipments.customs_state
+export const CUSTOMS_STATES = {
+  PENDING: 'PENDING',
+  DECLARATION_FILED: 'DECLARATION_FILED',
+  DUTIES_PAID: 'DUTIES_PAID',
+  CUSTOMS_RELEASED: 'CUSTOMS_RELEASED',
+};
+
+// Labels for the old state set. Shipments no longer use these, but the audit log
+// (timeline history) still contains them, so they must keep displaying.
+export const LEGACY_STATE_LABELS = {
   // Step 1 — Registration
   RECORD_OPENED: 'Record Opened',
   DECLARATION_FILED: 'Declaration Filed',
@@ -79,7 +118,7 @@ export const STATE_LABELS = {
 // Label for a state, falling back to "SOME STATE" for unknown ones.
 export function getStateLabel(state) {
   if (!state) return '—';
-  return STATE_LABELS[state] || state.replace(/_/g, ' ');
+  return STATE_LABELS[state] || LEGACY_STATE_LABELS[state] || state.replace(/_/g, ' ');
 }
 
 // Formats a date string like "30 Oct 2026, 02:15 pm". Returns "—" when empty.
