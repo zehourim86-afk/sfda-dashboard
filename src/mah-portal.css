@@ -228,6 +228,12 @@ textarea.mah-input { resize: vertical; min-height: 60px; }
 .mah-app .mah-action-chip { background: #fff; border: 1.5px solid #E2E8F0; color: #64748B; border-radius: 20px; padding: 5px 14px; font-size: 12px; font-weight: 500; line-height: 1.4; text-align: center; white-space: nowrap; cursor: pointer; transition: border-color 0.15s, color 0.15s, background 0.15s; }
 .mah-app .mah-action-chip:not(.is-active):hover { border-color: #0099EE; color: #0099EE; }
 .mah-app .mah-action-chip.is-active { background: #0F1A4A; border-color: #0F1A4A; color: #fff; }
+
+/* Shipments list: status row (with search) above sector row */
+.mah-filter-rows { display: flex; flex-direction: column; gap: 8px; }
+.mah-filter-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.mah-filter-search { margin-left: auto; }
+.mah-app .mah-action-chip .mah-chip-count { margin-left: 6px; }
 .mah-pager { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 13px; color: var(--text-3); padding-top: 4px; }
 .mah-pager-links { display: flex; gap: 16px; }
 .mah-app .mah-pager .mah-link-btn:disabled { color: var(--grey); text-decoration: none; }

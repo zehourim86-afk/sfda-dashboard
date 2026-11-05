@@ -1,27 +1,41 @@
 // MAH portal — Shipments & Tracking list.
 import { useState } from 'react';
 import {
-  needsAction, isInProgress, isClosed, shipmentSector, StateBadge, SectorBadge,
+  stateOf, shipmentSector, StateBadge, SectorBadge,
   shipmentName, shipmentRef, fmtDate, timeAgo, Empty, Icon,
 } from './mahShared';
 
-const FILTERS = [
+// Row 1 — status groups. CONDITIONALLY_RELEASED and CUSTOMS_RELEASED are in no group, so they show under "All" only.
+const inStates = (states) => (s) => states.includes(stateOf(s));
+const STATUS_FILTERS = [
   { key: 'all', label: 'All', test: () => true },
-  { key: 'action', label: 'Needs Action', test: needsAction },
-  { key: 'progress', label: 'In Progress', test: isInProgress },
+  { key: 'action', label: 'Action Required',
+    test: inStates(['DRAFT', 'PREPARING', 'READY_TO_SUBMIT', 'SFDA_REJECTED', 'SFDA_INFO_REQUESTED', 'OBJECTION_FILED']) },
+  { key: 'active', label: 'Active',
+    test: inStates(['WITH_BROKER', 'SUBMITTED', 'SAMPLING', 'SFDA_RELEASED', 'PARTIALLY_RELEASED', 'DISPOSITION_PENDING']) },
+  { key: 'completed', label: 'Completed',
+    test: inStates(['CLOSED_RELEASED', 'CLOSED_REEXPORTED', 'CLOSED_DESTROYED', 'WITHDRAWN']) },
+];
+
+// Row 2 — sector, independent of the status filter
+const SECTOR_FILTERS = [
+  { key: 'all', label: 'All Sectors', test: () => true },
   { key: 'food_supplement', label: 'Food Supplement', test: s => shipmentSector(s) === 'food_supplement' },
   { key: 'cosmetic', label: 'Cosmetics', test: s => shipmentSector(s) === 'cosmetic' },
   { key: 'food', label: 'Food', test: s => shipmentSector(s) === 'food' },
-  { key: 'closed', label: 'Closed', test: isClosed },
 ];
+const byKey = (list, key) => list.find(f => f.key === key);
 
 export default function MahShipments({ shipments, productsById, suppliersById, openShipment, onNewShipment }) {
-  const [filter, setFilter] = useState('all');
+  const [status, setStatus] = useState('all');
+  const [sector, setSector] = useState('all');
   const [search, setSearch] = useState('');
 
+  // Status counts follow the sector filter
+  const inSector = shipments.filter(byKey(SECTOR_FILTERS, sector).test);
   const q = search.trim().toLowerCase();
-  const rows = shipments
-    .filter(FILTERS.find(f => f.key === filter).test)
+  const rows = inSector
+    .filter(byKey(STATUS_FILTERS, status).test)
     .filter(s => !q || [shipmentName(s, productsById), s.masaar_id, s.faseh_request_number, s.bl_awb_number, s.supplier_name]
       .some(v => v && String(v).toLowerCase().includes(q)))
     .sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
@@ -36,17 +50,26 @@ export default function MahShipments({ shipments, productsById, suppliersById, o
         <button className="mah-btn mah-btn-primary" onClick={onNewShipment}><Icon name="plus" size={16} /> New Shipment</button>
       </div>
 
-      <div className="mah-toolbar">
-        <div className="mah-filters">
-          {FILTERS.map(f => (
-            <button key={f.key} className={`mah-chip${filter === f.key ? ' is-active' : ''}`} onClick={() => setFilter(f.key)}>
+      <div className="mah-filter-rows">
+        <div className="mah-filter-row" role="group" aria-label="Filter by status">
+          {STATUS_FILTERS.map(f => (
+            <button key={f.key} className={`mah-action-chip${status === f.key ? ' is-active' : ''}`}
+              aria-pressed={status === f.key} onClick={() => setStatus(f.key)}>
               {f.label}
-              <span className="mah-chip-count">{shipments.filter(f.test).length}</span>
+              <span className="mah-chip-count">{inSector.filter(f.test).length}</span>
+            </button>
+          ))}
+          <input className="mah-input mah-search mah-filter-search" placeholder="Search name, MSR ID, B/L..." value={search}
+            onChange={e => setSearch(e.target.value)} aria-label="Search shipments" />
+        </div>
+        <div className="mah-filter-row" role="group" aria-label="Filter by sector">
+          {SECTOR_FILTERS.map(f => (
+            <button key={f.key} className={`mah-action-chip${sector === f.key ? ' is-active' : ''}`}
+              aria-pressed={sector === f.key} onClick={() => setSector(f.key)}>
+              {f.label}
             </button>
           ))}
         </div>
-        <input className="mah-input mah-search" placeholder="Search name, MSR ID, B/L…" value={search}
-          onChange={e => setSearch(e.target.value)} aria-label="Search shipments" />
       </div>
 
       <section className="mah-card mah-card-flush">
