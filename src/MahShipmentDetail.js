@@ -128,7 +128,8 @@ export default function MahShipmentDetail({
 }
 
 // ── Timeline ─────────────────────────────────────────
-function TimelineTab({ shipment }) {
+// Also used by the Clearance Portal's shipment detail
+export function TimelineTab({ shipment }) {
   const entries = shipment.audit_log || [];
   if (entries.length === 0) return <section className="mah-card"><Empty title="No timeline events yet" /></section>;
   return (
@@ -440,6 +441,16 @@ function ObjectionTab({ token, shipment, onChanged }) {
     await load();
     await onChanged();
   });
+  // Reasons the clearance company recorded from the SFDA notice: file them with the MAH's responses
+  const recorded = state === 'SFDA_REJECTED' && rows.length > 0;
+  const fileRecorded = () => run('file', async () => {
+    const reasons = rows.map(o => ({
+      reason_index: o.reason_index, reason_text: o.reason_text, response_text: (drafts[o.reason_index] || '').trim() || null,
+    }));
+    await apiFetch(token, `/shipments/${shipment.id}/objection`, { method: 'POST', body: { rejection_reasons: reasons } });
+    await load();
+    await onChanged();
+  });
   const save = (idx) => run(`save-${idx}`, async () => {
     await apiFetch(token, `/shipments/${shipment.id}/objection/${idx}`, { method: 'PUT', body: { response_text: drafts[idx]?.trim() || null } });
     await load();
@@ -488,6 +499,13 @@ function ObjectionTab({ token, shipment, onChanged }) {
         </section>
       )}
 
+      {recorded && (
+        <div className="mah-alert mah-alert-amber">
+          Your clearance company recorded {rows.length} rejection reason{rows.length === 1 ? '' : 's'} from the SFDA notice.
+          Write your responses below, then file the objection.
+        </div>
+      )}
+
       {rows.map(o => {
         const dirty = (drafts[o.reason_index] || '') !== (o.response_text || '');
         return (
@@ -496,7 +514,7 @@ function ObjectionTab({ token, shipment, onChanged }) {
             <div className="mah-row-title">{o.reason_text}</div>
             <textarea className="mah-input" rows={3} placeholder="Your response to this reason" disabled={submitted}
               value={drafts[o.reason_index] ?? ''} onChange={e => setDrafts(prev => ({ ...prev, [o.reason_index]: e.target.value }))} />
-            {!submitted && (
+            {!submitted && !recorded && (
               <div className="mah-row-actions">
                 <span className="mah-small mah-muted">{o.responded_at ? `Saved ${fmtDateTime(o.responded_at)}` : 'Not answered yet'}</span>
                 <button className="mah-btn mah-btn-sm mah-btn-primary" disabled={!dirty || busy !== null} onClick={() => save(o.reason_index)}>
@@ -508,7 +526,16 @@ function ObjectionTab({ token, shipment, onChanged }) {
         );
       })}
 
-      {rows.length > 0 && !submitted && (
+      {recorded && (
+        <section className="mah-card mah-row-actions">
+          <span className="mah-small mah-muted">Responses can also be added after filing, before you submit the dossier.</span>
+          <button className="mah-btn mah-btn-red" disabled={busy !== null} onClick={fileRecorded}>
+            {busy === 'file' ? 'Filing…' : 'File objection'}
+          </button>
+        </section>
+      )}
+
+      {rows.length > 0 && !submitted && !recorded && (
         <section className="mah-card mah-row-actions">
           <span className="mah-small mah-muted">{allAnswered ? 'All reasons answered — ready to submit.' : 'Every reason needs a saved response before you can submit.'}</span>
           <button className="mah-btn mah-btn-red" disabled={!allAnswered || busy !== null} onClick={submit}>

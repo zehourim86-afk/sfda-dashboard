@@ -211,9 +211,10 @@ const QUICK_PROMPTS = [
 const GREETING = "Hello! I'm your MASAAR AI assistant. I can help you understand validation findings, explain SFDA regulations, track deadlines, and guide you through the objection process.";
 const ASSISTANT_UNAVAILABLE = 'AI assistant is being configured. Please try again shortly.';
 
-function MahAssistant({ token, actionCount, activeCount }) {
+// Also used by the Clearance Portal, which passes its own prompts, greeting and placeholder
+export function MahAssistant({ token, actionCount, activeCount, prompts = QUICK_PROMPTS, greeting = GREETING, placeholder = 'Ask about your shipments…' }) {
   const [open, setOpen] = useState(false);
-  const [messages, setMessages] = useState([{ role: 'assistant', content: GREETING }]);
+  const [messages, setMessages] = useState([{ role: 'assistant', content: greeting }]);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const scrollRef = useRef(null);
@@ -254,7 +255,7 @@ function MahAssistant({ token, actionCount, activeCount }) {
             <button className="mah-ai-close" onClick={() => setOpen(false)} aria-label="Close assistant">×</button>
           </div>
           <div className="mah-ai-chips">
-            {QUICK_PROMPTS.map(q => (
+            {prompts.map(q => (
               <button key={q.label} className="mah-ai-chip" onClick={() => { setInput(q.text); inputRef.current?.focus(); }}>
                 {q.label}
               </button>
@@ -268,7 +269,7 @@ function MahAssistant({ token, actionCount, activeCount }) {
           </div>
           <form className="mah-ai-input" onSubmit={send}>
             <input ref={inputRef} className="mah-input" value={input} onChange={e => setInput(e.target.value)}
-              placeholder="Ask about your shipments…" aria-label="Message" maxLength={2000} />
+              placeholder={placeholder} aria-label="Message" maxLength={2000} />
             <button type="submit" className="mah-btn mah-btn-primary" disabled={!input.trim() || sending}>Send</button>
           </form>
         </div>
