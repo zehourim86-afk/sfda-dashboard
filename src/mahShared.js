@@ -143,6 +143,23 @@ export function shipmentName(s, productsById) {
 
 export const shipmentRef = (s) => s.masaar_id || s.faseh_request_number || String(s.id).slice(0, 8);
 
+// ── File upload ──────────────────────────────────────
+// Reads a file for POST /documents/:id/upload. Plain-text files are sent as text (so the AI
+// validator can read them); everything else (PDF, images, Office docs) is sent as a base64
+// data URL — binary bytes as text break the TEXT column with "invalid byte sequence ... 0x00".
+export function readFileForUpload(file) {
+  const type = file.type || '';
+  const textLike = type.startsWith('text/') || /\.(txt|csv|tsv|json|xml|md)$/i.test(file.name || '');
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result); // data URL for binary, raw text for text
+    reader.onerror = () => reject(new Error('Could not read the file'));
+    if (textLike) reader.readAsText(file); else reader.readAsDataURL(file);
+  });
+}
+// True when stored document content is a base64 data URL rather than plain text
+export const isDataUrl = (content) => typeof content === 'string' && content.startsWith('data:');
+
 // ── Dates ────────────────────────────────────────────
 const DAY = 24 * 60 * 60 * 1000;
 

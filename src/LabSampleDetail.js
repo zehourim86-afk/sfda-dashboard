@@ -3,7 +3,8 @@
 // or a read-only results / rejection view.
 import { useState } from 'react';
 import {
-  apiFetch, StateBadge, SectorBadge, shipmentName, shipmentRef, shipmentSector, fmtDate, fmtDateTime, Empty, Icon,
+  apiFetch, SectorBadge, shipmentName, shipmentRef, shipmentSector, fmtDateTime, Empty, Icon,
+  readFileForUpload,
 } from './mahShared';
 import { todayISO, daysSince } from './clearanceShared';
 import { SamplingTrack, SamplingBadge, mahCompany } from './sfdaShared';
@@ -11,15 +12,6 @@ import {
   RESULT_OPTIONS, ResultBadge, REJECTION_REASONS, ARRIVAL_CONDITIONS, ColdChainTag,
   isRejected, hasResults, composeResultsSummary,
 } from './labShared';
-
-function readFileText(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = () => reject(new Error('Could not read the file'));
-    reader.readAsText(file);
-  });
-}
 
 export default function LabSampleDetail({ token, sample, productsById, user, onClose, afterChange }) {
   const [busy, setBusy] = useState(false);
@@ -188,7 +180,7 @@ function ResultsForm({ busy, run, sampling, token, sample, initial, inline, onCa
 
   const submit = () => run(async () => {
     if (file) {
-      const content = await readFileText(file);
+      const content = await readFileForUpload(file);
       await apiFetch(token, `/documents/${sample.id}/upload`, {
         method: 'POST', body: { document_type: 'LAB_RESULTS', file_name: file.name, file_content: content },
       });

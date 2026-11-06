@@ -5,7 +5,7 @@ import { getStateLabel } from './constants';
 import {
   apiFetch, stateOf, StateBadge, SectorBadge, shipmentName, shipmentRef, shipmentSector,
   SECTOR_CHECKLISTS, CHECKLIST_DOC_TYPES, CLOSED_STATES, objectionDeadline, daysUntil, fmtDate, fmtDateTime,
-  Tabs, Empty, Icon, ConfirmDialog,
+  Tabs, Empty, Icon, ConfirmDialog, readFileForUpload,
 } from './mahShared';
 import { RiskPanel } from './MahNewShipment';
 
@@ -15,14 +15,6 @@ const CUSTOMS_LABELS = {
   PENDING: 'Pending', DECLARATION_FILED: 'Declaration filed', DUTIES_PAID: 'Duties paid', CUSTOMS_RELEASED: 'Customs released',
 };
 const TRANSPORT_LABELS = { sea: 'Sea', air: 'Air', land: 'Land' };
-
-// Reads a file as text, the format POST /documents/:id/upload expects
-const readFileText = (file) => new Promise((resolve, reject) => {
-  const reader = new FileReader();
-  reader.onload = () => resolve(reader.result);
-  reader.onerror = () => reject(new Error('Could not read the file'));
-  reader.readAsText(file);
-});
 
 export default function MahShipmentDetail({
   token, user, shipment: initial, initialTab, productsById, suppliersById, organisations, navigate, reloadShipments, showToast,
@@ -246,7 +238,7 @@ function DocumentsTab({ token, shipment, checklist, uploaded, onChanged }) {
     setBusyType(docType);
     setError(null);
     try {
-      const content = await readFileText(file);
+      const content = await readFileForUpload(file);
       await apiFetch(token, `/documents/${shipment.id}/upload`, {
         method: 'POST', body: { document_type: docType, file_name: file.name, file_content: content },
       });

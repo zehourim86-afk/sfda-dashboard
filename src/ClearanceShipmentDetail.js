@@ -4,7 +4,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   apiFetch, stateOf, StateBadge, SectorBadge, shipmentName, shipmentRef, shipmentSector,
-  SECTOR_CHECKLISTS, CHECKLIST_DOC_TYPES, fmtDate, fmtDateTime, Tabs, Icon,
+  SECTOR_CHECKLISTS, CHECKLIST_DOC_TYPES, fmtDate, fmtDateTime, Tabs, Icon, isDataUrl,
 } from './mahShared';
 import { TimelineTab } from './MahShipmentDetail';
 import {
@@ -215,7 +215,18 @@ function DocumentsTab({ shipment, sector, docs, shared }) {
             </div>
             <div className="mah-modal-body">
               {viewing.validation_result?.summary && <div className="mah-alert mah-alert-amber">{viewing.validation_result.summary}</div>}
-              <pre className="clr-doc-content">{viewing.file_content || 'No content stored for this document.'}</pre>
+              {!viewing.file_content ? (
+                <pre className="clr-doc-content">No content stored for this document.</pre>
+              ) : isDataUrl(viewing.file_content) ? (
+                viewing.file_content.startsWith('data:image/') ? (
+                  <img className="clr-doc-image" src={viewing.file_content} alt={viewing.file_name} />
+                ) : (
+                  <a className="mah-btn mah-btn-primary mah-self-start" href={viewing.file_content}
+                    download={viewing.file_name} target="_blank" rel="noreferrer">Open / download file</a>
+                )
+              ) : (
+                <pre className="clr-doc-content">{viewing.file_content}</pre>
+              )}
             </div>
           </div>
         </div>
