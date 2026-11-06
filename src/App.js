@@ -5,11 +5,12 @@ import LabPortal from './LabPortal';
 import ShippingPortal from './ShippingPortal';
 import BillingModule from './BillingModule';
 import MahPortal from './MahPortal';
-import AdminPanel from './AdminPanel';
+import AdminPortal from './AdminPortal';
 import NotifiedBodyPortal from './NotifiedBodyPortal';
 import GMPPortal from './GMPPortal';
 import ClearancePortal from './ClearancePortal';
 import SFDAObserverPortal from './SFDAObserverPortal';
+import SfdaPortal from './SfdaPortal';
 
 function App() {
   const [user, setUser] = useState(null);
@@ -88,7 +89,9 @@ function App() {
   const renderPortal = () => {
     switch (user.role) {
       case 'DEMARA_ADMIN':
-        return <AdminPanel user={user} token={token} onLogout={handleLogout} />;
+        return <AdminPortal user={user} token={token} onLogout={handleLogout} />;
+      case 'SFDA_OFFICER':
+        return <SfdaPortal user={user} token={token} onLogout={handleLogout} />;
       case 'SFDA_REVIEWER':
         return <SFDAObserverPortal user={user} token={token} onLogout={handleLogout} />;
       case 'LAB_ANALYST':
