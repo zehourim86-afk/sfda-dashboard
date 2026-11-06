@@ -1,8 +1,8 @@
 // MAH portal — Shipments & Tracking list.
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
-  stateOf, shipmentSector, StateBadge, SectorBadge,
-  shipmentName, shipmentRef, fmtDate, timeAgo, Empty, Icon,
+  apiFetch, stateOf, shipmentSector, StateBadge, SectorBadge,
+  shipmentName, shipmentRef, fmtDate, timeAgo, Empty, Icon, ConfirmDialog,
 } from './mahShared';
 
 // Row 1 — status groups. CONDITIONALLY_RELEASED and CUSTOMS_RELEASED are in no group, so they show under "All" only.
@@ -26,10 +26,43 @@ const SECTOR_FILTERS = [
 ];
 const byKey = (list, key) => list.find(f => f.key === key);
 
-export default function MahShipments({ shipments, productsById, suppliersById, openShipment, onNewShipment }) {
+export default function MahShipments({ token, shipments, productsById, suppliersById, openShipment, onNewShipment, reloadShipments, showToast }) {
   const [status, setStatus] = useState('all');
   const [sector, setSector] = useState('all');
   const [search, setSearch] = useState('');
+  const [openMenuId, setOpenMenuId] = useState(null);
+  const [confirm, setConfirm] = useState(null); // shipment pending delete
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(null);
+
+  // Close the row menu on any outside click
+  useEffect(() => {
+    if (!openMenuId) return undefined;
+    const onDown = (e) => { if (!e.target.closest('.mah-kebab-wrap')) setOpenMenuId(null); };
+    document.addEventListener('mousedown', onDown);
+    return () => document.removeEventListener('mousedown', onDown);
+  }, [openMenuId]);
+
+  const doDelete = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      await apiFetch(token, `/shipments/${confirm.id}`, { method: 'DELETE' });
+      const name = shipmentName(confirm, productsById);
+      setConfirm(null);
+      await reloadShipments?.().catch(() => {});
+      showToast?.(`Shipment deleted — ${name}`);
+    } catch (e) {
+      if (e.status === 403) {
+        setConfirm(null);
+        showToast?.('Only draft shipments can be deleted. Contact your DEMARA advisor to cancel a submitted shipment.');
+      } else {
+        setError(e.message);
+      }
+    } finally {
+      setBusy(false);
+    }
+  };
 
   // Status counts follow the sector filter
   const inSector = shipments.filter(byKey(SECTOR_FILTERS, sector).test);
@@ -79,7 +112,7 @@ export default function MahShipments({ shipments, productsById, suppliersById, o
           <div className="mah-table-wrap">
             <table className="mah-table">
               <thead>
-                <tr><th>Shipment</th><th>Sector</th><th>Supplier</th><th>State</th><th>ETA</th><th>Updated</th></tr>
+                <tr><th>Shipment</th><th>Sector</th><th>Supplier</th><th>State</th><th>ETA</th><th>Updated</th><th aria-label="Actions"></th></tr>
               </thead>
               <tbody>
                 {rows.map(s => (
@@ -94,6 +127,21 @@ export default function MahShipments({ shipments, productsById, suppliersById, o
                     <td><StateBadge state={s.current_state} /></td>
                     <td>{fmtDate(s.eta)}</td>
                     <td className="mah-muted">{timeAgo(s.updated_at)}</td>
+                    <td className="mah-kebab-cell" onClick={e => e.stopPropagation()}>
+                      <div className="mah-kebab-wrap">
+                        <button className="mah-kebab" aria-label="Row actions" aria-haspopup="menu"
+                          onClick={() => setOpenMenuId(openMenuId === s.id ? null : s.id)}>⋯</button>
+                        {openMenuId === s.id && (
+                          <div className="mah-menu" role="menu">
+                            <button className="mah-menu-item" role="menuitem" onClick={() => { setOpenMenuId(null); openShipment(s); }}>Open</button>
+                            {stateOf(s) === 'DRAFT' && (
+                              <button className="mah-menu-item is-danger" role="menuitem"
+                                onClick={() => { setOpenMenuId(null); setError(null); setConfirm(s); }}>Delete</button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -101,6 +149,12 @@ export default function MahShipments({ shipments, productsById, suppliersById, o
           </div>
         )}
       </section>
+
+      {confirm && (
+        <ConfirmDialog title="Delete shipment" confirmLabel="Delete shipment" tone="red"
+          message={`Delete ${shipmentName(confirm, productsById)}? This cannot be undone. The shipment and all its documents will be permanently deleted.`}
+          busy={busy} error={error} onConfirm={doDelete} onClose={() => { if (!busy) setConfirm(null); }} />
+      )}
     </div>
   );
 }

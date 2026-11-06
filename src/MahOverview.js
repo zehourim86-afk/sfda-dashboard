@@ -39,6 +39,8 @@ export default function MahOverview({ shipments, products, productsById, openShi
 
   const inProgress = shipments.filter(isInProgress)
     .sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
+  // Shipments with an open cancellation request (flag from the shipments list endpoint)
+  const cancelRequested = shipments.filter(s => s.cancellation_requested);
 
   // Closest deadline: objection windows and upcoming ETAs
   const deadlines = [
@@ -95,8 +97,17 @@ export default function MahOverview({ shipments, products, productsById, openShi
                 </div>
               </div>
             )}
+            {cancelRequested.map(s => (
+              <div key={`cancel-${s.id}`} className="mah-action-row mah-edge-grey">
+                <div className="mah-action-main">
+                  <div className="mah-row-title">{shipmentName(s, productsById)}</div>
+                  <div className="mah-row-sub"><span className="mah-mono">{shipmentRef(s)}</span> · Cancellation requested — awaiting DEMARA review</div>
+                </div>
+                <StateBadge state={s.current_state} />
+              </div>
+            ))}
             {actions.length === 0
-              ? <Empty title="Nothing needs your action">New shipments and SFDA decisions will appear here.</Empty>
+              ? (cancelRequested.length === 0 && <Empty title="Nothing needs your action">New shipments and SFDA decisions will appear here.</Empty>)
               : filteredActions.length === 0
                 ? <Empty title="No action items match">Try a different search or filter.</Empty>
                 : visibleActions.map(s => {

@@ -2,6 +2,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import './mah-portal.css';
 import { apiFetch, Icon, needsAction, isClosed } from './mahShared';
+import { Toast } from './clearanceShared';
+import NotificationBell from './PortalNotificationBell';
 import MahOverview from './MahOverview';
 import MahShipments from './MahShipments';
 import MahShipmentDetail from './MahShipmentDetail';
@@ -56,6 +58,14 @@ export default function MahPortal({ user, token: tokenProp, onLogout }) {
   const [organisations, setOrganisations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
+  const [toast, setToast] = useState(null);
+  const toastTimer = useRef(null);
+  useEffect(() => () => clearTimeout(toastTimer.current), []);
+  const showToast = useCallback((message) => {
+    setToast(message);
+    clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(() => setToast(null), 3500);
+  }, []);
 
   const loadShipments = useCallback(async () => {
     const data = await apiFetch(token, '/shipments?limit=500');
@@ -108,7 +118,7 @@ export default function MahPortal({ user, token: tokenProp, onLogout }) {
 
   const shared = {
     token, user, shipments, products, suppliers, organisations, productsById, suppliersById,
-    navigate, openShipment, onNewShipment: () => setShowNewShipment(true),
+    navigate, openShipment, onNewShipment: () => setShowNewShipment(true), showToast,
     reloadShipments: loadShipments, reloadProducts: loadProducts, reloadSuppliers: loadSuppliers,
   };
 
@@ -148,6 +158,7 @@ export default function MahPortal({ user, token: tokenProp, onLogout }) {
         {!showCollapsed && <span className="mah-portal-label">MAH Portal</span>}
         <div className="mah-topbar-title"><strong>{PAGE_TITLES[currentPage]}</strong></div>
         <div className="mah-topbar-right">
+          <NotificationBell token={token} />
           <div className="mah-user-chip">
             <span className="mah-avatar">{initials}</span>
             <span className="mah-user-name">{user?.full_name || user?.email}</span>
@@ -197,6 +208,8 @@ export default function MahPortal({ user, token: tokenProp, onLogout }) {
           }}
         />
       )}
+
+      <Toast message={toast} />
     </div>
   );
 }

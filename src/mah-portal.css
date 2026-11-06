@@ -488,3 +488,56 @@ textarea.mah-input { resize: vertical; min-height: 60px; }
   .mah-mi-country { flex: 1 1 100% !important; }
   .mah-mi-metrics, .mah-mi-cols { grid-template-columns: 1fr; }
 }
+
+/* ── Notification bell (design-system portals) ───────── */
+.notification-bell-wrapper { position: relative; }
+.mah-app .notification-bell { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; color: var(--text-2); position: relative; transition: background 0.15s, color 0.15s; }
+.mah-app .notification-bell:hover { background: var(--bg); color: var(--text); }
+.notification-badge { position: absolute; top: 2px; right: 2px; min-width: 16px; height: 16px; padding: 0 3px; border-radius: 8px; background: var(--red); color: #fff; font-size: 10px; font-weight: 600; display: flex; align-items: center; justify-content: center; }
+.notification-panel { position: absolute; top: calc(100% + 8px); right: 0; width: 360px; max-width: calc(100vw - 32px); max-height: 480px; background: #fff; border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 4px 24px rgba(15, 26, 74, 0.12); overflow-y: auto; z-index: 999; }
+.notification-head { position: sticky; top: 0; background: #fff; display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; border-bottom: 1px solid var(--border); }
+.notification-head strong { font-size: 15px; }
+.mah-app .notification-markall { color: var(--blue); font-size: 13px; font-weight: 600; }
+.mah-app .notification-markall:hover { text-decoration: underline; }
+.notification-list { display: flex; flex-direction: column; }
+.mah-app .notification-item { display: flex; align-items: flex-start; gap: 10px; width: 100%; padding: 11px 14px; border-bottom: 1px solid #F1F5F9; text-align: left; background: #fff; transition: background 0.15s; }
+.mah-app .notification-item:last-child { border-bottom: 0; }
+.mah-app .notification-item.unread { background: #F8FAFF; }
+.mah-app .notification-item:hover { background: var(--bg); }
+.notification-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 5px; }
+.notification-dot-red { background: var(--red); }
+.notification-dot-blue { background: var(--blue); }
+.notification-dot-amber { background: var(--amber); }
+.notification-dot-grey { background: var(--grey); }
+.notification-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.notification-message { font-size: 13px; color: var(--navy); line-height: 1.4; overflow-wrap: anywhere; }
+.notification-item:not(.unread) .notification-message { color: var(--text-3); }
+.notification-time { font-size: 11px; color: var(--grey); }
+.notification-unread-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--blue); flex-shrink: 0; margin-top: 6px; }
+.notification-empty { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px; padding: 32px 16px; }
+.notification-empty-icon { color: var(--grey); }
+.notification-empty strong { font-size: 14px; color: var(--text-2); }
+.notification-skel { width: 80%; }
+
+/* ── Row kebab menu (MAH shipments) ──────────────────── */
+.mah-kebab-cell { width: 44px; text-align: right; }
+.mah-kebab-wrap { position: relative; display: inline-block; }
+.mah-app .mah-kebab { width: 30px; height: 30px; border-radius: 7px; display: grid; place-items: center; color: var(--text-3); font-size: 18px; line-height: 1; letter-spacing: 1px; }
+.mah-app .mah-kebab:hover { background: var(--bg); color: var(--text); }
+.mah-menu { position: absolute; top: calc(100% + 4px); right: 0; min-width: 150px; background: #fff; border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 4px 20px rgba(15,26,74,0.14); padding: 4px; z-index: 50; display: flex; flex-direction: column; }
+.mah-app .mah-menu-item { padding: 8px 12px; border-radius: 7px; font-size: 13px; font-weight: 500; color: var(--text); white-space: nowrap; }
+.mah-app .mah-menu-item:hover { background: var(--bg); }
+.mah-app .mah-menu-item.is-danger { color: var(--red); }
+.mah-app .mah-menu-item.is-danger:hover { background: #FDE4E8; }
+
+/* Outline buttons for destructive / cautionary detail actions */
+.mah-app .mah-btn-outline-red { background: #fff; border-color: #F5B5C0; color: var(--red); }
+.mah-app .mah-btn-outline-red:not(:disabled):hover { background: #FDE4E8; filter: none; }
+.mah-app .mah-btn-outline-amber { background: #fff; border-color: #F3C98A; color: var(--amber); }
+.mah-app .mah-btn-outline-amber:not(:disabled):hover { background: #FDF0DC; filter: none; }
+
+/* Bottom action bar on the shipment detail */
+.mah-detail-actions { display: flex; gap: 10px; flex-wrap: wrap; padding-top: 4px; }
+
+/* Small confirm modal */
+.mah-modal.mah-modal-sm { width: min(460px, 100%); }

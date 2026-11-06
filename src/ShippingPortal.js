@@ -6,6 +6,7 @@ import './mah-portal.css';
 import './clearance-portal.css';
 import './shipping-portal.css';
 import { apiFetch, Icon } from './mahShared';
+import NotificationBell from './PortalNotificationBell';
 import { productsFromShipments } from './clearanceShared';
 import { isActiveShipment } from './shippingShared';
 import ShippingOverview from './ShippingOverview';
@@ -97,6 +98,7 @@ export default function ShippingPortal({ user, token: tokenProp, onLogout }) {
         {!showCollapsed && <span className="mah-portal-label">Shipping Portal</span>}
         <div className="mah-topbar-title"><strong>{PAGE_TITLES[currentPage]}</strong></div>
         <div className="mah-topbar-right">
+          <NotificationBell token={token} />
           <div className="mah-user-chip">
             <span className="mah-avatar">{initials}</span>
             <span className="mah-user-name">{user?.full_name || user?.email}</span>

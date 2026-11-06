@@ -263,6 +263,29 @@ export function Tabs({ tabs, active, onChange }) {
   );
 }
 
+// Confirmation modal shared by MAH delete / cancellation flows.
+export function ConfirmDialog({ title, message, confirmLabel = 'Confirm', tone = 'red', onConfirm, onClose, busy, error, confirmDisabled, children }) {
+  return (
+    <div className="mah-modal-backdrop" onClick={onClose}>
+      <div className="mah-modal mah-modal-sm" role="dialog" aria-modal="true" aria-label={title} onClick={e => e.stopPropagation()}>
+        <div className="mah-modal-head">
+          <strong>{title}</strong>
+          <button className="mah-ai-close" onClick={onClose} aria-label="Close">×</button>
+        </div>
+        <div className="mah-modal-body">
+          {message && <p>{message}</p>}
+          {children}
+          {error && <div className="mah-alert mah-alert-red" role="alert">{error}</div>}
+        </div>
+        <div className="mah-modal-foot">
+          <button className="mah-btn mah-btn-ghost" onClick={onClose} disabled={busy}>Cancel</button>
+          <button className={`mah-btn mah-btn-${tone}`} onClick={onConfirm} disabled={busy || confirmDisabled}>{busy ? 'Working…' : confirmLabel}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function Empty({ title, children }) {
   return (
     <div className="mah-empty">
@@ -307,6 +330,7 @@ const ICON_PATHS = {
   search: 'M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14zM21 21l-5-5',
   'x-circle': 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM9 9l6 6M15 9l-6 6',
   'map-pin': 'M12 21s7-6.5 7-11a7 7 0 1 0-14 0c0 4.5 7 11 7 11zM12 12a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z',
+  bell: 'M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0',
 };
 
 export function Icon({ name, size = 18, className }) {

@@ -6,6 +6,7 @@ import './mah-portal.css';
 import './clearance-portal.css';
 import './sfda-portal.css';
 import { apiFetch, Icon, stateOf } from './mahShared';
+import NotificationBell from './PortalNotificationBell';
 import { productsFromShipments } from './clearanceShared';
 import { ShipmentModal } from './sfdaShared';
 import SfdaOverview from './SfdaOverview';
@@ -105,6 +106,7 @@ export default function SfdaPortal({ user, token: tokenProp, onLogout }) {
         {!showCollapsed && <span className="mah-portal-label">SFDA Observer</span>}
         <div className="mah-topbar-title"><strong>{PAGE_TITLES[currentPage]}</strong></div>
         <div className="mah-topbar-right">
+          <NotificationBell token={token} />
           <span className="mah-badge mah-tone-blue sfda-readonly-pill">Read-only</span>
           <div className="mah-user-chip">
             <span className="mah-avatar">{initials}</span>

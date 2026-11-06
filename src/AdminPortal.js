@@ -7,6 +7,7 @@ import './clearance-portal.css';
 import './sfda-portal.css';
 import './admin-portal.css';
 import { apiFetch, Icon } from './mahShared';
+import NotificationBell from './PortalNotificationBell';
 import { productsFromShipments, Toast } from './clearanceShared';
 import { ShipmentModal } from './sfdaShared';
 import { buildAlerts, pendingCancellations, isClosedState, TransitionModal, WithdrawModal } from './adminShared';
@@ -162,6 +163,7 @@ export default function AdminPortal({ user, token: tokenProp, onLogout }) {
         {!showCollapsed && <span className="mah-portal-label">DEMARA Admin</span>}
         <div className="mah-topbar-title"><strong>{PAGE_TITLES[currentPage]}</strong></div>
         <div className="mah-topbar-right">
+          <NotificationBell token={token} />
           <div className="mah-user-chip">
             <span className="mah-avatar">{initials}</span>
             <span className="mah-user-name">{user?.full_name || user?.email}</span>

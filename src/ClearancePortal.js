@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import './mah-portal.css';
 import './clearance-portal.css';
 import { apiFetch, Icon, stateOf } from './mahShared';
+import NotificationBell from './PortalNotificationBell';
 import { MahAssistant } from './MahPortal';
 import { brokerAction, COMPLETED_STATES, productsFromShipments } from './clearanceShared';
 import ClearanceOverview from './ClearanceOverview';
@@ -140,6 +141,7 @@ export default function ClearancePortal({ user, token: tokenProp, onLogout }) {
         {!showCollapsed && <span className="mah-portal-label">Clearance Portal</span>}
         <div className="mah-topbar-title"><strong>{PAGE_TITLES[currentPage]}</strong></div>
         <div className="mah-topbar-right">
+          <NotificationBell token={token} />
           <div className="mah-user-chip">
             <span className="mah-avatar">{initials}</span>
             <span className="mah-user-name">{user?.full_name || user?.email}</span>

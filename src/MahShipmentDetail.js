@@ -4,8 +4,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { getStateLabel } from './constants';
 import {
   apiFetch, stateOf, StateBadge, SectorBadge, shipmentName, shipmentRef, shipmentSector,
-  SECTOR_CHECKLISTS, CHECKLIST_DOC_TYPES, objectionDeadline, daysUntil, fmtDate, fmtDateTime,
-  Tabs, Empty, Icon,
+  SECTOR_CHECKLISTS, CHECKLIST_DOC_TYPES, CLOSED_STATES, objectionDeadline, daysUntil, fmtDate, fmtDateTime,
+  Tabs, Empty, Icon, ConfirmDialog,
 } from './mahShared';
 import { RiskPanel } from './MahNewShipment';
 
@@ -25,7 +25,7 @@ const readFileText = (file) => new Promise((resolve, reject) => {
 });
 
 export default function MahShipmentDetail({
-  token, user, shipment: initial, initialTab, productsById, suppliersById, organisations, navigate, reloadShipments,
+  token, user, shipment: initial, initialTab, productsById, suppliersById, organisations, navigate, reloadShipments, showToast,
 }) {
   const [shipment, setShipment] = useState(initial);
   const [docs, setDocs] = useState(null);
@@ -33,6 +33,11 @@ export default function MahShipmentDetail({
   const [intelError, setIntelError] = useState(null);
   const [error, setError] = useState(null);
   const [tab, setTab] = useState(initialTab || 'timeline');
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [cancelOpen, setCancelOpen] = useState(false);
+  const [reason, setReason] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [actionError, setActionError] = useState(null);
 
   const load = useCallback(async () => {
     const [detail, documents, pre] = await Promise.allSettled([
@@ -54,6 +59,42 @@ export default function MahShipmentDetail({
   };
 
   const state = stateOf(shipment);
+  const canDelete = state === 'DRAFT';
+  const canCancel = !['DRAFT', ...CLOSED_STATES].includes(state);
+
+  const doDelete = async () => {
+    setBusy(true);
+    setActionError(null);
+    try {
+      await apiFetch(token, `/shipments/${shipment.id}`, { method: 'DELETE' });
+      showToast?.(`Shipment deleted — ${shipmentName(shipment, productsById)}`);
+      reloadShipments?.().catch(() => {});
+      navigate('shipments'); // component unmounts; no further state updates
+    } catch (e) {
+      setBusy(false);
+      if (e.status === 403) {
+        setConfirmDelete(false);
+        showToast?.('Only draft shipments can be deleted. Contact your DEMARA advisor to cancel a submitted shipment.');
+      } else {
+        setActionError(e.message);
+      }
+    }
+  };
+
+  const submitCancellation = async () => {
+    setBusy(true);
+    setActionError(null);
+    try {
+      await apiFetch(token, `/shipments/${shipment.id}/request-cancellation`, { method: 'POST', body: { reason: reason.trim() } });
+      setCancelOpen(false);
+      setReason('');
+      showToast?.('Cancellation request sent to your DEMARA advisor');
+    } catch (e) {
+      setActionError(e.message);
+    } finally {
+      setBusy(false);
+    }
+  };
   const showObjection = ['SFDA_REJECTED', 'OBJECTION_FILED'].includes(state);
   const tabs = [
     { key: 'timeline', label: 'Timeline' },
@@ -122,6 +163,43 @@ export default function MahShipmentDetail({
       )}
       {activeTab === 'objection' && showObjection && (
         <ObjectionTab token={token} shipment={shipment} onChanged={refresh} />
+      )}
+
+      {(canDelete || canCancel) && (
+        <div className="mah-detail-actions">
+          {canDelete && (
+            <button className="mah-btn mah-btn-outline-red" onClick={() => { setActionError(null); setConfirmDelete(true); }}>
+              <Icon name="x" size={15} /> Delete shipment
+            </button>
+          )}
+          {canCancel && (
+            <button className="mah-btn mah-btn-outline-amber" onClick={() => { setActionError(null); setReason(''); setCancelOpen(true); }}>
+              Request cancellation
+            </button>
+          )}
+        </div>
+      )}
+
+      {confirmDelete && (
+        <ConfirmDialog title="Delete shipment" confirmLabel="Delete shipment" tone="red" busy={busy} error={actionError}
+          message={`Delete ${shipmentName(shipment, productsById)}? This cannot be undone. The shipment and all its documents will be permanently deleted.`}
+          onConfirm={doDelete} onClose={() => { if (!busy) setConfirmDelete(false); }} />
+      )}
+
+      {cancelOpen && (
+        <ConfirmDialog title="Request cancellation" confirmLabel="Send request →" tone="amber" busy={busy} error={actionError}
+          confirmDisabled={reason.trim().length < 20} onConfirm={submitCancellation}
+          onClose={() => { if (!busy) setCancelOpen(false); }}>
+          <p className="mah-muted mah-small">
+            Cancellation requests are reviewed by your DEMARA advisor. The shipment will continue in its current state until the request is approved.
+          </p>
+          <label className="mah-field">
+            <span>Reason for cancellation</span>
+            <textarea className="mah-input" rows={4} maxLength={2000} value={reason} onChange={e => setReason(e.target.value)}
+              placeholder="Why should this shipment be cancelled? (at least 20 characters)" />
+            <small className={reason.trim().length < 20 ? 'mah-text-amber' : 'mah-muted'}>{reason.trim().length}/20 minimum</small>
+          </label>
+        </ConfirmDialog>
       )}
     </div>
   );
