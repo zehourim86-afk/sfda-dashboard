@@ -1,7 +1,7 @@
 // MAH portal — New shipment wizard (4 steps).
 // Pre-arrival intelligence needs a shipment id, so the DRAFT is created when leaving
 // step 2 (POST /shipments). Steps 1-2 are locked after that; step 4 opens the shipment.
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { apiFetch, SECTOR_LABELS, SectorBadge, Icon, fmtDate } from './mahShared';
 
 export const PORTS = [
@@ -56,7 +56,16 @@ export default function MahNewShipment({ token, products, suppliers, organisatio
 
   const activeProducts = products.filter(p => p.is_active !== false);
   const activeSuppliers = suppliers.filter(s => s.is_active !== false);
-  const clearanceCompanies = organisations.filter(o => o.org_type === 'CLEARANCE_COMPANY');
+  // Clearance companies come from GET /clearance-companies; fall back to the organisations list.
+  const [clearanceCompanies, setClearanceCompanies] = useState(() =>
+    organisations.filter(o => o.org_type === 'CLEARANCE_COMPANY').map(o => ({ id: o.id, name: o.name_en, faseh_connected: true })));
+  useEffect(() => {
+    let cancelled = false;
+    apiFetch(token, '/clearance-companies')
+      .then(d => { if (!cancelled && d.clearance_companies?.length) setClearanceCompanies(d.clearance_companies); })
+      .catch(() => { /* keep the organisations fallback */ });
+    return () => { cancelled = true; };
+  }, [token]);
   const productName = (id) => products.find(p => p.id === id)?.name_en || '—';
   const setField = (k) => (e) => setInfo(prev => ({ ...prev, [k]: e.target.value }));
   const setLine = (i, k, v) => setLines(prev => prev.map((l, j) => (j === i ? { ...l, [k]: v } : l)));
@@ -107,6 +116,7 @@ export default function MahNewShipment({ token, products, suppliers, organisatio
   const locked = !!created;
   const supplier = activeSuppliers.find(s => s.id === info.supplier_id);
   const broker = clearanceCompanies.find(o => o.id === info.preferred_clearance_company_id);
+  const clearanceChosen = !!info.preferred_clearance_company_id;
 
   return (
     <div className="mah-modal-backdrop" role="dialog" aria-modal="true" aria-label="New shipment">
@@ -166,13 +176,13 @@ export default function MahNewShipment({ token, products, suppliers, organisatio
                   placeholder="e.g. MSCU1234567" disabled={locked} />
               </label>
               <label className="mah-field">
-                <span>Preferred clearance company</span>
+                <span>Clearance company *</span>
                 <select className="mah-input" value={info.preferred_clearance_company_id}
-                  onChange={setField('preferred_clearance_company_id')} disabled={locked}>
-                  <option value="">— Decide later —</option>
-                  {clearanceCompanies.map(o => <option key={o.id} value={o.id}>{o.name_en}</option>)}
+                  onChange={setField('preferred_clearance_company_id')} disabled={locked} required>
+                  <option value="" disabled>Select a clearance company…</option>
+                  {clearanceCompanies.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
                 </select>
-                <small>Needed before the shipment can be handed to a broker.</small>
+                <small>The selected company will receive your shipment documents once you confirm handover.</small>
               </label>
             </div>
           )}
@@ -254,7 +264,7 @@ export default function MahNewShipment({ token, products, suppliers, organisatio
               <div><span>Transport</span><strong>{TRANSPORT.find(t => t.value === info.transport_mode)?.label}</strong></div>
               <div><span>Expected Arrival Date (ETA)</span><strong>{fmtDate(info.eta)}</strong></div>
               <div><span>B/L / AWB</span><strong>{info.bl_awb_number || '—'}</strong></div>
-              <div><span>Clearance company</span><strong>{broker?.name_en || 'Decide later'}</strong></div>
+              <div><span>Clearance company</span><strong>{broker?.name || '—'}</strong></div>
               <div className="mah-summary-wide">
                 <span>Products</span>
                 <ul>
@@ -274,7 +284,12 @@ export default function MahNewShipment({ token, products, suppliers, organisatio
             <button className="mah-btn mah-btn-ghost" onClick={() => setStep(step - 1)} disabled={busy}>← Back</button>
           )}
           <span className="mah-grow" />
-          {step === 0 && <button className="mah-btn mah-btn-primary" onClick={() => setStep(1)}>Next: products →</button>}
+          {step === 0 && (
+            <button className="mah-btn mah-btn-primary" disabled={!clearanceChosen}
+              title={clearanceChosen ? '' : 'Select a clearance company to continue'} onClick={() => setStep(1)}>
+              Next: products →
+            </button>
+          )}
           {step === 1 && (
             <button className="mah-btn mah-btn-primary" disabled={busy || !!lineError || activeProducts.length === 0}
               title={lineError || ''} onClick={() => (locked ? setStep(2) : createDraft())}>
