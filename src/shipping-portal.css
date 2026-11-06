@@ -1,0 +1,50 @@
+/* Shipping Portal — styles only this portal needs.
+   Base styles come from mah-portal.css and clearance-portal.css (root has .mah-app .clr-app .ship-app). */
+
+/* Overview strip: 4 columns */
+.ship-app .ship-strip { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.ship-app .ship-pipe-transit { border-top-color: var(--blue); }
+.ship-app .ship-pipe-port { border-top-color: var(--amber); }
+.ship-app .ship-pipe-released { border-top-color: var(--green); }
+.ship-app .ship-pipe-delivered { border-top-color: var(--navy); }
+
+.ship-transport { white-space: nowrap; }
+.mah-min0 { min-width: 0; }
+.ship-ellipsis { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* Active shipment cards */
+.ship-card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+.ship-card { border: 1px solid var(--border); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 12px; background: #fff; }
+.ship-card-top { display: flex; align-items: center; gap: 10px; }
+.ship-card-mode { font-size: 22px; line-height: 1; flex-shrink: 0; }
+.ship-card-facts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 12px; }
+.ship-card-facts > div { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.ship-card-facts span { font-size: 11px; color: var(--text-3); font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; }
+.ship-card-facts strong { font-size: 13px; font-weight: 600; }
+.ship-card-link { align-self: flex-start; }
+
+/* Map placeholder */
+.ship-map { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px;
+  padding: 32px 20px; border: 2px dashed #CBD5E1; border-radius: 12px; background: #FAFBFC; color: var(--text-2); }
+.ship-map strong { font-size: 16px; color: var(--text); }
+.ship-map p { margin: 0; font-size: 13px; max-width: 520px; }
+.ship-map-emoji { font-size: 40px; line-height: 1; }
+.ship-map code { background: #EEF2F6; padding: 1px 6px; border-radius: 5px; }
+.ship-map-full { padding: 44px 20px; gap: 8px; }
+.ship-map-table { width: 100%; margin-top: 16px; border: 1px solid var(--border); border-radius: 10px; background: #fff; }
+
+/* Detail modal */
+.ship-modal { width: min(840px, 100%); }
+.ship-modal .mah-modal-body > section + section { padding-top: 14px; border-top: 1px solid var(--border); }
+
+/* Fleet list + connected systems */
+.ship-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.ship-list li { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; }
+.ship-systems { display: flex; flex-direction: column; gap: 8px; }
+.ship-system { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border: 1px solid var(--border); border-radius: 10px; }
+.ship-system.is-dimmed { opacity: 0.6; }
+
+@media (max-width: 820px) {
+  .ship-app .ship-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ship-card-grid { grid-template-columns: 1fr; }
+}

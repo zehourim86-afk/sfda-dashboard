@@ -3,6 +3,7 @@ import Login from './Login';
 import Dashboard from './Dashboard';
 import LabPortal from './LabPortal';
 import ShippingPortal from './ShippingPortal';
+import InspectorApp from './InspectorApp';
 import BillingModule from './BillingModule';
 import MahPortal from './MahPortal';
 import AdminPortal from './AdminPortal';
@@ -97,7 +98,7 @@ function App() {
       case 'LAB_ANALYST':
         return <LabPortal user={user} token={token} onLogout={handleLogout} />;
       case 'SFDA_INSPECTOR':
-        return <ShippingPortal user={user} token={token} onLogout={handleLogout} />;
+        return <InspectorApp user={user} token={token} onLogout={handleLogout} />;
       case 'SHIPPING_COMPANY':
         return <ShippingPortal user={user} token={token} onLogout={handleLogout} />;
       case 'IMPORTER':
