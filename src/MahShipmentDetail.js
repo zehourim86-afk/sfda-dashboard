@@ -328,10 +328,16 @@ function ValidationTab({ token, shipment, checklist, uploaded, docsLoaded, broke
   const step = PROGRESS_STEPS[state];
   const [moving, setMoving] = useState(false);
   const [moveError, setMoveError] = useState(null);
+  const [missingBlock, setMissingBlock] = useState(0);
 
   async function advance() {
-    setMoving(true);
     setMoveError(null);
+    setMissingBlock(0);
+    if (step.to === 'READY_TO_SUBMIT' && missing.length > 0) {
+      setMissingBlock(missing.length);
+      return;
+    }
+    setMoving(true);
     try {
       await apiFetch(token, `/shipments/${shipment.id}/transition`, {
         method: 'PUT', body: { to_state: step.to, notes: step.notes },
@@ -365,10 +371,17 @@ function ValidationTab({ token, shipment, checklist, uploaded, docsLoaded, broke
     <div className="mah-stack">
       {step && (
         <section className="mah-card mah-state-step">
-          <button className="mah-btn mah-btn-primary" onClick={advance} disabled={moving}>
+          <button className="mah-btn mah-btn-primary" onClick={advance} disabled={moving || !docsLoaded}>
             {moving ? 'Updating…' : step.label}
           </button>
           {step.help && <p className="mah-small mah-muted">{step.help}</p>}
+          {missingBlock > 0 && missing.length > 0 && (
+            <div className="mah-alert mah-alert-red">
+              Cannot mark as ready — {missing.length} required document{missing.length === 1 ? ' is' : 's are'} still
+              missing. Upload them in the Documents tab.{' '}
+              <button className="mah-link-btn" onClick={() => goTo('documents')}>Go to Documents →</button>
+            </div>
+          )}
           {moveError && <div className="mah-alert mah-alert-red">{moveError}</div>}
         </section>
       )}
