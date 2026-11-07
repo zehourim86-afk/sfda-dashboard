@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { getStateLabel } from './constants';
 import {
   apiFetch, stateOf, StateBadge, SectorBadge, shipmentName, shipmentRef, shipmentSector,
-  SECTOR_CHECKLISTS, CHECKLIST_DOC_TYPES, CLOSED_STATES, objectionDeadline, daysUntil, fmtDate, fmtDateTime,
+  CLOSED_STATES, objectionDeadline, daysUntil, fmtDate, fmtDateTime,
   Tabs, Empty, Icon, ConfirmDialog, readFileForUpload, PRE_BROKER_STATES, agreementInEffect,
 } from './mahShared';
 import { RiskPanel } from './MahNewShipment';
@@ -21,10 +21,11 @@ export default function MahShipmentDetail({
   token, user, shipment: initial, initialTab, productsById, suppliersById, organisations, navigate, reloadShipments, showToast,
 }) {
   const [shipment, setShipment] = useState(initial);
-  const [docs, setDocs] = useState(null);
   const [intel, setIntel] = useState(null);
   const [intelError, setIntelError] = useState(null);
   const [error, setError] = useState(null);
+  const [reqs, setReqs] = useState(null);         // GET /shipments/:id/document-requirements
+  const [reqError, setReqError] = useState(null);
   const [tab, setTab] = useState(initialTab || 'timeline');
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
@@ -33,14 +34,14 @@ export default function MahShipmentDetail({
   const [actionError, setActionError] = useState(null);
 
   const load = useCallback(async () => {
-    const [detail, documents, pre] = await Promise.allSettled([
+    const [detail, pre, requirements] = await Promise.allSettled([
       apiFetch(token, `/shipments/${initial.id}`),
-      apiFetch(token, `/documents/${initial.id}`),
       apiFetch(token, `/shipments/${initial.id}/pre-arrival`),
+      apiFetch(token, `/shipments/${initial.id}/document-requirements`),
     ]);
+    if (requirements.status === 'fulfilled') { setReqs(requirements.value); setReqError(null); } else setReqError(requirements.reason.message);
     if (detail.status === 'fulfilled') setShipment(detail.value.shipment);
     else setError(detail.reason.message);
-    if (documents.status === 'fulfilled') setDocs(documents.value);
     if (pre.status === 'fulfilled') { setIntel(pre.value); setIntelError(null); } else setIntelError(pre.reason.message);
   }, [token, initial.id]);
 
@@ -100,8 +101,6 @@ export default function MahShipmentDetail({
   const activeTab = tabs.some(t => t.key === tab) ? tab : 'timeline';
 
   const sector = shipmentSector(shipment);
-  const checklist = intel?.document_checklist?.length ? intel.document_checklist : (SECTOR_CHECKLISTS[sector] || []);
-  const uploaded = Object.fromEntries((docs?.documents || []).map(d => [d.document_type, d]));
   const broker = organisations.find(o => o.id === (shipment.clearance_company_id || shipment.preferred_clearance_company_id));
   const supplierName = suppliersById[shipment.supplier_id]?.name || shipment.supplier_name;
 
@@ -145,11 +144,10 @@ export default function MahShipmentDetail({
 
       {activeTab === 'timeline' && <TimelineTab shipment={shipment} />}
       {activeTab === 'documents' && (
-        <DocumentsTab token={token} shipment={shipment} checklist={checklist} uploaded={uploaded} onChanged={refresh} />
+        <DocumentsTab token={token} shipment={shipment} reqs={reqs} reqError={reqError} onChanged={refresh} />
       )}
       {activeTab === 'validation' && (
-        <ValidationTab token={token} shipment={shipment} checklist={checklist} uploaded={uploaded}
-          docsLoaded={!!docs} broker={broker} onChanged={refresh} goTo={setTab} showToast={showToast}
+        <ValidationTab token={token} shipment={shipment} reqs={reqs} broker={broker} onChanged={refresh} goTo={setTab} showToast={showToast}
           organisations={organisations} />
       )}
       {activeTab === 'customs' && <CustomsTab token={token} user={user} shipment={shipment} onChanged={refresh} />}
@@ -235,9 +233,18 @@ export function TimelineTab({ shipment }) {
 }
 
 // ── Documents ────────────────────────────────────────
-function DocumentsTab({ token, shipment, checklist, uploaded, onChanged }) {
+// Three-tier checklist (GET /shipments/:id/document-requirements):
+//   MANDATORY — SFDA, can't be removed · RECOMMENDED — removable after a warning · OPTIONAL — incl. MAH custom documents
+function DocumentsTab({ token, shipment, reqs, reqError, onChanged }) {
   const [busyType, setBusyType] = useState(null);
   const [error, setError] = useState(null);
+  const [warnRemove, setWarnRemove] = useState(null); // RECOMMENDED type whose removal warning is open
+  const [prefBusy, setPrefBusy] = useState(false);
+  const [recommendedOpen, setRecommendedOpen] = useState(true);
+  const [optionalOpen, setOptionalOpen] = useState(false);
+  const [adding, setAdding] = useState(false);
+  const [newName, setNewName] = useState('');
+  const [newNotes, setNewNotes] = useState('');
   const inputs = useRef({});
 
   async function upload(docType, file) {
@@ -257,9 +264,111 @@ function DocumentsTab({ token, shipment, checklist, uploaded, onChanged }) {
     }
   }
 
-  if (checklist.length === 0) {
+  async function setPreference(body) {
+    setPrefBusy(true);
+    setError(null);
+    try {
+      await apiFetch(token, `/shipments/${shipment.id}/document-preferences`, { method: 'PUT', body });
+      await onChanged();
+      return true;
+    } catch (e) {
+      setError(e.message);
+      return false;
+    } finally {
+      setPrefBusy(false);
+    }
+  }
+  const remove = async (type) => { if (await setPreference({ action: 'REMOVE', document_type: type })) setWarnRemove(null); };
+  const restore = (type) => setPreference({ action: 'RESTORE', document_type: type });
+  async function addCustom(e) {
+    e.preventDefault();
+    const ok = await setPreference({ action: 'ADD_CUSTOM', custom_doc: { display_name: newName.trim(), notes: newNotes.trim() || undefined } });
+    if (ok) { setAdding(false); setNewName(''); setNewNotes(''); setOptionalOpen(true); }
+  }
+
+  if (!reqs) {
+    return (
+      <section className="mah-card">
+        {reqError ? <div className="mah-alert mah-alert-red">Could not load the document checklist: {reqError}</div>
+          : <div className="mah-loading">Loading document checklist…</div>}
+      </section>
+    );
+  }
+  if (!reqs.sector) {
     return <section className="mah-card"><Empty title="No sector set">This shipment has no sector, so there is no document checklist.</Empty></section>;
   }
+
+  const active = reqs.documents.filter(d => !d.is_removed);
+  const removedDocs = reqs.documents.filter(d => d.is_removed);
+  const mandatory = active.filter(d => d.tier === 'MANDATORY');
+  const recommended = active.filter(d => d.tier === 'RECOMMENDED');
+  const optional = active.filter(d => d.tier === 'OPTIONAL');
+  const mandatoryMissing = reqs.mandatory_uploaded < reqs.mandatory_count;
+  const optionalUploaded = optional.filter(d => d.uploaded_doc).length;
+
+  const row = (d) => {
+    const doc = d.uploaded_doc;
+    const tone = doc ? READINESS_TONES[doc.readiness_status] || 'grey' : null;
+    const sub = d.tier === 'MANDATORY' ? d.sfda_citation : d.description;
+    return (
+      <div key={d.document_type} className="mah-tier-item">
+        <div className={`mah-tier-row${doc ? ' is-uploaded' : ''}`}>
+          {d.tier === 'MANDATORY'
+            ? <span className="mah-tier-lock" title={`Required by ${d.sfda_citation || 'SFDA regulations'} — cannot be removed`}
+              aria-label={`Required by ${d.sfda_citation || 'SFDA regulations'} — cannot be removed`}>🔒</span>
+            : <span className="mah-doc-icon">{doc ? <Icon name="check" /> : <Icon name="upload" />}</span>}
+          <div className="mah-grow mah-tier-text">
+            <div className="mah-row-title">{d.display_name}{d.is_custom && <span className="mah-badge mah-tone-grey mah-tier-custom">Custom</span>}</div>
+            {sub && <div className="mah-row-sub">{sub}</div>}
+          </div>
+          <div className="mah-tier-status">
+            {doc ? (
+              <>
+                <span className="mah-text-green mah-small"><strong>✓ Uploaded</strong></span>
+                <span className="mah-row-sub mah-tier-file" title={doc.file_name}>
+                  {doc.file_name} · <span className={`mah-text-${tone}`}>{(doc.readiness_status || 'Checked').replace(/_/g, ' ')}</span>
+                  {doc.validation_result?.score != null && <> · {doc.validation_result.score}/100</>}
+                </span>
+                <button className="mah-link-btn mah-small" disabled={busyType !== null}
+                  onClick={() => inputs.current[d.document_type]?.click()}>
+                  {busyType === d.document_type ? 'Checking…' : 'Re-upload'}
+                </button>
+              </>
+            ) : (
+              <>
+                <span className={`mah-small ${d.tier === 'MANDATORY' ? 'mah-text-red' : 'mah-muted'}`}>Missing</span>
+                <button className="mah-btn mah-btn-sm mah-btn-primary" disabled={busyType !== null}
+                  onClick={() => inputs.current[d.document_type]?.click()}>
+                  {busyType === d.document_type ? 'Checking…' : 'Upload'}
+                </button>
+              </>
+            )}
+            <input type="file" hidden accept=".pdf,.txt,.doc,.docx,.jpg,.png"
+              ref={el => { inputs.current[d.document_type] = el; }}
+              onChange={e => { upload(d.document_type, e.target.files[0]); e.target.value = ''; }} />
+          </div>
+        </div>
+        {d.can_remove && warnRemove !== d.document_type && (
+          <button className="mah-remove-link" disabled={prefBusy}
+            onClick={() => (d.tier === 'RECOMMENDED' ? setWarnRemove(d.document_type) : remove(d.document_type))}>
+            Remove
+          </button>
+        )}
+        {warnRemove === d.document_type && (
+          <div className="mah-remove-warning" role="alert">
+            <strong>⚠ MASAAR recommends this document</strong>
+            {d.removal_warning && <p>{d.removal_warning}</p>}
+            <div className="mah-remove-warning-actions">
+              <button className="mah-btn mah-btn-sm mah-btn-amber" onClick={() => setWarnRemove(null)} autoFocus>Keep it</button>
+              <button className="mah-btn mah-btn-sm mah-btn-ghost" disabled={prefBusy} onClick={() => remove(d.document_type)}>
+                {prefBusy ? 'Removing…' : 'Remove anyway — I accept the risk'}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <section className="mah-card">
@@ -267,41 +376,66 @@ function DocumentsTab({ token, shipment, checklist, uploaded, onChanged }) {
         <h2>Document checklist</h2>
         <span className="mah-muted mah-small">Each upload is checked by the MASAAR AI validator</span>
       </div>
-      {error && <div className="mah-alert mah-alert-red">{error}</div>}
-      <div className="mah-doc-grid">
-        {checklist.map(name => {
-          const docType = CHECKLIST_DOC_TYPES[name];
-          const doc = docType && uploaded[docType];
-          const tone = doc ? READINESS_TONES[doc.readiness_status] || 'grey' : null;
-          return (
-            <div key={name} className={`mah-doc-slot${doc ? ' is-uploaded' : ''}`}>
-              <div className="mah-doc-icon">{doc ? <Icon name="check" /> : <Icon name="upload" />}</div>
-              <div className="mah-grow">
-                <div className="mah-row-title">{name}</div>
-                {doc ? (
-                  <div className="mah-row-sub">
-                    {doc.file_name} · <span className={`mah-text-${tone}`}>{(doc.readiness_status || 'Checked').replace(/_/g, ' ')}</span>
-                    {doc.validation_result?.score != null && <> · score {doc.validation_result.score}</>}
-                  </div>
-                ) : (
-                  <div className="mah-row-sub">{docType ? 'Missing' : 'Not uploadable in MASAAR yet — send to your broker'}</div>
-                )}
-              </div>
-              {docType && (
-                <>
-                  <input type="file" hidden accept=".pdf,.txt,.doc,.docx,.jpg,.png"
-                    ref={el => { inputs.current[docType] = el; }}
-                    onChange={e => { upload(docType, e.target.files[0]); e.target.value = ''; }} />
-                  <button className={`mah-btn mah-btn-sm ${doc ? 'mah-btn-ghost' : 'mah-btn-primary'}`}
-                    disabled={busyType !== null} onClick={() => inputs.current[docType]?.click()}>
-                    {busyType === docType ? 'Checking…' : doc ? 'Replace' : 'Upload'}
-                  </button>
-                </>
-              )}
-            </div>
-          );
-        })}
+      <div className="mah-tier-stats">
+        <span className={`mah-badge mah-tone-${mandatoryMissing ? 'red' : 'green'}`}>✓ {reqs.mandatory_uploaded}/{reqs.mandatory_count} Mandatory</span>
+        <span className="mah-badge mah-tone-amber">● {reqs.recommended_uploaded}/{reqs.recommended_count} Recommended</span>
+        <span className="mah-badge mah-tone-grey">+ {optional.length} Optional/Custom</span>
       </div>
+      {error && <div className="mah-alert mah-alert-red">{error}</div>}
+
+      <div className="mah-tier mah-tier-mandatory">
+        <div className="mah-tier-head is-static"><span>🔒 Mandatory — Required by SFDA regulations</span></div>
+        {mandatory.length ? mandatory.map(row) : <p className="mah-muted mah-small">No mandatory documents for this sector.</p>}
+      </div>
+
+      <div className="mah-tier mah-tier-recommended">
+        <button className="mah-tier-head" onClick={() => setRecommendedOpen(o => !o)} aria-expanded={recommendedOpen}>
+          <span>● Recommended — Based on MASAAR expertise</span>
+          <span className="mah-small mah-muted">{reqs.recommended_uploaded}/{recommended.length} uploaded {recommendedOpen ? '▾' : '▸'}</span>
+        </button>
+        {recommendedOpen && (recommended.length ? recommended.map(row) : <p className="mah-muted mah-small">No recommended documents left on the checklist.</p>)}
+      </div>
+
+      <div className="mah-tier mah-tier-optional">
+        <button className="mah-tier-head" onClick={() => setOptionalOpen(o => !o)} aria-expanded={optionalOpen}>
+          <span>+ Optional &amp; Custom documents</span>
+          <span className="mah-small mah-muted">{optionalUploaded}/{optional.length} uploaded {optionalOpen ? '▾' : '▸'}</span>
+        </button>
+        {optionalOpen && (optional.length ? optional.map(row) : <p className="mah-muted mah-small">No optional or custom documents yet.</p>)}
+      </div>
+
+      {adding ? (
+        <form className="mah-tier-add" onSubmit={addCustom}>
+          <label className="mah-field">
+            <span>Document name *</span>
+            <input className="mah-input" value={newName} onChange={e => setNewName(e.target.value)} maxLength={150} required autoFocus />
+          </label>
+          <label className="mah-field">
+            <span>Notes / reason</span>
+            <input className="mah-input" value={newNotes} onChange={e => setNewNotes(e.target.value)} maxLength={500} />
+          </label>
+          <div className="mah-remove-warning-actions">
+            <button type="button" className="mah-btn mah-btn-sm mah-btn-ghost" onClick={() => setAdding(false)} disabled={prefBusy}>Cancel</button>
+            <button type="submit" className="mah-btn mah-btn-sm mah-btn-primary" disabled={prefBusy || !newName.trim()}>
+              {prefBusy ? 'Adding…' : 'Add to checklist →'}
+            </button>
+          </div>
+        </form>
+      ) : (
+        <button className="mah-btn mah-btn-ghost mah-tier-add-btn" onClick={() => setAdding(true)}>+ Add a document</button>
+      )}
+
+      {removedDocs.length > 0 && (
+        <div className="mah-tier-removed">
+          <div className="mah-small"><strong>Removed documents (not required for this shipment)</strong></div>
+          {removedDocs.map(d => (
+            <div key={d.document_type} className="mah-tier-removed-row">
+              <span className="mah-strike">{d.display_name}</span>
+              <button className="mah-link-btn mah-small" disabled={prefBusy} onClick={() => restore(d.document_type)}>Restore</button>
+            </div>
+          ))}
+        </div>
+      )}
     </section>
   );
 }
@@ -487,7 +621,8 @@ function generateSummaryText({ documents, required, reviewed, score, layer1Compl
   return `${docLine} ${issueLine} ${advice}`;
 }
 
-function AiValidationSummary({ documents, required, layer1Complete, shipmentSector, loading }) {
+// tiers: { mandatory: [uploaded, total], recommended: [uploaded, total], custom } from the checklist
+function AiValidationSummary({ documents, required, layer1Complete, shipmentSector, loading, tiers }) {
   if (loading) {
     return (
       <section className="mah-ai-summary mah-ai-summary-loading" aria-busy="true">
@@ -521,7 +656,10 @@ function AiValidationSummary({ documents, required, layer1Complete, shipmentSect
           <span className="mah-ai-summary-max">/100</span>
         </div>
         <div className="mah-ai-summary-stats">
-          Docs: {documents.length}/{required} · AI reviewed: {reviewed}/{documents.length} · Issues: {issueCount}
+          Mandatory: {tiers.mandatory[0]}/{tiers.mandatory[1]}{tiers.mandatory[0] === tiers.mandatory[1] ? ' ✓' : ''}
+          {' · '}Recommended: {tiers.recommended[0]}/{tiers.recommended[1]}
+          {' · '}Custom: {tiers.custom}
+          {' · '}Issues: {issueCount}
         </div>
       </div>
       <div className="mah-ai-summary-track">
@@ -540,19 +678,22 @@ const PROGRESS_STEPS = {
   PREPARING: {
     to: 'READY_TO_SUBMIT', label: 'Mark as Ready to Submit →', notes: 'MAH marked shipment ready',
     toast: 'Shipment is now Ready to Submit',
-    help: 'All required documents must be uploaded before handing over to your broker',
+    help: 'All mandatory documents must be uploaded before marking the shipment ready',
   },
 };
 
-function ValidationTab({ token, shipment, checklist, uploaded, docsLoaded, broker, onChanged, goTo, showToast, organisations }) {
+function ValidationTab({ token, shipment, reqs, broker, onChanged, goTo, showToast, organisations }) {
   const [notes, setNotes] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
   const [done, setDone] = useState(null);
 
-  const missing = checklist.filter(n => CHECKLIST_DOC_TYPES[n] && !uploaded[CHECKLIST_DOC_TYPES[n]]);
-  const manual = checklist.filter(n => !CHECKLIST_DOC_TYPES[n]);
-  const checked = checklist.map(n => uploaded[CHECKLIST_DOC_TYPES[n]]).filter(Boolean);
+  // Layer 1 = every MANDATORY document uploaded; RECOMMENDED ones are advisory
+  const docsLoaded = !!reqs;
+  const active = (reqs?.documents || []).filter(d => !d.is_removed);
+  const missing = active.filter(d => d.tier === 'MANDATORY' && !d.uploaded_doc);
+  const missingRecommended = active.filter(d => d.tier === 'RECOMMENDED' && !d.uploaded_doc);
+  const checked = active.filter(d => d.uploaded_doc).map(d => ({ ...d.uploaded_doc, name: d.display_name }));
   const critical = checked.filter(d => d.readiness_status === 'CRITICAL_ISSUE');
   const blocking = missing.length + critical.length;
   const state = stateOf(shipment);
@@ -566,12 +707,19 @@ function ValidationTab({ token, shipment, checklist, uploaded, docsLoaded, broke
   const [moving, setMoving] = useState(false);
   const [moveError, setMoveError] = useState(null);
   const [missingBlock, setMissingBlock] = useState(0);
+  const [recommendedWarning, setRecommendedWarning] = useState(false);
 
-  async function advance() {
+  // proceed = the MAH chose "Proceed anyway" past the recommended-documents warning
+  async function advance(proceed = false) {
     setMoveError(null);
     setMissingBlock(0);
+    setRecommendedWarning(false);
     if (step.to === 'READY_TO_SUBMIT' && missing.length > 0) {
       setMissingBlock(missing.length);
+      return;
+    }
+    if (step.to === 'READY_TO_SUBMIT' && missingRecommended.length > 0 && !proceed) {
+      setRecommendedWarning(true);
       return;
     }
     setMoving(true);
@@ -607,24 +755,43 @@ function ValidationTab({ token, shipment, checklist, uploaded, docsLoaded, broke
   return (
     <div className="mah-stack">
       <AiValidationSummary
-        documents={checklist.filter(n => uploaded[CHECKLIST_DOC_TYPES[n]]).map(n => ({ ...uploaded[CHECKLIST_DOC_TYPES[n]], name: n }))}
-        required={checklist.length - manual.length}
-        layer1Complete={missing.length === 0}
+        documents={checked}
+        required={active.length}
+        layer1Complete={!!reqs?.layer1_complete}
         shipmentSector={shipmentSector(shipment)}
         loading={!docsLoaded}
+        tiers={{
+          mandatory: [reqs?.mandatory_uploaded ?? 0, reqs?.mandatory_count ?? 0],
+          recommended: [reqs?.recommended_uploaded ?? 0, reqs?.recommended_count ?? 0],
+          custom: reqs?.custom_count ?? 0,
+        }}
       />
 
       {step && (
         <section className="mah-card mah-state-step">
-          <button className="mah-btn mah-btn-primary" onClick={advance} disabled={moving || !docsLoaded}>
+          <button className="mah-btn mah-btn-primary" onClick={() => advance()} disabled={moving || !docsLoaded}>
             {moving ? 'Updating…' : step.label}
           </button>
           {step.help && <p className="mah-small mah-muted">{step.help}</p>}
           {missingBlock > 0 && missing.length > 0 && (
             <div className="mah-alert mah-alert-red">
-              Cannot mark as ready — {missing.length} required document{missing.length === 1 ? ' is' : 's are'} still
+              Cannot mark as ready — {missing.length} mandatory document{missing.length === 1 ? ' is' : 's are'} still
               missing. Upload them in the Documents tab.{' '}
               <button className="mah-link-btn" onClick={() => goTo('documents')}>Go to Documents →</button>
+            </div>
+          )}
+          {recommendedWarning && missingRecommended.length > 0 && (
+            <div className="mah-remove-warning" role="alert">
+              <strong>
+                ⚠ {missingRecommended.length} recommended document{missingRecommended.length === 1 ? '' : 's'} not uploaded.
+              </strong>
+              <p>MASAAR advises uploading these before submission to reduce rejection risk: {missingRecommended.map(d => d.display_name).join(', ')}.</p>
+              <div className="mah-remove-warning-actions">
+                <button className="mah-btn mah-btn-sm mah-btn-amber" onClick={() => goTo('documents')}>Upload them →</button>
+                <button className="mah-btn mah-btn-sm mah-btn-ghost" onClick={() => advance(true)} disabled={moving}>
+                  {moving ? 'Updating…' : 'Proceed anyway'}
+                </button>
+              </div>
             </div>
           )}
           {moveError && <div className="mah-alert mah-alert-red">{moveError}</div>}
@@ -634,19 +801,22 @@ function ValidationTab({ token, shipment, checklist, uploaded, docsLoaded, broke
       <section className="mah-card">
         <div className="mah-card-head">
           <h2>Layer 1 · Completeness</h2>
-          <span className={`mah-badge mah-tone-${missing.length ? 'red' : 'green'}`}>{missing.length ? `${missing.length} missing` : 'Complete'}</span>
+          <span className={`mah-badge mah-tone-${!docsLoaded ? 'grey' : missing.length ? 'red' : 'green'}`}>
+            {!docsLoaded ? 'Loading…' : missing.length ? `${missing.length} mandatory missing` : 'Complete'}
+          </span>
         </div>
-        {missing.length === 0
-          ? <p className="mah-muted">All uploadable required documents are in.</p>
-          : (
-            <ul className="mah-issue-list">
-              {missing.map(n => <li key={n} className="mah-issue-red"><Icon name="alert" size={14} /> {n} is missing</li>)}
-            </ul>
-          )}
-        {manual.length > 0 && (
-          <p className="mah-small mah-muted">Not checked here (no upload type yet): {manual.join(', ')}</p>
+        {docsLoaded && missing.length === 0 && <p className="mah-muted">All mandatory documents are in.</p>}
+        {(missing.length > 0 || missingRecommended.length > 0) && (
+          <ul className="mah-issue-list">
+            {missing.map(d => <li key={d.document_type} className="mah-issue-red"><Icon name="alert" size={14} /> {d.display_name} is missing (mandatory)</li>)}
+            {missingRecommended.map(d => (
+              <li key={d.document_type} className="mah-issue-amber"><Icon name="alert" size={14} /> {d.display_name} not uploaded (recommended)</li>
+            ))}
+          </ul>
         )}
-        {missing.length > 0 && <button className="mah-link-btn" onClick={() => goTo('documents')}>Upload documents →</button>}
+        {(missing.length > 0 || missingRecommended.length > 0) && (
+          <button className="mah-link-btn" onClick={() => goTo('documents')}>Upload documents →</button>
+        )}
       </section>
 
       <section className="mah-card">
@@ -664,13 +834,12 @@ function ValidationTab({ token, shipment, checklist, uploaded, docsLoaded, broke
         </div>
         {checked.length === 0
           ? <p className="mah-muted">Upload documents to get the AI review.</p>
-          : checklist.filter(n => uploaded[CHECKLIST_DOC_TYPES[n]]).map(n => {
-            const d = uploaded[CHECKLIST_DOC_TYPES[n]];
+          : checked.map(d => {
             const v = d.validation_result || {};
             return (
-              <div key={n} className={`mah-ai-row mah-edge-${READINESS_TONES[d.readiness_status] || 'grey'}`}>
+              <div key={d.document_type} className={`mah-ai-row mah-edge-${READINESS_TONES[d.readiness_status] || 'grey'}`}>
                 <div className="mah-tl-head">
-                  <strong>{n}</strong>
+                  <strong>{d.name}</strong>
                   <span className="mah-small">{(d.readiness_status || '').replace(/_/g, ' ')}{v.score != null ? ` · ${v.score}/100` : ''}</span>
                 </div>
                 {v.summary && <div className="mah-small">{v.summary}</div>}

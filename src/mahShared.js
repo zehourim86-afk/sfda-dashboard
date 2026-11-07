@@ -67,10 +67,10 @@ export const CHECKLIST_DOC_TYPES = {
   'Packing List': 'PACKING_LIST',
   'Health Certificate': 'HEALTH_CERTIFICATE',
   'Certificate of Origin': 'CERTIFICATE_OF_ORIGIN',
-  'Certificate of Conformity (CoC)': null,
-  'INCI Declaration': null,
-  'Ingredient Declaration': null,
-  'Nutritional Facts': null,
+  'Certificate of Conformity (CoC)': 'CERTIFICATE_OF_CONFORMITY',
+  'INCI Declaration': 'INCI_DECLARATION',
+  'Ingredient Declaration': 'INGREDIENT_DECLARATION',
+  'Nutritional Facts': 'NUTRITIONAL_FACTS',
 };
 
 // ── States ───────────────────────────────────────────
