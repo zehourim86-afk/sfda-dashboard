@@ -300,6 +300,91 @@ function DocumentsTab({ token, shipment, checklist, uploaded, onChanged }) {
 }
 
 // ── Validation ───────────────────────────────────────
+// ── AI validation summary ────────────────────────────
+const VERDICTS = [
+  { min: 85, label: 'Ready for submission', color: '#00B87A', bg: '#F0FDF4' },
+  { min: 70, label: 'Review recommended', color: '#E8900A', bg: '#FFFBEB' },
+  { min: 50, label: 'Issues found', color: '#E8700A', bg: '#FFF7ED' },
+  { min: 0, label: 'Critical issues', color: '#E0334C', bg: '#FFF1F2' },
+];
+const docScore = (d) => d.validation_result?.score ?? null;
+const isBinaryWarning = (d) => {
+  const v = d.validation_result || {};
+  return [v.summary, ...(v.issues || [])].some(m => typeof m === 'string' && /binary|extract/i.test(m));
+};
+const listNames = (items) => items.map(i => i.name).join(', ');
+
+// TODO: Replace generateSummaryText() with
+// Anthropic API call after demo
+// POST https://api.anthropic.com/v1/messages
+// Pass document scores + sector as context
+// Return AI-generated summary paragraph
+function generateSummaryText({ documents, required, reviewed, score, layer1Complete }) {
+  const docLine = `${documents.length} of ${required} documents uploaded, ${reviewed} analyzed by AI.`;
+
+  const critical = documents.filter(d => (docScore(d) ?? 0) < 50 && d.readiness_status === 'CRITICAL_ISSUE');
+  const weak = documents.filter(d => (docScore(d) ?? 0) < 70);
+  const binary = documents.filter(isBinaryWarning);
+  let issueLine;
+  if (critical.length) issueLine = `Critical issues found in: ${listNames(critical)}.`;
+  else if (weak.length) issueLine = `${listNames(weak)} ${weak.length === 1 ? 'requires' : 'require'} attention before submission.`;
+  else if (binary.length) issueLine = `${binary.length} document${binary.length === 1 ? '' : 's'} uploaded in binary format — text format recommended for AI analysis.`;
+  else issueLine = documents.length ? 'All analyzed documents meet requirements.' : 'No documents analyzed yet.';
+
+  let advice;
+  if (!layer1Complete) advice = 'Complete document upload before proceeding.';
+  else if (score >= 85) advice = 'Shipment is ready to proceed to broker.';
+  else if (score >= 70) advice = 'Review flagged documents before proceeding.';
+  else advice = 'Address critical issues before submission to avoid SFDA rejection.';
+
+  return `${docLine} ${issueLine} ${advice}`;
+}
+
+function AiValidationSummary({ documents, required, layer1Complete, shipmentSector, loading }) {
+  if (loading) {
+    return (
+      <section className="mah-ai-summary mah-ai-summary-loading" aria-busy="true">
+        <div className="mah-ai-summary-pulse">✦ Analyzing documents...</div>
+        <span className="mah-skel-bar" style={{ width: '40%' }} />
+        <span className="mah-skel-bar" style={{ width: '100%', height: 6 }} />
+        <span className="mah-skel-bar" style={{ width: '85%' }} />
+      </section>
+    );
+  }
+
+  const scores = documents.map(d => docScore(d) ?? 0);
+  const score = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
+  const reviewed = documents.filter(d => docScore(d) != null).length;
+  const issueCount = documents.filter(d => (docScore(d) ?? 0) < 70 || d.readiness_status === 'CRITICAL_ISSUE').length;
+  const verdict = VERDICTS.find(v => score >= v.min);
+  const text = generateSummaryText({ documents, required, reviewed, score, layer1Complete, shipmentSector });
+
+  return (
+    <section className="mah-ai-summary" style={{ background: verdict.bg, borderColor: `${verdict.color}4D` }}>
+      <div className="mah-ai-summary-head">
+        <div>
+          <span className="mah-ai-summary-brand" style={{ color: verdict.color }}>✦ MASAAR AI</span>
+          <span className="mah-ai-summary-title">Validation Summary</span>
+        </div>
+        <span className="mah-ai-summary-pill" style={{ background: verdict.color }}>{verdict.label}</span>
+      </div>
+      <div className="mah-ai-summary-score">
+        <div>
+          <span className="mah-ai-summary-num" style={{ color: verdict.color }}>{score}</span>
+          <span className="mah-ai-summary-max">/100</span>
+        </div>
+        <div className="mah-ai-summary-stats">
+          Docs: {documents.length}/{required} · AI reviewed: {reviewed}/{documents.length} · Issues: {issueCount}
+        </div>
+      </div>
+      <div className="mah-ai-summary-track">
+        <div className="mah-ai-summary-fill" style={{ width: `${score}%`, background: verdict.color }} />
+      </div>
+      <p className="mah-ai-summary-text">{text}</p>
+    </section>
+  );
+}
+
 const PROGRESS_STEPS = {
   DRAFT: {
     to: 'PREPARING', label: 'Start document preparation →', notes: 'MAH started document preparation',
@@ -369,6 +454,14 @@ function ValidationTab({ token, shipment, checklist, uploaded, docsLoaded, broke
 
   return (
     <div className="mah-stack">
+      <AiValidationSummary
+        documents={checklist.filter(n => uploaded[CHECKLIST_DOC_TYPES[n]]).map(n => ({ ...uploaded[CHECKLIST_DOC_TYPES[n]], name: n }))}
+        required={checklist.length - manual.length}
+        layer1Complete={missing.length === 0}
+        shipmentSector={shipmentSector(shipment)}
+        loading={!docsLoaded}
+      />
+
       {step && (
         <section className="mah-card mah-state-step">
           <button className="mah-btn mah-btn-primary" onClick={advance} disabled={moving || !docsLoaded}>

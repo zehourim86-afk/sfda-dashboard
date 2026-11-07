@@ -544,3 +544,20 @@ textarea.mah-input { resize: vertical; min-height: 60px; }
 
 /* Small confirm modal */
 .mah-modal.mah-modal-sm { width: min(460px, 100%); }
+
+/* AI validation summary */
+.mah-ai-summary { border: 1.5px solid; border-radius: 12px; padding: 20px 24px; margin-bottom: 20px; }
+.mah-ai-summary-loading { background: #F8FAFC; border-color: #E2E8F0; display: flex; flex-direction: column; gap: 12px; }
+.mah-ai-summary-pulse { font-size: 13px; font-weight: 700; color: #64748B; animation: mah-ai-pulse 1.4s ease-in-out infinite; }
+@keyframes mah-ai-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+.mah-ai-summary-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.mah-ai-summary-brand { font-size: 13px; font-weight: 700; margin-right: 8px; }
+.mah-ai-summary-title { font-size: 15px; font-weight: 700; color: #0F1A4A; }
+.mah-ai-summary-pill { color: #fff; border-radius: 20px; padding: 4px 12px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+.mah-ai-summary-score { margin-top: 12px; display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.mah-ai-summary-num { font-size: 32px; font-weight: 700; line-height: 1; }
+.mah-ai-summary-max { color: #94A3B8; font-size: 14px; margin-left: 2px; }
+.mah-ai-summary-stats { font-size: 12px; color: #64748B; }
+.mah-ai-summary-track { margin-top: 12px; height: 6px; border-radius: 3px; background: rgba(0, 0, 0, 0.08); overflow: hidden; }
+.mah-ai-summary-fill { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
+.mah-ai-summary-text { margin: 14px 0 0; font-size: 13px; color: #334155; line-height: 1.6; }
