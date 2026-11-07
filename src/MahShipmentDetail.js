@@ -149,7 +149,8 @@ export default function MahShipmentDetail({
       )}
       {activeTab === 'validation' && (
         <ValidationTab token={token} shipment={shipment} checklist={checklist} uploaded={uploaded}
-          docsLoaded={!!docs} broker={broker} onChanged={refresh} goTo={setTab} showToast={showToast} />
+          docsLoaded={!!docs} broker={broker} onChanged={refresh} goTo={setTab} showToast={showToast}
+          organisations={organisations} />
       )}
       {activeTab === 'customs' && <CustomsTab token={token} user={user} shipment={shipment} onChanged={refresh} />}
       {activeTab === 'intelligence' && (
@@ -543,7 +544,7 @@ const PROGRESS_STEPS = {
   },
 };
 
-function ValidationTab({ token, shipment, checklist, uploaded, docsLoaded, broker, onChanged, goTo, showToast }) {
+function ValidationTab({ token, shipment, checklist, uploaded, docsLoaded, broker, onChanged, goTo, showToast, organisations }) {
   const [notes, setNotes] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
@@ -555,7 +556,12 @@ function ValidationTab({ token, shipment, checklist, uploaded, docsLoaded, broke
   const critical = checked.filter(d => d.readiness_status === 'CRITICAL_ISSUE');
   const blocking = missing.length + critical.length;
   const state = stateOf(shipment);
-  const canConfirm = state === 'READY_TO_SUBMIT' && !!broker;
+  const [agreementOpen, setAgreementOpen] = useState(false);
+  // Hand-over needs the broker's acceptance and both agreement acknowledgements (also enforced by the API)
+  const engagementBlock = shipment.broker_acceptance_status !== 'ACCEPTED' ? 'accept'
+    : !shipment.agreement_acknowledged_mah ? 'mah'
+      : !shipment.agreement_acknowledged_clearance ? 'clearance' : null;
+  const canConfirm = state === 'READY_TO_SUBMIT' && !!broker && !engagementBlock;
   const step = PROGRESS_STEPS[state];
   const [moving, setMoving] = useState(false);
   const [moveError, setMoveError] = useState(null);
@@ -700,9 +706,29 @@ function ValidationTab({ token, shipment, checklist, uploaded, docsLoaded, broke
             <button className="mah-btn mah-btn-green" onClick={confirm} disabled={!canConfirm || busy}>
               {busy ? 'Confirming…' : 'Confirm & Hand to Broker'}
             </button>
+            {engagementBlock === 'accept' && (
+              <p className="mah-handover-block">Waiting for clearance company to accept your engagement request</p>
+            )}
+            {engagementBlock === 'mah' && (
+              <p className="mah-handover-block">
+                Please acknowledge the service agreement first —{' '}
+                <button className="mah-link-btn" onClick={() => setAgreementOpen(true)}>Review agreement →</button>
+              </p>
+            )}
+            {engagementBlock === 'clearance' && (
+              <p className="mah-handover-block">Waiting for clearance company to acknowledge the service agreement</p>
+            )}
           </>
         )}
       </section>
+
+      {agreementOpen && (
+        <ServiceAgreementModal shipment={shipment} party="MAH" token={token}
+          mahOrg={organisations?.find(o => o.id === shipment.org_id)}
+          clearanceOrg={organisations?.find(o => o.id === shipment.preferred_clearance_company_id)}
+          onClose={() => setAgreementOpen(false)}
+          onAcknowledged={async (_updated, message) => { showToast?.(message); await onChanged(); }} />
+      )}
     </div>
   );
 }

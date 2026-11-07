@@ -626,3 +626,4 @@ textarea.mah-input { resize: vertical; min-height: 60px; }
 .clr-decline-form { display: flex; flex-direction: column; gap: 8px; max-width: 560px; }
 .clr-char-count { font-size: 12px; color: var(--text-3); align-self: flex-end; }
 .mah-form-grid > .mah-wide { grid-column: 1 / -1; }
+.mah-handover-block { margin: 0; font-size: 13px; color: var(--amber); font-weight: 600; }
