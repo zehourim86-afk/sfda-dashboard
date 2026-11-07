@@ -16,6 +16,19 @@ const TRANSPORT = [{ value: 'sea', label: 'Sea' }, { value: 'air', label: 'Air' 
 const STEPS = ['Basic info', 'Products', 'Pre-arrival intelligence', 'Confirm'];
 const emptyLine = () => ({ product_id: '', quantity: '', batch_number: '' });
 
+// ETA dates as YYYY-MM-DD in the user's local time zone (toISOString would use UTC and can be a day off)
+const ETA_RE = /^\d{4}-\d{2}-\d{2}$/;
+const ETA_DEFAULT_DAYS = 30;
+const localISODate = (d) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+const daysFromToday = (n) => { const d = new Date(); d.setDate(d.getDate() + n); return localISODate(d); };
+// Returns an error message, or null when the ETA is a valid date that is not in the past
+function etaError(eta) {
+  if (!ETA_RE.test(eta || '') || Number.isNaN(Date.parse(eta))) return 'Please select a valid arrival date';
+  if (eta < localISODate(new Date())) return 'Arrival date cannot be in the past';
+  return null;
+}
+
 export function RiskPanel({ intel }) {
   if (!intel) return null;
   const tone = { LOW: 'green', MEDIUM: 'amber', HIGH: 'red' }[intel.risk_band];
@@ -47,8 +60,10 @@ export function RiskPanel({ intel }) {
 export default function MahNewShipment({ token, products, suppliers, organisations, navigate, onClose, onCreated, showToast }) {
   const [step, setStep] = useState(0);
   const [info, setInfo] = useState({
-    supplier_id: '', port_of_entry: PORTS[0], transport_mode: 'sea', eta: '', bl_awb_number: '', preferred_clearance_company_id: '',
+    supplier_id: '', port_of_entry: PORTS[0], transport_mode: 'sea', eta: daysFromToday(ETA_DEFAULT_DAYS),
+    bl_awb_number: '', preferred_clearance_company_id: '',
   });
+  const [etaTouched, setEtaTouched] = useState(false);
   const [lines, setLines] = useState([emptyLine()]);
   const [created, setCreated] = useState(null);
   const [intel, setIntel] = useState(null);
@@ -80,6 +95,12 @@ export default function MahNewShipment({ token, products, suppliers, organisatio
   })();
 
   async function createDraft(confirmDuplicate = false) {
+    // The date input's value is already YYYY-MM-DD; check it before the API does
+    if (etaError(info.eta)) {
+      setEtaTouched(true);
+      setStep(0);
+      return;
+    }
     setBusy(true);
     setError(null);
     setDuplicate(null);
@@ -88,7 +109,7 @@ export default function MahNewShipment({ token, products, suppliers, organisatio
       supplier_id: info.supplier_id || undefined,
       port_of_entry: info.port_of_entry,
       transport_mode: info.transport_mode,
-      eta: info.eta || undefined,
+      eta: info.eta,
       bl_awb_number: info.bl_awb_number.trim() || undefined,
       preferred_clearance_company_id: info.preferred_clearance_company_id || undefined,
       line_items: filledLines.map(l => ({
@@ -188,7 +209,10 @@ export default function MahNewShipment({ token, products, suppliers, organisatio
               </div>
               <label className="mah-field">
                 <span>Expected Arrival Date (ETA)</span>
-                <input type="date" className="mah-input" value={info.eta} onChange={setField('eta')} disabled={locked} />
+                <input type="date" className="mah-input" value={info.eta} onChange={setField('eta')} disabled={locked}
+                  min={localISODate(new Date())} max="9999-12-31" required
+                  onBlur={() => setEtaTouched(true)} aria-invalid={!!(etaTouched && etaError(info.eta))} />
+                {etaTouched && !locked && etaError(info.eta) && <small className="mah-text-red">{etaError(info.eta)}</small>}
               </label>
               <label className="mah-field">
                 <span>{info.transport_mode === 'air' ? 'AWB number' : 'B/L or AWB number'}</span>
@@ -313,7 +337,8 @@ export default function MahNewShipment({ token, products, suppliers, organisatio
           <span className="mah-grow" />
           {step === 0 && (
             <button className="mah-btn mah-btn-primary" disabled={!clearanceChosen}
-              title={clearanceChosen ? '' : 'Select a clearance company to continue'} onClick={() => setStep(1)}>
+              title={clearanceChosen ? '' : 'Select a clearance company to continue'}
+              onClick={() => { if (!locked && etaError(info.eta)) { setEtaTouched(true); return; } setStep(1); }}>
               Next: products →
             </button>
           )}
