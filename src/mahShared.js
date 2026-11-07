@@ -119,8 +119,41 @@ export const ACTION_STATES = {
   READY_TO_SUBMIT: { tone: 'green', button: 'Confirm →', tab: 'validation', why: 'Ready — RA lead confirmation needed' },
 };
 
+// Broker engagement items (migration 020) — before hand-over these take priority over the state's own item
+export const PRE_BROKER_STATES = ['DRAFT', 'PREPARING', 'READY_TO_SUBMIT'];
+export const BROKER_ACTIONS = {
+  BROKER_DECLINED: {
+    tone: 'red', button: 'Reselect →', tab: 'timeline', title: 'Clearance declined — select new company',
+    why: (s) => `${s.preferred_clearance_company_name || 'Your clearance company'} declined`,
+  },
+  PENDING_AGREEMENT: {
+    tone: 'blue', button: 'Review →', tab: 'timeline', title: 'Service agreement pending acknowledgement',
+    why: () => 'Review and acknowledge',
+  },
+};
+export const agreementInEffect = (s) => !!(s.agreement_acknowledged_mah && s.agreement_acknowledged_clearance);
+
+// The MAH's action key for a shipment: a BROKER_ACTIONS key, an ACTION_STATES state, or null
+export function actionKey(s) {
+  const st = stateOf(s);
+  if (PRE_BROKER_STATES.includes(st)) {
+    if (s.broker_acceptance_status === 'DECLINED') return 'BROKER_DECLINED';
+    if (s.broker_acceptance_status === 'ACCEPTED' && !s.agreement_acknowledged_mah) return 'PENDING_AGREEMENT';
+  }
+  return ACTION_STATES[st] ? st : null;
+}
+// { tone, button, tab, why, title? } for the Overview row, or null
+export function actionFor(s) {
+  const key = actionKey(s);
+  if (!key) return null;
+  const broker = BROKER_ACTIONS[key];
+  return broker ? { ...broker, key, why: broker.why(s) } : { ...ACTION_STATES[key], key };
+}
+// Overview sort order, most urgent first
+export const ACTION_ORDER = ['SFDA_REJECTED', 'BROKER_DECLINED', 'SFDA_INFO_REQUESTED', 'PENDING_AGREEMENT', 'PREPARING', 'DRAFT', 'READY_TO_SUBMIT'];
+
 export const stateOf = (s) => normalizeState(s.current_state);
-export const needsAction = (s) => !!ACTION_STATES[stateOf(s)];
+export const needsAction = (s) => !!actionKey(s);
 export const isClosed = (s) => CLOSED_STATES.includes(stateOf(s));
 export const isInProgress = (s) => !needsAction(s) && !isClosed(s);
 
@@ -138,6 +171,7 @@ export function SectorBadge({ sector }) {
 export function shipmentName(s, productsById) {
   return productsById?.[s.product_id]?.name_en
     || (s.supplier_name ? `Shipment from ${s.supplier_name}` : null)
+    || s.shipment_name
     || (s.faseh_request_number ? `Faseh ${s.faseh_request_number}` : 'Shipment');
 }
 

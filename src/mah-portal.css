@@ -561,3 +561,68 @@ textarea.mah-input { resize: vertical; min-height: 60px; }
 .mah-ai-summary-track { margin-top: 12px; height: 6px; border-radius: 3px; background: rgba(0, 0, 0, 0.08); overflow: hidden; }
 .mah-ai-summary-fill { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
 .mah-ai-summary-text { margin: 14px 0 0; font-size: 13px; color: #334155; line-height: 1.6; }
+
+/* Broker engagement (migration 020) */
+.mah-app .mah-btn-blue { background: var(--blue); color: #fff; }
+.mah-app .mah-btn-navy { background: var(--navy); color: #fff; }
+.mah-app .mah-btn-outline-navy { background: #fff; border-color: var(--navy); color: var(--navy); }
+.mah-app .mah-btn-outline-navy:not(:disabled):hover { background: #EEF1FA; filter: none; }
+
+.mah-broker-banner { border: 1px solid; border-left-width: 4px; border-radius: 12px; padding: 14px 18px; display: flex; flex-direction: column; gap: 10px; }
+.mah-broker-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.mah-broker-text { display: flex; flex-direction: column; gap: 3px; font-size: 13px; min-width: 0; }
+.mah-broker-text strong { font-size: 14px; display: inline-flex; align-items: center; gap: 8px; }
+.mah-broker-actions { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.mah-broker-grey { background: #F8FAFC; border-color: #E2E8F0; border-left-color: #94A3B8; color: #475569; }
+.mah-broker-amber { background: #FFF7EA; border-color: #F7D9A8; border-left-color: var(--amber); color: #8A5300; }
+.mah-broker-red { background: #FFF1F3; border-color: #F8C6CF; border-left-color: var(--red); color: #A31A30; }
+.mah-broker-blue { background: #EEF8FE; border-color: #BCE3FA; border-left-color: var(--blue); color: #00669E; }
+.mah-broker-green { background: #EDFAF4; border-color: #B5E8D3; border-left-color: var(--green); color: #006B47; }
+.mah-broker-picker { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.mah-broker-picker .mah-input { flex: 1 1 240px; max-width: 360px; }
+
+.mah-spinner { width: 14px; height: 14px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; display: inline-block; animation: mah-spin 0.8s linear infinite; flex-shrink: 0; }
+@keyframes mah-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .mah-spinner { animation: none; } }
+
+/* Service agreement modal */
+.mah-modal.sa-modal { width: min(680px, 100%); border-radius: 16px; }
+.sa-doc { max-height: 400px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; padding: 4px 4px 4px 0; font-size: 13px; color: var(--text); line-height: 1.55; }
+.sa-section { display: flex; flex-direction: column; gap: 8px; padding: 14px 16px; border: 1px solid var(--border); border-radius: 10px; }
+.sa-section h3 { margin: 0; font-size: 13px; font-weight: 700; color: var(--navy); text-transform: uppercase; letter-spacing: 0.04em; }
+.sa-section p { margin: 0; }
+.sa-locked { background: #F5F7FA; }
+.sa-parties, .sa-facts { margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px 18px; }
+.sa-parties dt, .sa-facts dt { font-size: 11.5px; color: var(--text-3); font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; }
+.sa-parties dd, .sa-facts dd { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
+.sa-parties dd.mah-small { font-weight: 400; color: var(--text-2); }
+.sa-terms { font-family: inherit; font-size: 13px; line-height: 1.5; resize: vertical; }
+.sa-ack { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 8px 0; border-top: 1px dashed var(--border); }
+.sa-ack:first-of-type { border-top: 0; }
+.sa-ack-label { font-weight: 600; }
+.sa-print-only { display: none; }
+
+/* Print just the agreement ("Download draft PDF") */
+@media print {
+  body.sa-printing * { visibility: hidden !important; }
+  body.sa-printing .sa-print-area, body.sa-printing .sa-print-area * { visibility: visible !important; }
+  body.sa-printing .sa-print-area { position: absolute; left: 0; top: 0; width: 100%; max-height: none; overflow: visible; padding: 24px; }
+  body.sa-printing .sa-terms, body.sa-printing .sa-no-print { display: none !important; }
+  body.sa-printing .sa-print-only { display: block; }
+  body.sa-printing .sa-print-title { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+  body.sa-printing .sa-terms-print { white-space: pre-wrap; font-family: inherit; margin: 0; }
+  body.sa-printing .sa-section { break-inside: avoid; }
+}
+
+/* Clearance portal — pending engagement requests */
+.clr-pending-card { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding: 14px 16px; border: 1px solid var(--border); border-left: 2px solid #0F1A4A; border-radius: 10px; background: #fff; }
+.clr-pending-card + .clr-pending-card { margin-top: 10px; }
+.clr-pending-main { flex: 1 1 260px; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.clr-pending-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 12px; color: var(--text-2); }
+.clr-pending-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.clr-engagement { display: flex; flex-direction: column; gap: 16px; }
+.clr-engagement-actions { display: flex; flex-direction: column; gap: 12px; }
+.clr-engagement-buttons { display: flex; gap: 10px; flex-wrap: wrap; }
+.clr-decline-form { display: flex; flex-direction: column; gap: 8px; max-width: 560px; }
+.clr-char-count { font-size: 12px; color: var(--text-3); align-self: flex-end; }
+.mah-form-grid > .mah-wide { grid-column: 1 / -1; }

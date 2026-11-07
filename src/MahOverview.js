@@ -1,7 +1,7 @@
 // MAH portal — Overview: pipeline, action items, in-progress list, live metrics.
 import { useState } from 'react';
 import {
-  PIPELINE, ACTION_STATES, stateOf, needsAction, isInProgress, StateBadge, SectorBadge,
+  PIPELINE, ACTION_ORDER, actionFor, actionKey, stateOf, needsAction, isInProgress, StateBadge, SectorBadge,
   shipmentName, shipmentRef, shipmentSector, objectionDeadline, daysUntil, fmtDate, timeAgo,
   expiryStatus, Ring, Empty, Icon,
 } from './mahShared';
@@ -15,7 +15,7 @@ const ACTION_FILTERS = [
   { key: 'all', label: 'All', states: null },
   { key: 'rejected', label: 'Rejected', states: ['SFDA_REJECTED'] },
   // Everything blocked on the MAH's own work: validation issues, drafts, SFDA info requests
-  { key: 'fix', label: 'Fix needed', states: ['PREPARING', 'DRAFT', 'SFDA_INFO_REQUESTED'] },
+  { key: 'fix', label: 'Fix needed', states: ['PREPARING', 'DRAFT', 'SFDA_INFO_REQUESTED', 'BROKER_DECLINED', 'PENDING_AGREEMENT'] },
   { key: 'ready', label: 'Ready', states: ['READY_TO_SUBMIT'] },
 ];
 
@@ -26,11 +26,11 @@ export default function MahOverview({ shipments, products, productsById, openShi
 
   const counts = PIPELINE.map(col => ({ ...col, count: shipments.filter(s => col.states.includes(stateOf(s))).length }));
   const actions = shipments.filter(needsAction)
-    .sort((a, b) => Object.keys(ACTION_STATES).indexOf(stateOf(a)) - Object.keys(ACTION_STATES).indexOf(stateOf(b)));
+    .sort((a, b) => ACTION_ORDER.indexOf(actionKey(a)) - ACTION_ORDER.indexOf(actionKey(b)));
   const q = actionSearch.trim().toLowerCase();
   const filterStates = ACTION_FILTERS.find(f => f.key === actionFilter).states;
   const filteredActions = actions
-    .filter(s => !filterStates || filterStates.includes(stateOf(s)))
+    .filter(s => !filterStates || filterStates.includes(actionKey(s)))
     .filter(s => !q || shipmentName(s, productsById).toLowerCase().includes(q) || (s.masaar_id || '').toLowerCase().includes(q));
   const pageCount = Math.max(1, Math.ceil(filteredActions.length / ACTIONS_PER_PAGE));
   const page = Math.min(actionPage, pageCount);
@@ -111,14 +111,14 @@ export default function MahOverview({ shipments, products, productsById, openShi
               : filteredActions.length === 0
                 ? <Empty title="No action items match">Try a different search or filter.</Empty>
                 : visibleActions.map(s => {
-                const a = ACTION_STATES[stateOf(s)];
+                const a = actionFor(s);
                 const deadline = stateOf(s) === 'SFDA_REJECTED' ? objectionDeadline(s) : null;
                 return (
                   <div key={s.id} className={`mah-action-row mah-edge-${a.tone}`}>
                     <div className="mah-action-main">
-                      <div className="mah-row-title">{shipmentName(s, productsById)}</div>
+                      <div className="mah-row-title">{a.title || shipmentName(s, productsById)}</div>
                       <div className="mah-row-sub">
-                        <span className="mah-mono">{shipmentRef(s)}</span> · {a.why}
+                        {a.title ? shipmentName(s, productsById) : <span className="mah-mono">{shipmentRef(s)}</span>} · {a.why}
                         {deadline && <> · <strong className="mah-text-red">{daysUntil(deadline)} days left</strong></>}
                       </div>
                     </div>

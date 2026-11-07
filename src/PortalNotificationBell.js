@@ -6,6 +6,8 @@
 // organisation. Roles whose users have no organisation, or orgs that receive no notifications,
 // will see an empty bell. Row-click marks read locally only (per spec); "Mark all read" also
 // tells the server.
+//
+// onNavigateToShipment(shipmentId) — optional; called when a row about a shipment is clicked.
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { apiFetch, timeAgo, Icon } from './mahShared';
 
@@ -15,12 +17,13 @@ const REFRESH_MS = 60000;
 function dotTone(n) {
   const key = `${n.event_type || ''} ${n.data?.to_state || ''}`.toUpperCase();
   if (/REJECT|SFDA_RELEASED|PARTIALLY_RELEASED|DESTROYED|REEXPORTED/.test(key)) return 'red';   // SFDA decision
-  if (/INFO_REQUEST/.test(key)) return 'amber';                                                   // info request
+  if (/INFO_REQUEST|BROKER_REQUEST|BROKER_DECLINED/.test(key)) return 'amber';                    // needs a response
+  if (/BROKER_|AGREEMENT_/.test(key)) return 'blue';                                              // broker engagement
   if (/^STATE_|STATE_/.test(key)) return 'blue';                                                  // state transition
   return 'grey';
 }
 
-export default function PortalNotificationBell({ token }) {
+export default function PortalNotificationBell({ token, onNavigateToShipment }) {
   const [notifications, setNotifications] = useState([]);
   const [open, setOpen] = useState(false);
   const [status, setStatus] = useState('loading'); // loading | ok | error
@@ -62,6 +65,11 @@ export default function PortalNotificationBell({ token }) {
     localRead.current.add(id);
     setNotifications(prev => prev.map(n => (n.id === id ? { ...n, is_read: true } : n)));
   };
+  const openRow = (n) => {
+    markOne(n.id);
+    setOpen(false);
+    if (n.shipment_id && onNavigateToShipment) onNavigateToShipment(n.shipment_id);
+  };
   const markAll = async () => {
     notifications.forEach(n => localRead.current.add(n.id));
     setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
@@ -101,7 +109,7 @@ export default function PortalNotificationBell({ token }) {
           ) : (
             <div className="notification-list">
               {notifications.map(n => (
-                <button key={n.id} className={`notification-item${n.is_read ? '' : ' unread'}`} onClick={() => markOne(n.id)}>
+                <button key={n.id} className={`notification-item${n.is_read ? '' : ' unread'}`} onClick={() => openRow(n)}>
                   <span className={`notification-dot notification-dot-${dotTone(n)}`} />
                   <span className="notification-body">
                     <span className="notification-message">{n.message || 'Notification'}</span>

@@ -4,8 +4,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   apiFetch, stateOf, StateBadge, SectorBadge, shipmentName, shipmentRef, shipmentSector,
-  SECTOR_CHECKLISTS, CHECKLIST_DOC_TYPES, fmtDate, fmtDateTime, Tabs, Icon, isDataUrl,
+  SECTOR_CHECKLISTS, CHECKLIST_DOC_TYPES, fmtDate, fmtDateTime, Tabs, Icon, isDataUrl, SECTOR_LABELS,
 } from './mahShared';
+import ServiceAgreementModal from './ServiceAgreementModal';
+import { RISK_TONES, isPendingRequest } from './ClearanceOverview';
+import { COUNTRY_FLAGS } from './mahMarketData';
 import { TimelineTab } from './MahShipmentDetail';
 import {
   SAMPLING_STEPS, SAMPLING_LABELS, CUSTOMS_STEPS, CUSTOMS_LABELS, INFO_REQUEST_LABELS,
@@ -16,7 +19,9 @@ const READINESS_TONES = { READY: 'green', WARNING: 'amber', MISSING_INFO: 'amber
 const TRANSPORT_LABELS = { sea: 'Sea', air: 'Air', land: 'Land' };
 const TOAST_MS = 3500;
 
-export default function ClearanceShipmentDetail({ token, shipment: initial, initialTab, productsById, navigate, reloadShipments }) {
+export default function ClearanceShipmentDetail({
+  token, user, shipment: initial, initialTab, productsById, organisations = [], navigate, reloadShipments, showToast: portalToast,
+}) {
   const [shipment, setShipment] = useState(initial);
   const [docs, setDocs] = useState(null);
   const [shared, setShared] = useState({});
@@ -26,6 +31,8 @@ export default function ClearanceShipmentDetail({ token, shipment: initial, init
   const [actionError, setActionError] = useState(null);
   const [toast, setToast] = useState(null);
   const toastTimer = useRef(null);
+
+  const [agreementOpen, setAgreementOpen] = useState(false);
 
   const load = useCallback(async () => {
     const [detail, documents, sharedDocs] = await Promise.allSettled([
@@ -84,6 +91,71 @@ export default function ClearanceShipmentDetail({ token, shipment: initial, init
   const sector = shipmentSector(shipment);
   const ctx = { token, shipment, state, busy, run, transition };
 
+  // A pending engagement request: only the limited summary and accept / decline
+  if (isPendingRequest(shipment)) {
+    return (
+      <div className="mah-page">
+        <button className="mah-link-btn mah-back" onClick={() => navigate('shipments')}><Icon name="back" size={16} /> All shipments</button>
+        {error && <div className="mah-alert mah-alert-red">{error}</div>}
+        <EngagementRequest token={token} shipment={shipment} startDeclining={initialTab === 'decline'}
+          onAccepted={async () => {
+            await load();
+            reloadShipments().catch(() => {});
+            showToast('Engagement accepted!');
+          }}
+          onDeclined={() => {
+            reloadShipments().catch(() => {});
+            portalToast?.('Request declined. MAH has been notified.');
+            navigate('overview');
+          }} />
+      </div>
+    );
+  }
+
+  const myOrg = organisations.find(o => o.id === user?.organisation_id);
+  const mahOrg = organisations.find(o => o.id === shipment.org_id);
+  const showAgreement = shipment.broker_acceptance_status === 'ACCEPTED'
+    && ['DRAFT', 'PREPARING', 'READY_TO_SUBMIT', 'WITH_BROKER'].includes(state);
+  const mahName = shipment.mah_org_name || shipment.importer_name || 'the MAH';
+  let agreementBanner = null;
+  if (showAgreement && !shipment.agreement_acknowledged_clearance) {
+    agreementBanner = (
+      <section className="mah-broker-banner mah-broker-blue">
+        <div className="mah-broker-row">
+          <div className="mah-broker-text">
+            <strong>✓ You accepted this engagement</strong>
+            <span>Please acknowledge the service agreement to proceed with filing.</span>
+          </div>
+          <button className="mah-btn mah-btn-sm mah-btn-primary" onClick={() => setAgreementOpen(true)}>Review agreement →</button>
+        </div>
+      </section>
+    );
+  } else if (showAgreement && !shipment.agreement_acknowledged_mah) {
+    agreementBanner = (
+      <section className="mah-broker-banner mah-broker-amber">
+        <div className="mah-broker-row">
+          <div className="mah-broker-text">
+            <strong>Agreement acknowledged by you ✓</strong>
+            <span>Waiting for {mahName} to acknowledge their side.</span>
+          </div>
+          <button className="mah-link-btn" onClick={() => setAgreementOpen(true)}>View agreement</button>
+        </div>
+      </section>
+    );
+  } else if (showAgreement) {
+    agreementBanner = (
+      <section className="mah-broker-banner mah-broker-green">
+        <div className="mah-broker-row">
+          <div className="mah-broker-text">
+            <strong>✓ Agreement in effect — proceed with filing</strong>
+            <span>Acknowledged by both parties.</span>
+          </div>
+          <button className="mah-link-btn" onClick={() => setAgreementOpen(true)}>View agreement</button>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <div className="mah-page">
       <button className="mah-link-btn mah-back" onClick={() => navigate('shipments')}><Icon name="back" size={16} /> All shipments</button>
@@ -113,6 +185,8 @@ export default function ClearanceShipmentDetail({ token, shipment: initial, init
         </div>
       </section>
 
+      {agreementBanner}
+
       {error && <div className="mah-alert mah-alert-red">{error}</div>}
 
       <Tabs tabs={tabs} active={activeTab} onChange={(t) => { setTab(t); setActionError(null); }} />
@@ -126,7 +200,118 @@ export default function ClearanceShipmentDetail({ token, shipment: initial, init
       {activeTab === 'customs' && <CustomsTab {...ctx} />}
       {activeTab === 'disposition' && <DispositionTab {...ctx} />}
 
+      {agreementOpen && (
+        <ServiceAgreementModal shipment={shipment} party="CLEARANCE" token={token}
+          mahOrg={mahOrg} clearanceOrg={myOrg}
+          onClose={() => setAgreementOpen(false)}
+          onAcknowledged={async (_updated, message) => {
+            await load();
+            reloadShipments().catch(() => {});
+            showToast(message);
+          }} />
+      )}
+
       <Toast message={toast} />
+    </div>
+  );
+}
+
+// ── Engagement request (broker_acceptance_status PENDING) ──
+const MIN_DECLINE_REASON = 10;
+
+function EngagementRequest({ token, shipment, startDeclining, onAccepted, onDeclined }) {
+  const [mode, setMode] = useState(startDeclining ? 'decline' : null); // null | 'decline' | 'accept'
+  const [reason, setReason] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(null);
+  const mahName = shipment.mah_org_name || 'the MAH';
+  const country = shipment.supplier_country;
+  const reasonLength = reason.trim().length;
+
+  const respond = async (body, after) => {
+    setBusy(true);
+    setError(null);
+    try {
+      await apiFetch(token, `/shipments/${shipment.id}/broker-response`, { method: 'POST', body });
+      await after();
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="clr-engagement">
+      <div className="mah-page-head">
+        <div>
+          <h1>New Engagement Request</h1>
+          <p className="mah-muted">Review the shipment details and decide whether to accept this engagement</p>
+        </div>
+      </div>
+
+      <section className="mah-card">
+        <div className="mah-card-head">
+          <h2>{mahName} — {shipment.shipment_name || 'Shipment'}</h2>
+          <span className="mah-mono mah-small">{shipmentRef(shipment)}</span>
+        </div>
+        <div className="mah-facts">
+          <div><span>MAH company</span><strong>{mahName}</strong></div>
+          <div><span>Sector</span><strong><SectorBadge sector={shipment.sector} /></strong></div>
+          <div><span>Product category</span><strong>{SECTOR_LABELS[shipment.sector] || shipment.product_category || '—'}</strong></div>
+          <div><span>Supplier origin</span><strong>{country ? `${COUNTRY_FLAGS[country] || '🌐'} ${country}` : '—'}</strong></div>
+          <div><span>Port of entry</span><strong>{shipment.port_of_entry || '—'}</strong></div>
+          <div><span>Transport mode</span><strong>{TRANSPORT_LABELS[shipment.transport_mode] || '—'}</strong></div>
+          <div><span>Expected arrival</span><strong>{fmtDate(shipment.eta)}</strong></div>
+          <div><span>Pre-arrival risk</span><strong>
+            {shipment.risk_band
+              ? <span className={`mah-badge mah-tone-${RISK_TONES[shipment.risk_band] || 'grey'}`}>{shipment.risk_band}</span>
+              : '—'}
+          </strong></div>
+          <div><span>Documents prepared</span><strong>{shipment.document_count ?? 0} document{shipment.document_count === 1 ? '' : 's'} ready</strong></div>
+        </div>
+      </section>
+
+      <div className="mah-alert mah-alert-blue">
+        <Icon name="shield" size={16} />
+        Full shipment details including supplier information, product specifications and documents will be shared
+        after you accept this engagement.
+      </div>
+
+      <section className="mah-card clr-engagement-actions">
+        {mode === 'decline' ? (
+          <div className="clr-decline-form">
+            <label className="mah-field">
+              <span>Reason for declining (required, min {MIN_DECLINE_REASON} chars)</span>
+              <textarea className="mah-input" rows={3} value={reason} onChange={e => setReason(e.target.value)}
+                maxLength={2000} disabled={busy} autoFocus />
+            </label>
+            <span className="clr-char-count">{reasonLength} / {MIN_DECLINE_REASON}+ characters</span>
+            <div className="clr-engagement-buttons">
+              <button className="mah-btn mah-btn-ghost" onClick={() => { setMode(null); setError(null); }} disabled={busy}>Cancel</button>
+              <button className="mah-btn mah-btn-red" disabled={busy || reasonLength < MIN_DECLINE_REASON}
+                onClick={() => respond({ decision: 'DECLINE', reason: reason.trim() }, onDeclined)}>
+                {busy ? 'Declining…' : 'Confirm decline →'}
+              </button>
+            </div>
+          </div>
+        ) : mode === 'accept' ? (
+          <div className="clr-engagement-buttons">
+            <strong className="mah-grow">Accept this shipment from {mahName}?</strong>
+            <button className="mah-btn mah-btn-ghost" onClick={() => setMode(null)} disabled={busy}>Cancel</button>
+            <button className="mah-btn mah-btn-navy" disabled={busy}
+              onClick={() => respond({ decision: 'ACCEPT' }, onAccepted)}>
+              {busy ? 'Accepting…' : 'Yes, accept →'}
+            </button>
+          </div>
+        ) : (
+          <div className="clr-engagement-buttons">
+            <button className="mah-btn mah-btn-outline-red" onClick={() => setMode('decline')}>Decline</button>
+            <button className="mah-btn mah-btn-navy" onClick={() => setMode('accept')}>Accept engagement →</button>
+          </div>
+        )}
+        {error && <div className="mah-alert mah-alert-red">{error}</div>}
+      </section>
     </div>
   );
 }

@@ -7,7 +7,7 @@ import './clearance-portal.css';
 import { apiFetch, Icon, stateOf } from './mahShared';
 import NotificationBell from './PortalNotificationBell';
 import { MahAssistant } from './MahPortal';
-import { brokerAction, COMPLETED_STATES, productsFromShipments } from './clearanceShared';
+import { brokerAction, COMPLETED_STATES, productsFromShipments, Toast } from './clearanceShared';
 import ClearanceOverview from './ClearanceOverview';
 import ClearanceShipments from './ClearanceShipments';
 import ClearanceShipmentDetail from './ClearanceShipmentDetail';
@@ -60,6 +60,14 @@ export default function ClearancePortal({ user, token: tokenProp, onLogout }) {
   const [organisations, setOrganisations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
+  const [toast, setToast] = useState(null);
+  const toastTimer = useRef(null);
+  useEffect(() => () => clearTimeout(toastTimer.current), []);
+  const showToast = useCallback((message) => {
+    setToast(message);
+    clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(() => setToast(null), 3500);
+  }, []);
 
   // The API returns only shipments assigned to this clearance company
   const loadShipments = useCallback(async () => {
@@ -102,8 +110,15 @@ export default function ClearancePortal({ user, token: tokenProp, onLogout }) {
     setCurrentPage('shipment-detail');
   };
 
+  // Bell → shipment detail. Uses the listed row when there is one (it may be the limited
+  // pending-request view); the detail page loads the full record itself.
+  const handleNotificationNavigate = (shipmentId) => {
+    openShipment(shipments.find(s => s.id === shipmentId) || { id: shipmentId });
+    loadShipments().catch(() => {});
+  };
+
   const shared = {
-    token, user, shipments, organisations, productsById,
+    token, user, shipments, organisations, productsById, showToast,
     navigate, openShipment, setCurrentShipment: openShipment, reloadShipments: loadShipments,
   };
 
@@ -141,7 +156,7 @@ export default function ClearancePortal({ user, token: tokenProp, onLogout }) {
         {!showCollapsed && <span className="mah-portal-label">Clearance Portal</span>}
         <div className="mah-topbar-title"><strong>{PAGE_TITLES[currentPage]}</strong></div>
         <div className="mah-topbar-right">
-          <NotificationBell token={token} />
+          <NotificationBell token={token} onNavigateToShipment={handleNotificationNavigate} />
           <div className="mah-user-chip">
             <span className="mah-avatar">{initials}</span>
             <span className="mah-user-name">{user?.full_name || user?.email}</span>
@@ -180,6 +195,8 @@ export default function ClearancePortal({ user, token: tokenProp, onLogout }) {
 
       <MahAssistant token={token} actionCount={actionCount} activeCount={activeCount}
         prompts={BROKER_PROMPTS} greeting={BROKER_GREETING} placeholder="Ask about your assigned shipments…" />
+
+      <Toast message={toast} />
     </div>
   );
 }

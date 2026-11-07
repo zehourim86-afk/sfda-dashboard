@@ -163,7 +163,7 @@ export default function AdminPortal({ user, token: tokenProp, onLogout }) {
         {!showCollapsed && <span className="mah-portal-label">DEMARA Admin</span>}
         <div className="mah-topbar-title"><strong>{PAGE_TITLES[currentPage]}</strong></div>
         <div className="mah-topbar-right">
-          <NotificationBell token={token} />
+          <NotificationBell token={token} onNavigateToShipment={() => navigate('shipments')} />
           <div className="mah-user-chip">
             <span className="mah-avatar">{initials}</span>
             <span className="mah-user-name">{user?.full_name || user?.email}</span>

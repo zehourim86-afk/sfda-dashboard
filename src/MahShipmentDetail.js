@@ -5,9 +5,10 @@ import { getStateLabel } from './constants';
 import {
   apiFetch, stateOf, StateBadge, SectorBadge, shipmentName, shipmentRef, shipmentSector,
   SECTOR_CHECKLISTS, CHECKLIST_DOC_TYPES, CLOSED_STATES, objectionDeadline, daysUntil, fmtDate, fmtDateTime,
-  Tabs, Empty, Icon, ConfirmDialog, readFileForUpload,
+  Tabs, Empty, Icon, ConfirmDialog, readFileForUpload, PRE_BROKER_STATES, agreementInEffect,
 } from './mahShared';
 import { RiskPanel } from './MahNewShipment';
+import ServiceAgreementModal from './ServiceAgreementModal';
 
 const READINESS_TONES = { READY: 'green', WARNING: 'amber', MISSING_INFO: 'amber', CRITICAL_ISSUE: 'red' };
 const CUSTOMS_STEPS = ['PENDING', 'DECLARATION_FILED', 'DUTIES_PAID', 'CUSTOMS_RELEASED'];
@@ -132,6 +133,11 @@ export default function MahShipmentDetail({
           <div><span>Customs</span><strong>{CUSTOMS_LABELS[shipment.customs_state] || '—'}</strong></div>
         </div>
       </section>
+
+      {PRE_BROKER_STATES.includes(state) && (
+        <BrokerStatusBanner token={token} shipment={shipment} organisations={organisations}
+          onChanged={refresh} showToast={showToast} />
+      )}
 
       {error && <div className="mah-alert mah-alert-red">{error}</div>}
 
@@ -295,6 +301,146 @@ function DocumentsTab({ token, shipment, checklist, uploaded, onChanged }) {
           );
         })}
       </div>
+    </section>
+  );
+}
+
+// ── Broker engagement banner (DRAFT / PREPARING / READY_TO_SUBMIT) ──
+function BrokerStatusBanner({ token, shipment, organisations, onChanged, showToast }) {
+  const [picking, setPicking] = useState(false);
+  const [companies, setCompanies] = useState(null);
+  const [choice, setChoice] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(null);
+  const [agreementOpen, setAgreementOpen] = useState(false);
+
+  const status = shipment.broker_acceptance_status || 'NOT_REQUESTED';
+  const currentId = shipment.preferred_clearance_company_id;
+  const orgById = (id) => organisations.find(o => o.id === id);
+  const brokerName = shipment.preferred_clearance_company_name || orgById(currentId)?.name_en || 'Your clearance company';
+
+  useEffect(() => {
+    if (!picking || companies) return;
+    apiFetch(token, '/clearance-companies')
+      .then(d => setCompanies(d.clearance_companies || []))
+      .catch(() => setCompanies(organisations.filter(o => o.org_type === 'CLEARANCE_COMPANY').map(o => ({ id: o.id, name: o.name_en }))));
+  }, [picking, companies, token, organisations]);
+
+  const act = async (fn) => {
+    setBusy(true);
+    setError(null);
+    try {
+      await fn();
+      await onChanged();
+      return true;
+    } catch (e) {
+      setError(e.message);
+      await onChanged().catch(() => {});
+      return false;
+    } finally {
+      setBusy(false);
+    }
+  };
+  const sendRequest = (name) => act(async () => {
+    await apiFetch(token, `/shipments/${shipment.id}/broker-request`, { method: 'POST' });
+    showToast?.(`Engagement request sent to ${name}`);
+  });
+  const changeAndRequest = async () => {
+    const name = companies?.find(c => c.id === choice)?.name || 'the clearance company';
+    const done = await act(async () => {
+      await apiFetch(token, `/shipments/${shipment.id}/change-clearance`, { method: 'PUT', body: { new_clearance_company_id: choice } });
+      await apiFetch(token, `/shipments/${shipment.id}/broker-request`, { method: 'POST' });
+      showToast?.(`Engagement request sent to ${name}`);
+    });
+    if (done) { setPicking(false); setChoice(''); }
+  };
+
+  const picker = picking && (
+    <div className="mah-broker-picker">
+      <select className="mah-input" value={choice} onChange={e => setChoice(e.target.value)} disabled={busy || !companies}
+        aria-label="New clearance company">
+        <option value="">{companies ? 'Select a clearance company…' : 'Loading…'}</option>
+        {(companies || []).filter(c => c.id !== currentId).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+      </select>
+      <button className="mah-btn mah-btn-sm mah-btn-primary" onClick={changeAndRequest} disabled={!choice || busy}>
+        {busy ? 'Sending…' : 'Send request →'}
+      </button>
+      <button className="mah-btn mah-btn-sm mah-btn-ghost" onClick={() => { setPicking(false); setChoice(''); }} disabled={busy}>Cancel</button>
+    </div>
+  );
+
+  let tone; let body; let action = null;
+  if (!currentId) {
+    tone = 'grey';
+    body = <><strong>No clearance company selected yet.</strong><span>Select one to begin the engagement process.</span></>;
+    action = !picking && <button className="mah-btn mah-btn-sm mah-btn-ghost" onClick={() => setPicking(true)}>Select clearance company →</button>;
+  } else if (status === 'NOT_REQUESTED') {
+    tone = 'grey';
+    body = <><strong>Engagement request not sent yet</strong><span>{brokerName} has not been asked to take this shipment on.</span></>;
+    action = !picking && (
+      <div className="mah-broker-actions">
+        <button className="mah-link-btn" onClick={() => setPicking(true)}>Change clearance company</button>
+        <button className="mah-btn mah-btn-sm mah-btn-primary" onClick={() => sendRequest(brokerName)} disabled={busy}>
+          {busy ? 'Sending…' : 'Send request →'}
+        </button>
+      </div>
+    );
+  } else if (status === 'PENDING') {
+    tone = 'amber';
+    body = (
+      <>
+        <strong><span className="mah-spinner" aria-hidden="true" /> Awaiting response from {brokerName}</strong>
+        <span>Engagement request sent. They will review your request and respond shortly.</span>
+      </>
+    );
+    action = !picking && <button className="mah-link-btn" onClick={() => setPicking(true)}>Change clearance company</button>;
+  } else if (status === 'DECLINED') {
+    tone = 'red';
+    body = (
+      <>
+        <strong>✗ {brokerName} declined this request</strong>
+        {shipment.broker_declined_reason && <span>Reason: {shipment.broker_declined_reason}</span>}
+        <span>Please select a different clearance company.</span>
+      </>
+    );
+    action = !picking && <button className="mah-btn mah-btn-sm mah-btn-red" onClick={() => setPicking(true)}>Select new clearance company →</button>;
+  } else if (!agreementInEffect(shipment)) {
+    tone = 'blue';
+    body = (
+      <>
+        <strong>✓ {brokerName} accepted your request</strong>
+        <span>{shipment.agreement_acknowledged_mah
+          ? `You acknowledged the service agreement — waiting for ${brokerName} to acknowledge.`
+          : 'Please review and acknowledge the service agreement to proceed.'}</span>
+      </>
+    );
+    action = <button className="mah-btn mah-btn-sm mah-btn-primary" onClick={() => setAgreementOpen(true)}>Review agreement →</button>;
+  } else {
+    tone = 'green';
+    const dates = [shipment.agreement_acknowledged_mah_at, shipment.agreement_acknowledged_clearance_at].filter(Boolean).sort();
+    body = (
+      <>
+        <strong>✓ {brokerName} — Active partner</strong>
+        <span>Agreement acknowledged by both parties{dates.length ? ` on ${fmtDate(dates[dates.length - 1])}` : ''}.</span>
+      </>
+    );
+    action = <button className="mah-link-btn" onClick={() => setAgreementOpen(true)}>View agreement</button>;
+  }
+
+  return (
+    <section className={`mah-broker-banner mah-broker-${tone}`} aria-live="polite">
+      <div className="mah-broker-row">
+        <div className="mah-broker-text">{body}</div>
+        {action}
+      </div>
+      {picker}
+      {error && <div className="mah-alert mah-alert-red">{error}</div>}
+      {agreementOpen && (
+        <ServiceAgreementModal shipment={shipment} party="MAH" token={token}
+          mahOrg={orgById(shipment.org_id)} clearanceOrg={orgById(currentId)}
+          onClose={() => setAgreementOpen(false)}
+          onAcknowledged={async (_updated, message) => { showToast?.(message); await onChanged(); }} />
+      )}
     </section>
   );
 }

@@ -1,6 +1,8 @@
 // MAH portal — New shipment wizard (4 steps).
 // Pre-arrival intelligence needs a shipment id, so the DRAFT is created when leaving
 // step 2 (POST /shipments). Steps 1-2 are locked after that; step 4 opens the shipment.
+// When the wizard closes, the chosen clearance company is sent an engagement request
+// (POST /shipments/:id/broker-request) — it must accept before filing can begin.
 import { useEffect, useState } from 'react';
 import { apiFetch, SECTOR_LABELS, SectorBadge, Icon, fmtDate } from './mahShared';
 
@@ -42,7 +44,7 @@ export function RiskPanel({ intel }) {
   );
 }
 
-export default function MahNewShipment({ token, products, suppliers, organisations, navigate, onClose, onCreated }) {
+export default function MahNewShipment({ token, products, suppliers, organisations, navigate, onClose, onCreated, showToast }) {
   const [step, setStep] = useState(0);
   const [info, setInfo] = useState({
     supplier_id: '', port_of_entry: PORTS[0], transport_mode: 'sea', eta: '', bl_awb_number: '', preferred_clearance_company_id: '',
@@ -118,12 +120,30 @@ export default function MahNewShipment({ token, products, suppliers, organisatio
   const broker = clearanceCompanies.find(o => o.id === info.preferred_clearance_company_id);
   const clearanceChosen = !!info.preferred_clearance_company_id;
 
+  // Leaving the wizard after the draft exists: send the engagement request once, then open the shipment.
+  // A failed request is not fatal — the shipment page offers to send it again.
+  async function finish() {
+    if (busy) return;
+    if (created?.preferred_clearance_company_id) {
+      setBusy(true);
+      try {
+        await apiFetch(token, `/shipments/${created.id}/broker-request`, { method: 'POST' });
+        showToast?.(`Engagement request sent to ${broker?.name || 'your clearance company'}`);
+      } catch (e) {
+        showToast?.(`Shipment created, but the engagement request was not sent: ${e.message}`);
+      } finally {
+        setBusy(false);
+      }
+    }
+    onCreated(created);
+  }
+
   return (
     <div className="mah-modal-backdrop" role="dialog" aria-modal="true" aria-label="New shipment">
       <div className="mah-modal">
         <div className="mah-modal-head">
           <h2>New shipment</h2>
-          <button className="mah-icon-btn" onClick={() => (created ? onCreated(created) : onClose())} aria-label="Close"><Icon name="x" /></button>
+          <button className="mah-icon-btn" onClick={() => (created ? finish() : onClose())} disabled={busy} aria-label="Close"><Icon name="x" /></button>
         </div>
 
         <ol className="mah-stepper">
@@ -184,6 +204,12 @@ export default function MahNewShipment({ token, products, suppliers, organisatio
                 </select>
                 <small>The selected company will receive your shipment documents once you confirm handover.</small>
               </label>
+              {broker && (
+                <div className="mah-alert mah-alert-blue mah-wide">
+                  Once you create this shipment, {broker.name} will be notified and must accept your engagement
+                  request before filing can begin. You can continue collecting documents while waiting for their response.
+                </div>
+              )}
             </div>
           )}
 
@@ -275,6 +301,7 @@ export default function MahNewShipment({ token, products, suppliers, organisatio
               </div>
               {intel && <div><span>Pre-arrival risk</span><strong>{intel.risk_band}</strong></div>}
               <div><span>Status</span><strong>Draft — next: upload documents</strong></div>
+              {broker && <div><span>On opening</span><strong>Engagement request goes to {broker.name}</strong></div>}
             </div>
           )}
         </div>
@@ -297,7 +324,11 @@ export default function MahNewShipment({ token, products, suppliers, organisatio
             </button>
           )}
           {step === 2 && <button className="mah-btn mah-btn-primary" onClick={() => setStep(3)}>Next: confirm →</button>}
-          {step === 3 && <button className="mah-btn mah-btn-primary" onClick={() => onCreated(created)}>Open shipment →</button>}
+          {step === 3 && (
+            <button className="mah-btn mah-btn-primary" onClick={finish} disabled={busy}>
+              {busy ? 'Sending request…' : 'Open shipment →'}
+            </button>
+          )}
         </div>
       </div>
     </div>

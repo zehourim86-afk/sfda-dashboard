@@ -106,7 +106,7 @@ export default function SfdaPortal({ user, token: tokenProp, onLogout }) {
         {!showCollapsed && <span className="mah-portal-label">SFDA Observer</span>}
         <div className="mah-topbar-title"><strong>{PAGE_TITLES[currentPage]}</strong></div>
         <div className="mah-topbar-right">
-          <NotificationBell token={token} />
+          <NotificationBell token={token} onNavigateToShipment={() => setCurrentPage('submissions')} />
           <span className="mah-badge mah-tone-blue sfda-readonly-pill">Read-only</span>
           <div className="mah-user-chip">
             <span className="mah-avatar">{initials}</span>

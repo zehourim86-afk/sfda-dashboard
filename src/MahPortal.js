@@ -116,6 +116,14 @@ export default function MahPortal({ user, token: tokenProp, onLogout }) {
     setCurrentPage('shipment-detail');
   };
 
+  // Bell → shipment detail; the detail page loads the full record itself
+  const handleNotificationNavigate = (shipmentId) => {
+    setCurrentShipment(shipments.find(s => s.id === shipmentId) || { id: shipmentId });
+    setDetailTab('timeline');
+    setCurrentPage('shipment-detail');
+    loadShipments().catch(() => {});
+  };
+
   const shared = {
     token, user, shipments, products, suppliers, organisations, productsById, suppliersById,
     navigate, openShipment, onNewShipment: () => setShowNewShipment(true), showToast,
@@ -158,7 +166,7 @@ export default function MahPortal({ user, token: tokenProp, onLogout }) {
         {!showCollapsed && <span className="mah-portal-label">MAH Portal</span>}
         <div className="mah-topbar-title"><strong>{PAGE_TITLES[currentPage]}</strong></div>
         <div className="mah-topbar-right">
-          <NotificationBell token={token} />
+          <NotificationBell token={token} onNavigateToShipment={handleNotificationNavigate} />
           <div className="mah-user-chip">
             <span className="mah-avatar">{initials}</span>
             <span className="mah-user-name">{user?.full_name || user?.email}</span>

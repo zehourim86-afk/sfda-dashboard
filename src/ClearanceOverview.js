@@ -1,6 +1,8 @@
 // Clearance Portal — Overview: action queue, pipeline, in-progress list, live metrics.
 import { useState } from 'react';
-import { stateOf, StateBadge, SectorBadge, shipmentName, shipmentRef, shipmentSector, timeAgo, Empty, Icon } from './mahShared';
+import {
+  stateOf, StateBadge, SectorBadge, shipmentName, shipmentRef, shipmentSector, timeAgo, fmtDate, Empty, Icon, SECTOR_LABELS,
+} from './mahShared';
 import { CLR_PIPELINE, AT_SFDA_STATES, brokerAction, ACTION_ORDER, daysSince } from './clearanceShared';
 
 // Hardcoded until the metrics backend exists
@@ -9,9 +11,14 @@ const AVG_SFDA_CLEARANCE_DAYS = 16;
 const ACTION_LIMIT = 5;
 const IN_PROGRESS_LIMIT = 8;
 const AT_PORT_ALERT_DAYS = 30;
+export const RISK_TONES = { LOW: 'green', MEDIUM: 'amber', HIGH: 'red' };
+
+// MAH engagement requests waiting for this broker (limited view from the API)
+export const isPendingRequest = (s) => s.broker_acceptance_status === 'PENDING' && s.limited_view;
 
 export default function ClearanceOverview({ shipments, productsById, openShipment, navigate }) {
   const [search, setSearch] = useState('');
+  const pending = shipments.filter(isPendingRequest).sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
 
   const actions = shipments
     .map(s => ({ s, a: brokerAction(s) }))
@@ -35,6 +42,35 @@ export default function ClearanceOverview({ shipments, productsById, openShipmen
           <p className="mah-muted">{actions.length} shipment{actions.length === 1 ? '' : 's'} need your action · {inProgress.length} with SFDA</p>
         </div>
       </div>
+
+      {pending.length > 0 && (
+        <section className="mah-card">
+          <div className="mah-card-head">
+            <h2>Pending your response</h2>
+            <span className="mah-count-pill mah-tone-blue">{pending.length}</span>
+          </div>
+          {pending.map(s => (
+            <div key={s.id} className="clr-pending-card">
+              <div className="clr-pending-main">
+                <div className="mah-row-title">{s.mah_org_name || 'MAH'} — {shipmentName(s, productsById)}</div>
+                <div className="mah-row-sub">
+                  {SECTOR_LABELS[s.sector] || s.product_category || 'Sector not set'} · {s.supplier_country || 'Origin not set'}
+                  {' '}· ETA: {fmtDate(s.eta)} · {s.port_of_entry || 'Port not set'}
+                </div>
+                <div className="clr-pending-meta">
+                  {s.risk_band && <span className={`mah-badge mah-tone-${RISK_TONES[s.risk_band] || 'grey'}`}>{s.risk_band} risk</span>}
+                  <span>{s.document_count ?? 0} document{s.document_count === 1 ? '' : 's'} prepared</span>
+                  <span className="mah-mono">{shipmentRef(s)}</span>
+                </div>
+              </div>
+              <div className="clr-pending-actions">
+                <button className="mah-btn mah-btn-sm mah-btn-outline-red" onClick={() => openShipment(s, 'decline')}>Decline</button>
+                <button className="mah-btn mah-btn-sm mah-btn-navy" onClick={() => openShipment(s)}>Review &amp; Respond →</button>
+              </div>
+            </div>
+          ))}
+        </section>
+      )}
 
       <section className="mah-pipeline" aria-label="Shipment pipeline">
         {counts.map(col => (
