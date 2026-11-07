@@ -115,7 +115,7 @@ export const ACTION_STATES = {
   SFDA_REJECTED: { tone: 'red', button: 'Object →', tab: 'objection', why: 'SFDA rejected — objection window open' },
   SFDA_INFO_REQUESTED: { tone: 'amber', button: 'Respond →', tab: 'documents', why: 'SFDA requested more information' },
   PREPARING: { tone: 'amber', button: 'Fix →', tab: 'validation', why: 'Validation issues to fix' },
-  DRAFT: { tone: 'amber', button: 'Continue →', tab: 'documents', why: 'Draft — documents still to upload' },
+  DRAFT: { tone: 'amber', button: 'Start →', tab: 'validation', why: 'Start document preparation' },
   READY_TO_SUBMIT: { tone: 'green', button: 'Confirm →', tab: 'validation', why: 'Ready — RA lead confirmation needed' },
 };
 

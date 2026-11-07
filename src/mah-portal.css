@@ -327,6 +327,9 @@ textarea.mah-input { resize: vertical; min-height: 60px; }
 .mah-ai-issues { margin: 2px 0 0; padding-left: 18px; color: var(--text-2); }
 .mah-confirm-card { border-color: #B5E8D3; }
 .mah-confirm-card .mah-btn { align-self: flex-start; }
+.mah-state-step { border-color: #B3D4FF; display: flex; flex-direction: column; gap: 8px; }
+.mah-state-step .mah-btn { align-self: flex-start; }
+.mah-state-step p { margin: 0; }
 .mah-progress { list-style: none; margin: 0; padding: 0; display: flex; gap: 8px; }
 .mah-progress li { flex: 1; display: flex; align-items: center; gap: 8px; font-size: 12.5px; font-weight: 600; color: var(--text-3); padding: 8px 10px; border-radius: 8px; background: #FAFBFC; border: 1px solid var(--border); }
 .mah-progress li.is-done { color: #00875A; border-color: #B5E8D3; background: #F4FCF8; }

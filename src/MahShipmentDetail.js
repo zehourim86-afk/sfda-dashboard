@@ -143,7 +143,7 @@ export default function MahShipmentDetail({
       )}
       {activeTab === 'validation' && (
         <ValidationTab token={token} shipment={shipment} checklist={checklist} uploaded={uploaded}
-          docsLoaded={!!docs} broker={broker} onChanged={refresh} goTo={setTab} />
+          docsLoaded={!!docs} broker={broker} onChanged={refresh} goTo={setTab} showToast={showToast} />
       )}
       {activeTab === 'customs' && <CustomsTab token={token} user={user} shipment={shipment} onChanged={refresh} />}
       {activeTab === 'intelligence' && (
@@ -300,7 +300,19 @@ function DocumentsTab({ token, shipment, checklist, uploaded, onChanged }) {
 }
 
 // ── Validation ───────────────────────────────────────
-function ValidationTab({ token, shipment, checklist, uploaded, docsLoaded, broker, onChanged, goTo }) {
+const PROGRESS_STEPS = {
+  DRAFT: {
+    to: 'PREPARING', label: 'Start document preparation →', notes: 'MAH started document preparation',
+    toast: 'Shipment moved to Preparing',
+  },
+  PREPARING: {
+    to: 'READY_TO_SUBMIT', label: 'Mark as Ready to Submit →', notes: 'MAH marked shipment ready',
+    toast: 'Shipment is now Ready to Submit',
+    help: 'All required documents must be uploaded before handing over to your broker',
+  },
+};
+
+function ValidationTab({ token, shipment, checklist, uploaded, docsLoaded, broker, onChanged, goTo, showToast }) {
   const [notes, setNotes] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
@@ -312,7 +324,26 @@ function ValidationTab({ token, shipment, checklist, uploaded, docsLoaded, broke
   const critical = checked.filter(d => d.readiness_status === 'CRITICAL_ISSUE');
   const blocking = missing.length + critical.length;
   const state = stateOf(shipment);
-  const canConfirm = docsLoaded && blocking === 0 && state === 'READY_TO_SUBMIT';
+  const canConfirm = state === 'READY_TO_SUBMIT' && !!broker;
+  const step = PROGRESS_STEPS[state];
+  const [moving, setMoving] = useState(false);
+  const [moveError, setMoveError] = useState(null);
+
+  async function advance() {
+    setMoving(true);
+    setMoveError(null);
+    try {
+      await apiFetch(token, `/shipments/${shipment.id}/transition`, {
+        method: 'PUT', body: { to_state: step.to, notes: step.notes },
+      });
+      await onChanged();
+      showToast?.(step.toast);
+    } catch (e) {
+      setMoveError(e.message);
+    } finally {
+      setMoving(false);
+    }
+  }
 
   async function confirm() {
     setBusy(true);
@@ -332,6 +363,16 @@ function ValidationTab({ token, shipment, checklist, uploaded, docsLoaded, broke
 
   return (
     <div className="mah-stack">
+      {step && (
+        <section className="mah-card mah-state-step">
+          <button className="mah-btn mah-btn-primary" onClick={advance} disabled={moving}>
+            {moving ? 'Updating…' : step.label}
+          </button>
+          {step.help && <p className="mah-small mah-muted">{step.help}</p>}
+          {moveError && <div className="mah-alert mah-alert-red">{moveError}</div>}
+        </section>
+      )}
+
       <section className="mah-card">
         <div className="mah-card-head">
           <h2>Layer 1 · Completeness</h2>
@@ -379,7 +420,7 @@ function ValidationTab({ token, shipment, checklist, uploaded, docsLoaded, broke
               </div>
             );
           })}
-        <p className="mah-small mah-muted">Advisory only — critical issues block hand-over, warnings don't.</p>
+        <p className="mah-small mah-muted">Advisory only — fix critical issues before handing over.</p>
       </section>
 
       <section className="mah-card mah-confirm-card">
@@ -390,13 +431,17 @@ function ValidationTab({ token, shipment, checklist, uploaded, docsLoaded, broke
           </div>
         ) : (
           <>
-            <p className="mah-muted mah-small">
-              {state !== 'READY_TO_SUBMIT'
-                ? `Available when the shipment is Ready to Submit (currently ${getStateLabel(state)}).`
-                : blocking > 0 ? `Resolve ${blocking} blocking issue${blocking === 1 ? '' : 's'} first.`
-                  : !broker ? 'No clearance company chosen yet — set one before confirming.'
-                    : `As RA lead you confirm the dossier is complete. It goes to ${broker.name_en}.`}
-            </p>
+            {state === 'READY_TO_SUBMIT' && (
+              <p className="mah-muted mah-small">
+                {!broker ? 'No clearance company chosen yet — set one before confirming.'
+                  : `As RA lead you confirm the dossier is complete. It goes to ${broker.name_en}.`}
+              </p>
+            )}
+            {state === 'READY_TO_SUBMIT' && docsLoaded && blocking > 0 && (
+              <div className="mah-alert mah-alert-amber">
+                {blocking} open issue{blocking === 1 ? '' : 's'} above — check before handing over.
+              </div>
+            )}
             <textarea className="mah-input" rows={2} placeholder="Notes for the quality record (optional)"
               value={notes} onChange={e => setNotes(e.target.value)} maxLength={2000} disabled={!canConfirm} />
             {error && <div className="mah-alert mah-alert-red">{error}</div>}
