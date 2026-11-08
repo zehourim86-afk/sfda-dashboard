@@ -4,7 +4,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   apiFetch, stateOf, StateBadge, SectorBadge, shipmentName, shipmentRef, shipmentSector,
-  SECTOR_CHECKLISTS, CHECKLIST_DOC_TYPES, fmtDate, fmtDateTime, Tabs, Icon, isDataUrl, SECTOR_LABELS,
+  SECTOR_CHECKLISTS, CHECKLIST_DOC_TYPES, fmtDate, fmtDateTime, Tabs, Icon, isDataUrl, SECTOR_LABELS, FasehSyncBanner,
 } from './mahShared';
 import ServiceAgreementModal from './ServiceAgreementModal';
 import { RISK_TONES, isPendingRequest } from './ClearanceOverview';
@@ -521,6 +521,10 @@ function SfdaTab(ctx) {
         </div>
       </section>
 
+      {['SUBMITTED', 'SAMPLING'].includes(state) && (
+        <FasehSyncBanner title="Faseh Auto-Sync — Coming in next release" badge="Roadmap"
+          description="In production, MASAAR will sync with Faseh every 15 minutes. SFDA decisions will update automatically and both MAH and clearance will be notified instantly — no manual recording needed." />
+      )}
       {state === 'SUBMITTED' && <SubmittedActions {...ctx} onReasons={loadReasons} />}
       {state === 'SFDA_INFO_REQUESTED' && <InfoRequestActions {...ctx} />}
       {state === 'SAMPLING' && <SamplingActions {...ctx} onReasons={loadReasons} />}

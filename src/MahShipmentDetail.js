@@ -5,7 +5,7 @@ import { getStateLabel } from './constants';
 import {
   apiFetch, stateOf, StateBadge, SectorBadge, shipmentName, shipmentRef, shipmentSector,
   CLOSED_STATES, objectionDeadline, daysUntil, fmtDate, fmtDateTime,
-  Tabs, Empty, Icon, ConfirmDialog, readFileForUpload, PRE_BROKER_STATES, agreementInEffect,
+  Tabs, Empty, Icon, ConfirmDialog, readFileForUpload, PRE_BROKER_STATES, agreementInEffect, FasehSyncBanner,
 } from './mahShared';
 import { RiskPanel } from './MahNewShipment';
 import ServiceAgreementModal from './ServiceAgreementModal';
@@ -152,11 +152,17 @@ export default function MahShipmentDetail({
       )}
       {activeTab === 'customs' && <CustomsTab token={token} user={user} shipment={shipment} onChanged={refresh} />}
       {activeTab === 'intelligence' && (
-        <section className="mah-card">
-          <div className="mah-card-head"><h2>Pre-arrival intelligence</h2></div>
-          {intelError ? <div className="mah-alert mah-alert-red">{intelError}</div>
-            : intel ? <RiskPanel intel={intel} /> : <div className="mah-loading">Scoring shipment…</div>}
-        </section>
+        <div className="mah-stack">
+          <section className="mah-card">
+            <div className="mah-card-head"><h2>Pre-arrival intelligence</h2></div>
+            {intelError ? <div className="mah-alert mah-alert-red">{intelError}</div>
+              : intel ? <RiskPanel intel={intel} /> : <div className="mah-loading">Scoring shipment…</div>}
+          </section>
+          {['SUBMITTED', 'SAMPLING'].includes(state) && (
+            <FasehSyncBanner compact title="Faseh & SFDA Sync" badge="Coming soon"
+              description="MASAAR will automatically track SFDA decisions for this shipment via Faseh sync. Your clearance company will be notified of any SFDA action instantly." />
+          )}
+        </div>
       )}
       {activeTab === 'objection' && showObjection && (
         <ObjectionTab token={token} shipment={shipment} onChanged={refresh} />
