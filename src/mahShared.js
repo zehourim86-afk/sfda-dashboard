@@ -337,24 +337,6 @@ export function ConfirmDialog({ title, message, confirmLabel = 'Confirm', tone =
   );
 }
 
-// Roadmap notice for automatic Faseh / SFDA sync (not built yet). compact = smaller variant.
-export function FasehSyncBanner({ title, description, badge, compact = false }) {
-  return (
-    <div className={`faseh-sync${compact ? ' faseh-sync-compact' : ''}`} role="note">
-      <svg className="faseh-sync-icon" width={compact ? 16 : 18} height={compact ? 16 : 18} viewBox="0 0 24 24" fill="none"
-        stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-        <path d="M21 12a9 9 0 0 1-15.4 6.4L3 16" /><path d="M3 21v-5h5" />
-        <path d="M3 12a9 9 0 0 1 15.4-6.4L21 8" /><path d="M21 3v5h-5" />
-      </svg>
-      <div className="faseh-sync-text">
-        <div className="faseh-sync-title">{title}</div>
-        <div className="faseh-sync-desc">{description}</div>
-      </div>
-      <span className="faseh-sync-badge">{badge}</span>
-    </div>
-  );
-}
-
 export function Empty({ title, children }) {
   return (
     <div className="mah-empty">

@@ -6,6 +6,7 @@ import {
   apiFetch, SectorBadge, shipmentName, shipmentRef, shipmentSector, fmtDateTime, Empty, Icon,
   readFileForUpload,
 } from './mahShared';
+import RoadmapBanner from './RoadmapBanner';
 import { todayISO, daysSince } from './clearanceShared';
 import { SamplingTrack, SamplingBadge, mahCompany } from './sfdaShared';
 import {
@@ -203,6 +204,9 @@ function ResultsForm({ busy, run, sampling, token, sample, initial, inline, onCa
           placeholder="Summary of findings" /></label>
       <label className="mah-field"><span>Results document</span>
         <input type="file" className="mah-input" onChange={e => setFile(e.target.files?.[0] || null)} /></label>
+
+      <RoadmapBanner title="AI Results Extraction — Coming in next release" badge="Roadmap"
+        description="MASAAR will automatically extract test names, reference ranges and results from your uploaded PDF — no manual entry needed. Results will be pre-filled for your review and confirmation." />
 
       <div className="lab-tests">
         <div className="mah-card-head"><h3 className="mah-h3">Individual test results</h3>
