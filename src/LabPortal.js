@@ -7,6 +7,7 @@ import './clearance-portal.css';
 import './lab-portal.css';
 import { apiFetch, Icon } from './mahShared';
 import NotificationBell from './PortalNotificationBell';
+import NotificationCentre from './NotificationCentre';
 import { productsFromShipments, Toast } from './clearanceShared';
 import { labStage } from './labShared';
 import LabOverview from './LabOverview';
@@ -23,7 +24,7 @@ const NAV = [
   { page: 'rejected', label: 'Rejected Samples', icon: 'x-circle' },
   { page: 'settings', label: 'Settings', icon: 'gear' },
 ];
-const PAGE_TITLES = Object.fromEntries(NAV.map(n => [n.page, n.label]));
+const PAGE_TITLES = { ...Object.fromEntries(NAV.map(n => [n.page, n.label])), notifications: 'Notification Centre' };
 const TOAST_MS = 3500;
 
 export default function LabPortal({ user, token: tokenProp, onLogout }) {
@@ -89,8 +90,14 @@ export default function LabPortal({ user, token: tokenProp, onLogout }) {
     navigate: setCurrentPage, openSample, showToast, afterChange, reloadSamples: loadSamples,
   };
 
+  const handleOpenNotificationCentre = () => {
+    setCurrentPage('notifications');
+  };
+
   const renderPage = () => {
     switch (currentPage) {
+      case 'notifications':
+        return <NotificationCentre token={token} onNavigateToShipment={() => setCurrentPage('samples')} />;
       case 'samples': return <LabSamples {...shared} />;
       case 'results': return <LabResults {...shared} />;
       case 'rejected': return <LabRejectedSamples {...shared} />;
@@ -118,7 +125,7 @@ export default function LabPortal({ user, token: tokenProp, onLogout }) {
         {!showCollapsed && <span className="mah-portal-label">Lab Portal</span>}
         <div className="mah-topbar-title"><strong>{PAGE_TITLES[currentPage]}</strong></div>
         <div className="mah-topbar-right">
-          <NotificationBell token={token} onNavigateToShipment={() => setCurrentPage('samples')} />
+          <NotificationBell token={token} onNavigateToShipment={() => setCurrentPage('samples')} onOpenNotificationCentre={handleOpenNotificationCentre} />
           <div className="mah-user-chip">
             <span className="mah-avatar">{initials}</span>
             <span className="mah-user-name">{user?.full_name || user?.email}</span>

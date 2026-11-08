@@ -8,6 +8,7 @@ import './sfda-portal.css';
 import './admin-portal.css';
 import { apiFetch, Icon } from './mahShared';
 import NotificationBell from './PortalNotificationBell';
+import NotificationCentre from './NotificationCentre';
 import { productsFromShipments, Toast } from './clearanceShared';
 import { ShipmentModal } from './sfdaShared';
 import { buildAlerts, pendingCancellations, isClosedState, TransitionModal, WithdrawModal } from './adminShared';
@@ -28,7 +29,7 @@ const NAV = [
   { page: 'override', label: 'Override Tools', icon: 'tool' },
   { page: 'settings', label: 'Settings', icon: 'gear' },
 ];
-const PAGE_TITLES = Object.fromEntries(NAV.map(n => [n.page, n.label]));
+const PAGE_TITLES = { ...Object.fromEntries(NAV.map(n => [n.page, n.label])), notifications: 'Notification Centre' };
 const TOAST_MS = 3500;
 
 export default function AdminPortal({ user, token: tokenProp, onLogout }) {
@@ -132,8 +133,14 @@ export default function AdminPortal({ user, token: tokenProp, onLogout }) {
     openWithdraw: (shipment) => setModal({ type: 'withdraw', shipment }),
   };
 
+  const handleOpenNotificationCentre = () => {
+    navigate('notifications');
+  };
+
   const renderPage = () => {
     switch (currentPage) {
+      case 'notifications':
+        return <NotificationCentre token={token} onNavigateToShipment={() => navigate('shipments')} />;
       case 'shipments': return <AdminShipments {...shared} key={shipmentFilter || 'all'} initialFilter={shipmentFilter} />;
       case 'organisations': return <AdminOrganisations {...shared} />;
       case 'users': return <AdminUsers {...shared} />;
@@ -163,7 +170,7 @@ export default function AdminPortal({ user, token: tokenProp, onLogout }) {
         {!showCollapsed && <span className="mah-portal-label">DEMARA Admin</span>}
         <div className="mah-topbar-title"><strong>{PAGE_TITLES[currentPage]}</strong></div>
         <div className="mah-topbar-right">
-          <NotificationBell token={token} onNavigateToShipment={() => navigate('shipments')} />
+          <NotificationBell token={token} onNavigateToShipment={() => navigate('shipments')} onOpenNotificationCentre={handleOpenNotificationCentre} />
           <div className="mah-user-chip">
             <span className="mah-avatar">{initials}</span>
             <span className="mah-user-name">{user?.full_name || user?.email}</span>

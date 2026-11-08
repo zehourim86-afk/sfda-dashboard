@@ -7,6 +7,7 @@ import './clearance-portal.css';
 import './shipping-portal.css';
 import { apiFetch, Icon } from './mahShared';
 import NotificationBell from './PortalNotificationBell';
+import NotificationCentre from './NotificationCentre';
 import { productsFromShipments } from './clearanceShared';
 import { isActiveShipment } from './shippingShared';
 import ShippingOverview from './ShippingOverview';
@@ -23,7 +24,7 @@ const NAV = [
   { page: 'documents', label: 'Documents', icon: 'file-text' },
   { page: 'settings', label: 'Settings', icon: 'gear' },
 ];
-const PAGE_TITLES = Object.fromEntries(NAV.map(n => [n.page, n.label]));
+const PAGE_TITLES = { ...Object.fromEntries(NAV.map(n => [n.page, n.label])), notifications: 'Notification Centre' };
 
 export default function ShippingPortal({ user, token: tokenProp, onLogout }) {
   const token = tokenProp || localStorage.getItem('demara_token');
@@ -69,8 +70,14 @@ export default function ShippingPortal({ user, token: tokenProp, onLogout }) {
 
   const shared = { token, user, shipments, productsById, navigate: setCurrentPage, openShipment };
 
+  const handleOpenNotificationCentre = () => {
+    setCurrentPage('notifications');
+  };
+
   const renderPage = () => {
     switch (currentPage) {
+      case 'notifications':
+        return <NotificationCentre token={token} onNavigateToShipment={() => setCurrentPage('active')} />;
       case 'active': return <ShippingActiveShipments {...shared} />;
       case 'tracking': return <ShippingTracking {...shared} />;
       case 'documents': return <ShippingDocuments {...shared} />;
@@ -98,7 +105,7 @@ export default function ShippingPortal({ user, token: tokenProp, onLogout }) {
         {!showCollapsed && <span className="mah-portal-label">Shipping Portal</span>}
         <div className="mah-topbar-title"><strong>{PAGE_TITLES[currentPage]}</strong></div>
         <div className="mah-topbar-right">
-          <NotificationBell token={token} onNavigateToShipment={() => setCurrentPage('active')} />
+          <NotificationBell token={token} onNavigateToShipment={() => setCurrentPage('active')} onOpenNotificationCentre={handleOpenNotificationCentre} />
           <div className="mah-user-chip">
             <span className="mah-avatar">{initials}</span>
             <span className="mah-user-name">{user?.full_name || user?.email}</span>

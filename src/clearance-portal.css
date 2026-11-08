@@ -39,6 +39,7 @@
 .clr-inline-panel { display: flex; flex-direction: column; gap: 12px; padding: 14px 16px; background: #F8FAFC; border: 1px solid #EEF2F6; border-radius: 10px; }
 .clr-narrow { max-width: 320px; }
 .clr-subhead { font-size: 11.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-3); padding-top: 8px; border-top: 1px solid var(--border); }
+.clr-record-note { margin: 0; font-size: 13px; font-style: italic; color: var(--text-3); line-height: 1.5; }
 .clr-confirm { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; padding: 12px 14px; border-radius: 10px; background: #EFF6FF; border: 1px solid #BFDBFE; font-size: 13.5px; font-weight: 600; color: var(--navy); }
 .clr-confirm > span { flex: 1; min-width: 200px; }
 .clr-reasons { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; font-size: 13.5px; }

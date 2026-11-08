@@ -656,3 +656,21 @@ textarea.mah-input { resize: vertical; min-height: 60px; }
 .mah-strike { text-decoration: line-through; }
 .mah-issue-amber { display: flex; align-items: center; gap: 8px; color: #8A5300; font-size: 13px; }
 @media (max-width: 640px) { .mah-tier-add { grid-template-columns: 1fr; } .mah-tier-status { justify-content: flex-start; } }
+
+/* ── Notification Centre ───────────────────────────── */
+.mah-app .notification-viewall { position: sticky; bottom: 0; display: block; width: 100%; padding: 11px 14px; background: #fff; border-top: 1px solid var(--border); color: var(--blue); font-size: 13px; font-weight: 600; text-align: center; }
+.mah-app .notification-viewall:hover { background: var(--bg); text-decoration: underline; }
+.nc-list { display: flex; flex-direction: column; gap: 8px; }
+.nc-card { display: flex; align-items: flex-start; gap: 12px; padding: 16px 20px; background: #fff; border: 1px solid #E2E8F0; border-left: 3px solid transparent; border-radius: 8px; }
+.nc-card.is-unread { border-left-color: #0099EE; background: #F8FAFF; }
+.nc-card .notification-dot { margin-top: 6px; }
+.nc-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.nc-message { font-size: 14px; color: var(--navy); line-height: 1.45; overflow-wrap: anywhere; }
+.nc-card.is-unread .nc-message { font-weight: 600; }
+.nc-card:not(.is-unread) .nc-message { color: var(--text-2); }
+.nc-meta { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-size: 12px; color: var(--grey); }
+.mah-app .nc-link { color: var(--blue); font-size: 13px; font-weight: 600; }
+.mah-app .nc-link:hover { text-decoration: underline; }
+.nc-empty { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px; padding: 48px 16px; background: #fff; border: 1px solid #E2E8F0; border-radius: 8px; }
+.nc-empty strong { font-size: 15px; color: var(--text-2); }
+.nc-more { display: flex; justify-content: center; padding-top: 8px; }

@@ -6,6 +6,7 @@ import './mah-portal.css';
 import './clearance-portal.css';
 import { apiFetch, Icon, stateOf } from './mahShared';
 import NotificationBell from './PortalNotificationBell';
+import NotificationCentre from './NotificationCentre';
 import { MahAssistant } from './MahPortal';
 import { brokerAction, COMPLETED_STATES, productsFromShipments, Toast } from './clearanceShared';
 import ClearanceOverview from './ClearanceOverview';
@@ -33,6 +34,7 @@ const PAGE_TITLES = {
   sfda: 'SFDA Track',
   customs: 'Customs Track',
   settings: 'Settings',
+  notifications: 'Notification Centre',
 };
 
 const BROKER_PROMPTS = [
@@ -122,8 +124,14 @@ export default function ClearancePortal({ user, token: tokenProp, onLogout }) {
     navigate, openShipment, setCurrentShipment: openShipment, reloadShipments: loadShipments,
   };
 
+  const handleOpenNotificationCentre = () => {
+    setCurrentPage('notifications');
+  };
+
   const renderPage = () => {
     switch (currentPage) {
+      case 'notifications':
+        return <NotificationCentre token={token} onNavigateToShipment={handleNotificationNavigate} />;
       case 'shipments': return <ClearanceShipments {...shared} />;
       case 'shipment-detail':
         return currentShipment
@@ -156,7 +164,7 @@ export default function ClearancePortal({ user, token: tokenProp, onLogout }) {
         {!showCollapsed && <span className="mah-portal-label">Clearance Portal</span>}
         <div className="mah-topbar-title"><strong>{PAGE_TITLES[currentPage]}</strong></div>
         <div className="mah-topbar-right">
-          <NotificationBell token={token} onNavigateToShipment={handleNotificationNavigate} />
+          <NotificationBell token={token} onNavigateToShipment={handleNotificationNavigate} onOpenNotificationCentre={handleOpenNotificationCentre} />
           <div className="mah-user-chip">
             <span className="mah-avatar">{initials}</span>
             <span className="mah-user-name">{user?.full_name || user?.email}</span>

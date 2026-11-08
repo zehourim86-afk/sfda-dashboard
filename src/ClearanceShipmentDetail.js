@@ -547,7 +547,7 @@ function SfdaTab(ctx) {
   );
 }
 
-const DECISION_LABELS = { SFDA_RELEASED: 'SFDA Released', PARTIALLY_RELEASED: 'Partially Released', SFDA_REJECTED: 'SFDA Rejected' };
+const DECISION_LABELS = { SFDA_RELEASED: 'Record SFDA release', PARTIALLY_RELEASED: 'Record SFDA partial release', SFDA_REJECTED: 'Record SFDA rejection' };
 
 // Released / partially released / rejected buttons with their confirm or reasons form
 function DecisionButtons({ shipment, state, busy, run, transition, token, decisions, onReasons }) {
@@ -601,6 +601,7 @@ function RejectionForm({ token, shipment, busy, run, before, onDone }) {
 
   return (
     <form className="clr-inline-panel" onSubmit={submit}>
+      <p className="clr-record-note">Enter the rejection reasons exactly as stated in the SFDA decision notice.</p>
       <label className="mah-field clr-narrow">
         <span>Number of rejection reasons</span>
         <select className="mah-input" value={count} onChange={e => setCount(Number(e.target.value))}>
@@ -650,10 +651,11 @@ function SubmittedActions(ctx) {
 
   return (
     <section className="mah-card clr-action-card">
-      <div className="mah-card-head"><h2>Record SFDA outcome</h2></div>
+      <div className="mah-card-head"><h2>Record SFDA decision received from Faseh</h2></div>
+      <p className="clr-record-note">SFDA makes all decisions independently. Use this section to record decisions you have received from SFDA via Faseh or official notice.</p>
       <div className="clr-action-buttons">
-        <button className={`mah-btn mah-btn-amber${open === 'info' ? ' clr-is-open' : ''}`} onClick={() => toggle('info')} disabled={busy !== null}>SFDA Information Request</button>
-        <button className={`mah-btn clr-btn-purple${open === 'sampling' ? ' clr-is-open' : ''}`} onClick={() => toggle('sampling')} disabled={busy !== null}>SFDA Sampling Order</button>
+        <button className={`mah-btn mah-btn-amber${open === 'info' ? ' clr-is-open' : ''}`} onClick={() => toggle('info')} disabled={busy !== null}>Record information request</button>
+        <button className={`mah-btn clr-btn-purple${open === 'sampling' ? ' clr-is-open' : ''}`} onClick={() => toggle('sampling')} disabled={busy !== null}>Record sampling notice</button>
       </div>
 
       {open === 'info' && (
@@ -680,16 +682,16 @@ function SubmittedActions(ctx) {
         <form className="clr-inline-panel" onSubmit={recordSampling}>
           <div className="mah-form-grid">
             <label className="mah-field">
-              <span>Sampling location</span>
+              <span>Sampling location (as notified by SFDA)</span>
               <input className="mah-input" value={location} onChange={e => setLocation(e.target.value)} required maxLength={200} placeholder="e.g. Jeddah Islamic Port, Warehouse 4" />
             </label>
             <label className="mah-field">
-              <span>Scheduled date</span>
+              <span>Sampling date (as notified by SFDA)</span>
               <input className="mah-input" type="date" value={date} onChange={e => setDate(e.target.value)} required />
             </label>
           </div>
           <div className="mah-row-actions">
-            <span className="mah-small mah-muted">Moves the shipment to SAMPLING.</span>
+            <span className="mah-small mah-muted">Records that SFDA has ordered physical sampling of this shipment.</span>
             <button type="submit" className="mah-btn clr-btn-purple" disabled={!location.trim() || busy !== null}>{busy === 'sampling' ? 'Recording…' : 'Record →'}</button>
           </div>
         </form>
@@ -709,11 +711,11 @@ function InfoRequestActions({ shipment, busy, run, transition }) {
           {INFO_REQUEST_LABELS[shipment.info_request_type] || 'Type not set'}
         </span>
       </div>
-      <p className="mah-muted mah-small">When SFDA accepts the answer, resubmit the shipment.</p>
+      <p className="mah-muted mah-small">Once you have sent your response to SFDA via Faseh, record it here. SFDA then continues its review.</p>
       <div>
         <button className="mah-btn mah-btn-primary" disabled={busy !== null}
           onClick={() => run('resolve', () => transition('SUBMITTED', { notes: 'Info request resolved' }), 'Resubmitted — shipment is now SUBMITTED')}>
-          {busy === 'resolve' ? 'Saving…' : 'Information Request Resolved — Resubmit'}
+          {busy === 'resolve' ? 'Saving…' : 'Record response submitted to SFDA'}
         </button>
       </div>
     </section>
@@ -785,7 +787,8 @@ function SamplingActions(ctx) {
         </div>
       )}
 
-      <div className="clr-subhead">SFDA decision</div>
+      <div className="clr-subhead">Record SFDA decision received from Faseh</div>
+      <p className="clr-record-note">SFDA makes all decisions independently. Use this section to record decisions you have received from SFDA via Faseh or official notice.</p>
       {current < SAMPLING_STEPS.indexOf('RESULTS_SUBMITTED') && (
         <p className="mah-small mah-muted">Lab results are not recorded yet — record the decision once SFDA issues it.</p>
       )}

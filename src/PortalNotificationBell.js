@@ -4,17 +4,17 @@
 //
 // Backend note: GET /api/v1/notifications returns only UNREAD rows, scoped to the caller's
 // organisation. Roles whose users have no organisation, or orgs that receive no notifications,
-// will see an empty bell. Row-click marks read locally only (per spec); "Mark all read" also
-// tells the server.
+// will see an empty bell. Row-click and "Mark all read" both tell the server.
 //
 // onNavigateToShipment(shipmentId) — optional; called when a row about a shipment is clicked.
+// onOpenNotificationCentre()       — optional; adds the "View all notifications" link.
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { apiFetch, timeAgo, Icon } from './mahShared';
 
 const REFRESH_MS = 60000;
 
 // Dot colour by what the notification is about
-function dotTone(n) {
+export function dotTone(n) {
   const key = `${n.event_type || ''} ${n.data?.to_state || ''}`.toUpperCase();
   if (/REJECT|SFDA_RELEASED|PARTIALLY_RELEASED|DESTROYED|REEXPORTED/.test(key)) return 'red';   // SFDA decision
   if (/INFO_REQUEST|BROKER_REQUEST|BROKER_DECLINED/.test(key)) return 'amber';                    // needs a response
@@ -23,7 +23,7 @@ function dotTone(n) {
   return 'grey';
 }
 
-export default function PortalNotificationBell({ token, onNavigateToShipment }) {
+export default function PortalNotificationBell({ token, onNavigateToShipment, onOpenNotificationCentre }) {
   const [notifications, setNotifications] = useState([]);
   const [open, setOpen] = useState(false);
   const [status, setStatus] = useState('loading'); // loading | ok | error
@@ -64,6 +64,7 @@ export default function PortalNotificationBell({ token, onNavigateToShipment }) 
   const markOne = (id) => {
     localRead.current.add(id);
     setNotifications(prev => prev.map(n => (n.id === id ? { ...n, is_read: true } : n)));
+    apiFetch(token, `/notifications/${id}/read`, { method: 'PUT' }).catch(() => { /* local state already updated */ });
   };
   const openRow = (n) => {
     markOne(n.id);
@@ -119,6 +120,12 @@ export default function PortalNotificationBell({ token, onNavigateToShipment }) 
                 </button>
               ))}
             </div>
+          )}
+
+          {onOpenNotificationCentre && (
+            <button className="notification-viewall" onClick={() => { setOpen(false); onOpenNotificationCentre(); }}>
+              View all notifications →
+            </button>
           )}
         </div>
       )}

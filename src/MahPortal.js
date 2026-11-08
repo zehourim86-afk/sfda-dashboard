@@ -4,6 +4,7 @@ import './mah-portal.css';
 import { apiFetch, Icon, needsAction, isClosed } from './mahShared';
 import { Toast } from './clearanceShared';
 import NotificationBell from './PortalNotificationBell';
+import NotificationCentre from './NotificationCentre';
 import MahOverview from './MahOverview';
 import MahShipments from './MahShipments';
 import MahShipmentDetail from './MahShipmentDetail';
@@ -36,6 +37,7 @@ const PAGE_TITLES = {
   intelligence: 'My Performance',
   'market-intelligence': 'Market Intelligence',
   settings: 'Settings',
+  notifications: 'Notification Centre',
 };
 
 export default function MahPortal({ user, token: tokenProp, onLogout }) {
@@ -130,8 +132,14 @@ export default function MahPortal({ user, token: tokenProp, onLogout }) {
     reloadShipments: loadShipments, reloadProducts: loadProducts, reloadSuppliers: loadSuppliers,
   };
 
+  const handleOpenNotificationCentre = () => {
+    setCurrentPage('notifications');
+  };
+
   const renderPage = () => {
     switch (currentPage) {
+      case 'notifications':
+        return <NotificationCentre token={token} onNavigateToShipment={handleNotificationNavigate} />;
       case 'shipments': return <MahShipments {...shared} />;
       case 'shipment-detail':
         return currentShipment
@@ -166,7 +174,7 @@ export default function MahPortal({ user, token: tokenProp, onLogout }) {
         {!showCollapsed && <span className="mah-portal-label">MAH Portal</span>}
         <div className="mah-topbar-title"><strong>{PAGE_TITLES[currentPage]}</strong></div>
         <div className="mah-topbar-right">
-          <NotificationBell token={token} onNavigateToShipment={handleNotificationNavigate} />
+          <NotificationBell token={token} onNavigateToShipment={handleNotificationNavigate} onOpenNotificationCentre={handleOpenNotificationCentre} />
           <div className="mah-user-chip">
             <span className="mah-avatar">{initials}</span>
             <span className="mah-user-name">{user?.full_name || user?.email}</span>

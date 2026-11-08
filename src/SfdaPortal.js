@@ -7,6 +7,7 @@ import './clearance-portal.css';
 import './sfda-portal.css';
 import { apiFetch, Icon, stateOf } from './mahShared';
 import NotificationBell from './PortalNotificationBell';
+import NotificationCentre from './NotificationCentre';
 import { productsFromShipments } from './clearanceShared';
 import { ShipmentModal } from './sfdaShared';
 import SfdaOverview from './SfdaOverview';
@@ -22,7 +23,7 @@ const NAV = [
   { page: 'decisions', label: 'Decisions', icon: 'check-circle' },
   { page: 'settings', label: 'Settings', icon: 'gear' },
 ];
-const PAGE_TITLES = Object.fromEntries(NAV.map(n => [n.page, n.label]));
+const PAGE_TITLES = { ...Object.fromEntries(NAV.map(n => [n.page, n.label])), notifications: 'Notification Centre' };
 
 export default function SfdaPortal({ user, token: tokenProp, onLogout }) {
   const token = tokenProp || localStorage.getItem('demara_token');
@@ -78,8 +79,14 @@ export default function SfdaPortal({ user, token: tokenProp, onLogout }) {
     openShipment: (shipment, focus) => setModal({ shipment, focus }),
   };
 
+  const handleOpenNotificationCentre = () => {
+    setCurrentPage('notifications');
+  };
+
   const renderPage = () => {
     switch (currentPage) {
+      case 'notifications':
+        return <NotificationCentre token={token} onNavigateToShipment={() => setCurrentPage('submissions')} />;
       case 'submissions': return <SfdaSubmissions {...shared} />;
       case 'sampling': return <SfdaSampling {...shared} />;
       case 'decisions': return <SfdaDecisions {...shared} />;
@@ -106,7 +113,7 @@ export default function SfdaPortal({ user, token: tokenProp, onLogout }) {
         {!showCollapsed && <span className="mah-portal-label">SFDA Observer</span>}
         <div className="mah-topbar-title"><strong>{PAGE_TITLES[currentPage]}</strong></div>
         <div className="mah-topbar-right">
-          <NotificationBell token={token} onNavigateToShipment={() => setCurrentPage('submissions')} />
+          <NotificationBell token={token} onNavigateToShipment={() => setCurrentPage('submissions')} onOpenNotificationCentre={handleOpenNotificationCentre} />
           <span className="mah-badge mah-tone-blue sfda-readonly-pill">Read-only</span>
           <div className="mah-user-chip">
             <span className="mah-avatar">{initials}</span>
