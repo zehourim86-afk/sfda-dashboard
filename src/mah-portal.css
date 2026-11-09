@@ -757,6 +757,20 @@ textarea.mah-input { resize: vertical; min-height: 60px; }
 .cert-fact span { display: block; font-size: 10.5px; font-weight: 700; letter-spacing: 0.08em; color: #64748B; text-transform: uppercase; }
 .cert-fact strong { font-size: 14px; font-weight: 600; overflow-wrap: anywhere; }
 .cert-fact-lg strong { font-size: 18px; font-weight: 800; color: #0F1A4A; }
+.cert-supplier-name { display: block; font-size: 13px; font-weight: 700; }
+.cert-supplier-country { font-size: 12px; color: #64748B; margin-top: 1px; }
+.cert-legal { background: #F8FAFF; border: 1px solid #E2E8F0; border-radius: 8px; padding: 16px 20px; margin: 16px 0; break-inside: avoid; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.cert-legal-title { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; color: #94A3B8; margin-bottom: 12px; }
+.cert-legal-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px 20px; }
+.cert-legal-lab { margin-top: 12px; background: #EFF6FF; border-radius: 6px; padding: 8px 12px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.cert-ref { min-width: 0; }
+.cert-ref-label { display: block; font-size: 10px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; }
+.cert-ref-value { display: block; font-size: 13px; color: #0F1A4A; font-weight: 500; overflow-wrap: anywhere; }
+.cert-ref-value.cert-ok, .cert-ref-value.cert-bad, .cert-ref-value.cert-warn { font-weight: 700; }
+.cert-ref-value.cert-ok { color: #00875A; }
+.cert-ref-value.cert-bad { color: #C0223A; }
+.cert-ref-value.cert-warn { color: #B36B00; }
+.cert-footer-refs { font-size: 10px; color: #64748B; margin-top: 4px; overflow-wrap: anywhere; }
 .cert-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 .cert-col { display: flex; flex-direction: column; gap: 16px; }
 .cert-box { border: 1px solid #E2E8F0; border-radius: 10px; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; break-inside: avoid; }
@@ -784,6 +798,8 @@ textarea.mah-input { resize: vertical; min-height: 60px; }
   .cert { padding: 24px 18px; }
   .cert-header { grid-template-columns: 1fr; justify-items: center; text-align: center; }
   .cert-facts, .cert-grid, .cert-footer { grid-template-columns: 1fr; }
+  .cert-legal { padding: 14px; }
+  .cert-legal-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .cert-hash { text-align: left; }
 }
 /* "Download PDF": print just the certificate */

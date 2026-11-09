@@ -17,12 +17,40 @@ const mark = {
   sector: (s) => ({ VERIFIED: ['VERIFIED ✓', 'cert-ok'], MISMATCH: ['MISMATCH ✗', 'cert-bad'] }[s] || ['NOT VERIFIED', 'cert-na']),
   sampling: (s) => (s === 'NOT_SAMPLED' ? ['NOT SAMPLED', 'cert-na']
     : /^PASS/i.test(s) ? ['PASS ✓', 'cert-ok'] : [String(s).replace(/_/g, ' '), 'cert-warn']),
-  lab: (s) => ({ VERIFIED: ['VERIFIED ✓', 'cert-ok'], WARNING: ['WARNING ⚠', 'cert-warn'] }[s] || ['NOT APPLICABLE', 'cert-na']),
   supplier: (firstTime) => (firstTime == null ? ['NOT IN MASTER', 'cert-na'] : firstTime ? ['FIRST-TIME', 'cert-warn'] : ['VERIFIED ✓', 'cert-ok']),
 };
 const Line = ({ label, value: [text, cls] }) => (
   <div className="cert-line"><span>{label}</span><strong className={cls}>{text}</strong></div>
 );
+
+// DD MMM YYYY; a plain YYYY-MM-DD date is read as a calendar day, not shifted by time zone
+function fmtShort(v) {
+  if (!v) return null;
+  const day = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v);
+  const d = day ? new Date(Number(day[1]), Number(day[2]) - 1, Number(day[3])) : new Date(v);
+  return Number.isNaN(d.getTime()) ? null : d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+const capitalise = (v) => (v ? v.charAt(0).toUpperCase() + v.slice(1) : null);
+
+// Lab sampling result (sampling_overall_result is free text from the clearance company)
+function labResult(result, empty) {
+  if (!result) return [empty, 'cert-na'];
+  if (/^pass/i.test(result)) return ['PASS ✓', 'cert-ok'];
+  if (/^fail/i.test(result)) return ['FAIL ✗', 'cert-bad'];
+  if (/^conditional/i.test(result)) return ['CONDITIONAL ⚠', 'cert-warn'];
+  return [result.replace(/_/g, ' '), 'cert-na'];
+}
+
+// One labelled value in the Legal References grid; `value` is text or [text, className]
+function Ref({ label, value }) {
+  const [text, cls] = Array.isArray(value) ? value : [value, null];
+  return (
+    <div className="cert-ref">
+      <span className="cert-ref-label">{label}</span>
+      <span className={`cert-ref-value${cls ? ` ${cls}` : ''}`}>{text || '—'}</span>
+    </div>
+  );
+}
 
 export default function ClearanceCertificate({ shipment, token, apiUrl }) {
   const [cert, setCert] = useState(null);
@@ -111,6 +139,13 @@ export default function ClearanceCertificate({ shipment, token, apiUrl }) {
   const layers = integ.checks_summary?.layers || {};
   const verdict = integrityVerdict(integ.score);
   const aiScore = integ.ai_validation_score;
+  const product = cert.product || {};
+  const lab = cert.lab || {};
+  const sector = s.sector || product.sector || null;
+  const mahOrg = cert.mah_org || cert.mah || {};
+  const clearanceOrg = cert.clearance_org || cert.clearance || {};
+  const labName = lab.name || s.lab_name || null;
+  const accreditation = labName ? [`${lab.accreditation || 'ISO 17025'} ✓`, 'cert-ok'] : '—';
 
   return (
     <div className="cert-wrap">
@@ -128,16 +163,47 @@ export default function ClearanceCertificate({ shipment, token, apiUrl }) {
 
         <section className="cert-facts">
           <div className="cert-fact cert-fact-lg"><span>Shipment</span><strong>{s.name || '—'}</strong></div>
-          <div className="cert-fact"><span>MAH</span><strong>{cert.mah?.name || '—'}</strong></div>
+          <div className="cert-fact"><span>MAH</span><strong>{mahOrg.name || '—'}</strong></div>
           <div className="cert-fact"><span>MSR ID</span><strong className="mah-mono">{s.masaar_id || '—'}</strong></div>
-          <div className="cert-fact"><span>Clearance Co</span><strong>{cert.clearance?.name || '—'}</strong></div>
-          <div className="cert-fact"><span>Sector</span><strong>{s.sector ? <SectorBadge sector={s.sector} /> : '—'}</strong></div>
+          <div className="cert-fact"><span>Clearance Co</span><strong>{clearanceOrg.name || '—'}</strong></div>
+          <div className="cert-fact"><span>Sector</span><strong>{sector ? <SectorBadge sector={sector} /> : '—'}</strong></div>
           <div className="cert-fact">
             <span>Supplier</span>
-            <strong>{[cert.supplier?.name, cert.supplier?.country].filter(Boolean).join(', ') || '—'}</strong>
+            {cert.supplier?.name ? (
+              <>
+                <strong className="cert-supplier-name">{cert.supplier.name}</strong>
+                {cert.supplier.country && <div className="cert-supplier-country">{cert.supplier.country}</div>}
+              </>
+            ) : <strong>{cert.supplier?.country || '—'}</strong>}
           </div>
           <div className="cert-fact"><span>Clearance date</span><strong>{fmtDay(s.clearance_date)}</strong></div>
           <div className="cert-fact"><span>Port</span><strong>{s.port_of_entry || '—'}</strong></div>
+        </section>
+
+        <section className="cert-legal" aria-label="Legal references">
+          <div className="cert-legal-title">LEGAL REFERENCES</div>
+          <div className="cert-legal-grid">
+            <Ref label="SFDA Registration No" value={product.sfda_reg_number} />
+            <Ref label="SFDA Reg. Expiry" value={fmtShort(product.sfda_reg_expiry)} />
+            <Ref label="HS Code" value={product.hs_code} />
+
+            <Ref label="Faseh Declaration No" value={s.faseh_request_number} />
+            <Ref label="Faseh Filing Date" value={fmtShort(s.faseh_filed_at)} />
+            <Ref label="ZATCA Reference" value={s.zatca_declaration_ref} />
+
+            <Ref label="Transport Mode" value={capitalise(s.transport_mode)} />
+            <Ref label="B/L or AWB Number" value={s.bl_awb_number} />
+            <Ref label="Port of Entry" value={s.port_of_entry} />
+
+            <Ref label="MAH CR Number" value={mahOrg.cr_number} />
+            <Ref label="Clearance Co. CR" value={clearanceOrg.cr_number} />
+            <Ref label="Sampling Location" value={s.sampling_location || 'Not sampled'} />
+          </div>
+          <div className="cert-legal-grid cert-legal-lab">
+            <Ref label="QC Lab" value={labName || 'Not sampled'} />
+            <Ref label="Lab Accreditation" value={accreditation} />
+            <Ref label="Sampling Result" value={labResult(lab.sampling_result, 'Not required')} />
+          </div>
         </section>
 
         <hr className="cert-divider" />
@@ -169,7 +235,9 @@ export default function ClearanceCertificate({ shipment, token, apiUrl }) {
               <h3>Supplier Intelligence</h3>
               <Line label="Supplier status" value={mark.supplier(cert.supplier?.is_first_time)} />
               <Line label="Historical rejection rate" value={[cert.supplier?.rejection_rate || 'No history', 'cert-na']} />
-              <Line label="Lab independence" value={mark.lab(integ.lab_independence)} />
+              <Line label="QC Lab" value={[labName || 'Not sampled', labName ? null : 'cert-na']} />
+              <Line label="Accreditation" value={labName ? accreditation : ['—', 'cert-na']} />
+              <Line label="Lab result" value={labResult(lab.sampling_result, 'Not sampled')} />
             </div>
           </div>
         </section>
@@ -184,6 +252,9 @@ export default function ClearanceCertificate({ shipment, token, apiUrl }) {
             <div>Issued: {fmtDay(cert.generated_at)}</div>
             <div><strong>DEMARA Regulatory Consulting</strong></div>
             <div className="mah-small">Ref {cert.demara_reference}</div>
+            <div className="cert-footer-refs">
+              SFDA Reg: {product.sfda_reg_number || '—'} · Faseh: {s.faseh_request_number || '—'} · QC Lab: {labName || 'Not sampled'}
+            </div>
           </div>
           <div className="cert-qr">
             <div className="cert-qr-box" aria-hidden="true" />
