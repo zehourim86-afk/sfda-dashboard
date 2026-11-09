@@ -607,11 +607,25 @@ const truncate = (text, n) => (text.length > n ? `${text.slice(0, n - 1)}…` : 
 // hex colour + alpha (0–1) as #RRGGBBAA
 const alpha = (hex, a) => `${hex}${Math.round(a * 255).toString(16).padStart(2, '0')}`;
 const docScore = (d) => d.validation_result?.score ?? null;
+// A score the AI actually gave: binary uploads come back as 0 or with no score
+const realScore = (d) => (docScore(d) > 0 ? docScore(d) : null);
+// The validator could not read the file (binary PDF / image)
 const isBinaryWarning = (d) => {
   const v = d.validation_result || {};
-  return [v.summary, ...(v.issues || [])].some(m => typeof m === 'string' && /binary|extract/i.test(m));
+  return [v.summary, ...(v.issues || []), ...(v.recommendations || [])]
+    .some(m => typeof m === 'string' && /binary|extract|cannot/i.test(m));
 };
+const isUnreadable = (d) => realScore(d) == null && isBinaryWarning(d);
 const listNames = (items) => items.map(i => i.name).join(', ');
+
+// Donut score: integrity score and the AI score of readable documents, 60/40 when both exist.
+// → { score, basis } — score null when neither exists
+function displayScore(aiDocScore, integrityScore) {
+  if (integrityScore != null && aiDocScore == null) return { score: integrityScore, basis: 'Integrity score' };
+  if (integrityScore != null) return { score: Math.round(aiDocScore * 0.4 + integrityScore * 0.6), basis: 'Combined score' };
+  if (aiDocScore != null) return { score: aiDocScore, basis: 'AI doc score' };
+  return { score: null, basis: null };
+}
 
 // TODO: Replace with Anthropic API call after demo
 // POST https://api.anthropic.com/v1/messages
@@ -619,9 +633,10 @@ const listNames = (items) => items.map(i => i.name).join(', ');
 function generateSummaryText({ documents, required, reviewed, score, layer1Complete }) {
   const docLine = `${documents.length} of ${required} documents uploaded, ${reviewed} analyzed by AI.`;
 
-  const critical = documents.filter(d => (docScore(d) ?? 0) < 50 && d.readiness_status === 'CRITICAL_ISSUE');
-  const weak = documents.filter(d => (docScore(d) ?? 0) < 70);
-  const binary = documents.filter(isBinaryWarning);
+  // Only readable documents can be weak; unreadable ones are reported separately
+  const critical = documents.filter(d => d.readiness_status === 'CRITICAL_ISSUE' && !isUnreadable(d));
+  const weak = documents.filter(d => realScore(d) != null && realScore(d) < 70);
+  const binary = documents.filter(isUnreadable);
   let issueLine;
   if (critical.length) issueLine = `Critical issues found in: ${listNames(critical)}.`;
   else if (weak.length) issueLine = `${listNames(weak)} ${weak.length === 1 ? 'requires' : 'require'} attention before submission.`;
@@ -630,6 +645,7 @@ function generateSummaryText({ documents, required, reviewed, score, layer1Compl
 
   let advice;
   if (!layer1Complete) advice = 'Complete document upload before proceeding.';
+  else if (score == null) advice = 'Run the integrity check below to assess this shipment.';
   else if (score >= 85) advice = 'Shipment is ready to proceed to broker.';
   else if (score >= 70) advice = 'Review flagged documents before proceeding.';
   else advice = 'Address critical issues before submission to avoid SFDA rejection.';
@@ -637,16 +653,20 @@ function generateSummaryText({ documents, required, reviewed, score, layer1Compl
   return `${docLine} ${issueLine} ${advice}`;
 }
 
-// Score donut: 140px, ring from radius 42 to 60
+// Score donut: 140px, ring from radius 42 to 60. score null → grey "—"
 function SummaryDonut({ score, color }) {
   const r = 51;
   const c = 2 * Math.PI * r;
+  const filled = score == null ? 0 : (Math.max(0, Math.min(100, score)) / 100) * c;
   return (
-    <svg className="mah-ais-donut" width="140" height="140" viewBox="0 0 140 140" role="img" aria-label={`MASAAR AI score ${score} out of 100`}>
+    <svg className="mah-ais-donut" width="140" height="140" viewBox="0 0 140 140" role="img"
+      aria-label={score == null ? 'Not yet assessed' : `MASAAR score ${score} out of 100`}>
       <circle cx="70" cy="70" r={r} fill="none" stroke={GREY} strokeWidth="18" />
-      <circle cx="70" cy="70" r={r} fill="none" stroke={color} strokeWidth="18"
-        strokeDasharray={`${(Math.max(0, Math.min(100, score)) / 100) * c} ${c}`} transform="rotate(-90 70 70)" />
-      <text x="70" y="66" textAnchor="middle" dominantBaseline="central" fontSize="32" fontWeight="700" fill={color}>{score}</text>
+      {filled > 0 && (
+        <circle cx="70" cy="70" r={r} fill="none" stroke={color} strokeWidth="18"
+          strokeDasharray={`${filled} ${c}`} transform="rotate(-90 70 70)" />
+      )}
+      <text x="70" y="66" textAnchor="middle" dominantBaseline="central" fontSize="32" fontWeight="700" fill={color}>{score ?? '—'}</text>
       <text x="70" y="92" textAnchor="middle" fontSize="13" fill="#94A3B8">/100</text>
     </svg>
   );
@@ -686,13 +706,15 @@ function AiValidationSummary({ documents, required, layer1Complete, shipmentSect
     );
   }
 
-  const scores = documents.map(d => docScore(d) ?? 0);
-  const score = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
-  const reviewedDocs = documents.filter(d => docScore(d) != null);
-  const reviewed = reviewedDocs.length;
-  const reviewedAvg = reviewed ? Math.round(reviewedDocs.reduce((a, d) => a + docScore(d), 0) / reviewed) : null;
-  const issueCount = documents.filter(d => (docScore(d) ?? 0) < 70 || d.readiness_status === 'CRITICAL_ISSUE').length;
-  const verdict = VERDICTS.find(v => score >= v.min);
+  // AI score over readable documents only (null when none has a real score)
+  const scoredDocs = documents.filter(d => realScore(d) != null);
+  const reviewed = scoredDocs.length;
+  const aiDocScore = reviewed ? Math.round(scoredDocs.reduce((a, d) => a + realScore(d), 0) / reviewed) : null;
+  const binaryCount = documents.filter(isUnreadable).length;
+  const { score, basis } = displayScore(aiDocScore, integrityScore);
+  const issueCount = documents.filter(d => (realScore(d) != null && realScore(d) < 70)
+    || (d.readiness_status === 'CRITICAL_ISSUE' && !isUnreadable(d))).length;
+  const verdict = score == null ? { label: 'Not yet assessed', color: '#94A3B8' } : VERDICTS.find(v => score >= v.min);
   const text = generateSummaryText({ documents, required, reviewed, score, layer1Complete, shipmentSector });
 
   // Layer 1 — completeness
@@ -703,15 +725,18 @@ function AiValidationSummary({ documents, required, layer1Complete, shipmentSect
     : recommendedMissing > 0
       ? { status: 'WARNING', text: `${plural(recommendedMissing, 'recommended doc')} missing`, badge: { tone: 'amber', text: plural(recommendedMissing, 'warning') } }
       : { status: 'PASSED', text: 'All mandatory documents uploaded' };
-  // Layer 3 — AI review of the uploaded documents
-  const weakDocs = reviewedDocs.filter(d => docScore(d) < 70).length;
-  const layer3 = reviewedAvg == null
-    ? { status: 'PENDING', text: 'No documents reviewed yet' }
-    : {
-      status: reviewedAvg >= 70 ? 'PASSED' : reviewedAvg >= 50 ? 'WARNING' : 'FAILED',
-      text: `${plural(reviewed, 'document')} reviewed · avg ${reviewedAvg}/100`,
-      badge: weakDocs ? { tone: reviewedAvg < 50 ? 'red' : 'amber', text: `${weakDocs} below 70` } : null,
-    };
+  // Layer 3 — AI review, judged on readable documents only
+  const weakDocs = scoredDocs.filter(d => realScore(d) < 70).length;
+  const skipped = binaryCount ? ` · ${plural(binaryCount, 'binary format doc')} skipped` : '';
+  const layer3 = aiDocScore != null
+    ? {
+      status: aiDocScore >= 70 ? 'PASSED' : aiDocScore >= 50 ? 'WARNING' : 'FAILED',
+      text: `${plural(reviewed, 'document')} reviewed · avg ${aiDocScore}/100${skipped}`,
+      badge: weakDocs ? { tone: aiDocScore < 50 ? 'red' : 'amber', text: `${weakDocs} below 70` } : null,
+    }
+    : binaryCount
+      ? { status: 'PENDING', text: 'Documents in binary format — text format recommended for AI analysis' }
+      : { status: 'PENDING', text: 'No documents reviewed yet' };
   // Layer 4 — integrity score
   const layer4 = integrityScore == null
     ? { status: 'PENDING', text: 'Run integrity check below' }
@@ -736,7 +761,7 @@ function AiValidationSummary({ documents, required, layer1Complete, shipmentSect
         <div className="mah-ais-col-score">
           <SummaryDonut score={score} color={verdict.color} />
           <span className="mah-ais-pill" style={{ background: alpha(verdict.color, 0.15), color: verdict.color }}>{verdict.label}</span>
-          <span className="mah-ais-caption">MASAAR AI Score</span>
+          <span className="mah-ais-caption">{basis || 'MASAAR AI Score'}</span>
         </div>
 
         <div className="mah-ais-col-layers">
@@ -750,16 +775,21 @@ function AiValidationSummary({ documents, required, layer1Complete, shipmentSect
           <div className="mah-ais-docs-title">Document Scores</div>
           {documents.length === 0 ? <p className="mah-ais-docs-empty">Upload documents to see scores</p>
             : documents.map(d => {
-              const s = docScore(d);
+              // Coloured only for a real score; unreadable / unscored documents get a full grey bar and "—"
+              const s = realScore(d);
+              const binary = isUnreadable(d);
               const color = barColor(s);
+              const label = s != null ? `${d.name}: ${s} out of 100` : binary ? `${d.name}: binary format, not scored` : `${d.name}: no score`;
               return (
-                <div key={d.document_type} className="mah-ais-doc">
+                <div key={d.document_type} className="mah-ais-doc" title={binary ? 'Binary format — upload a text version for AI analysis' : undefined}>
                   <div className="mah-ais-doc-head">
                     <span className="mah-ais-doc-name" title={d.name}>{truncate(d.name, 20)}</span>
-                    <span className="mah-ais-doc-score" style={{ color: s == null ? '#94A3B8' : color }}>{s ?? '—'}</span>
+                    <span className="mah-ais-doc-score" style={{ color: s == null ? '#94A3B8' : color }}>
+                      {binary && <span className="mah-ais-doc-binary">Binary format</span>}{s ?? '—'}
+                    </span>
                   </div>
-                  <div className="mah-ais-doc-track" role="img" aria-label={s == null ? `${d.name}: no score` : `${d.name}: ${s} out of 100`}>
-                    <div className="mah-ais-doc-fill" style={{ width: s == null ? '100%' : `${Math.max(0, Math.min(100, s))}%`, background: color }} />
+                  <div className="mah-ais-doc-track" role="img" aria-label={label}>
+                    <div className="mah-ais-doc-fill" style={{ width: s == null ? '100%' : `${Math.min(100, s)}%`, background: color }} />
                   </div>
                 </div>
               );

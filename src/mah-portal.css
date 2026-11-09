@@ -579,6 +579,7 @@ textarea.mah-input { resize: vertical; min-height: 60px; }
 .mah-ais-doc-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 3px; }
 .mah-ais-doc-name { font-size: 12px; color: #334155; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .mah-ais-doc-score { font-size: 11px; font-weight: 600; flex-shrink: 0; }
+.mah-ais-doc-binary { font-size: 10px; font-weight: 500; color: #94A3B8; margin-right: 6px; }
 .mah-ais-doc-track { height: 6px; border-radius: 3px; background: #E2E8F0; overflow: hidden; }
 .mah-ais-doc-fill { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
 .mah-ais-text { margin: 16px 0 0; padding-top: 12px; border-top: 1px solid #EEF2F6; font-size: 13px; font-style: italic; color: #334155; line-height: 1.6; }
