@@ -1,5 +1,6 @@
-// Admin Panel — Dashboard: 18-state pipeline, alerts, organisation health, platform metrics.
-import { stateOf, STATE_TONES, shipmentName, shipmentRef, timeAgo, Empty, Icon } from './mahShared';
+// Admin Panel — Dashboard: 18-state pipeline, alerts, integrity alerts, organisation health, platform metrics.
+import { useEffect, useState } from 'react';
+import { apiFetch, stateOf, STATE_TONES, shipmentName, shipmentRef, timeAgo, Empty, Icon } from './mahShared';
 import { getStateLabel } from './constants';
 import { daysSince } from './clearanceShared';
 import { mahCompany } from './sfdaShared';
@@ -11,7 +12,71 @@ const ALERT_LABELS = {
 const ORG_CARD_LIMIT = 12;
 const isToday = (v) => v && new Date(v).toDateString() === new Date().toDateString();
 
-export default function AdminDashboard({ shipments, organisations, users, orgsById, productsById, alerts, cancelAuditAvailable, openShipment, navigate }) {
+const CHECK_LABELS = {
+  MANDATORY_DOCS_COMPLETE: 'Mandatory documents missing',
+  PRODUCT_SECTOR_CONSISTENCY: 'Sector mismatch',
+  REGISTRATION_EXPIRY_CHECK: 'Registration expired on arrival',
+  SUPPLIER_REJECTION_PATTERN: 'Supplier rejection rate',
+  CONCENTRATION_OUTLIER_CHECK: 'Concentration above threshold',
+};
+const checkLabel = (type) => CHECK_LABELS[type] || type.replace(/_/g, ' ').toLowerCase().replace(/^\w/, c => c.toUpperCase());
+
+// Failed HIGH / CRITICAL integrity checks — DEMARA's fraud-detection view (GET /admin/integrity-alerts)
+function IntegrityAlerts({ token, shipmentsById, productsById, openShipment }) {
+  const [alerts, setAlerts] = useState(null);
+  const [error, setError] = useState(null);
+  useEffect(() => {
+    let cancelled = false;
+    apiFetch(token, '/admin/integrity-alerts')
+      .then(d => { if (!cancelled) setAlerts(d.alerts || []); })
+      .catch(e => { if (!cancelled) setError(e.message); });
+    return () => { cancelled = true; };
+  }, [token]);
+
+  return (
+    <section className="mah-card">
+      <div className="mah-card-head">
+        <h2>Integrity Alerts</h2>
+        {alerts && <span className={`mah-count-pill mah-tone-${alerts.length ? 'red' : 'green'}`}>{alerts.length}</span>}
+      </div>
+      {error ? <div className="mah-alert mah-alert-red">Could not load integrity alerts: {error}</div>
+        : !alerts ? <div className="mah-loading">Loading integrity alerts…</div>
+          : alerts.length === 0 ? (
+            <Empty title="No integrity alerts">Failed high and critical integrity checks — misclassification, expired registrations, high-risk suppliers — appear here.</Empty>
+          ) : (
+            <div className="mah-table-wrap">
+              <table className="mah-table">
+                <thead><tr><th>Shipment</th><th>MAH</th><th>Check failed</th><th>Severity</th><th>Days in state</th></tr></thead>
+                <tbody>
+                  {alerts.map(a => {
+                    const shipment = shipmentsById?.[a.shipment_id];
+                    return (
+                      <tr key={a.id} className={shipment ? 'mah-row-click' : undefined} tabIndex={shipment ? 0 : undefined}
+                        onClick={() => shipment && openShipment(shipment)}
+                        onKeyDown={e => { if (e.key === 'Enter' && shipment) openShipment(shipment); }}>
+                        <td>
+                          <div className="mah-row-title">{shipment ? shipmentName(shipment, productsById) : a.product_name || a.masaar_id}</div>
+                          <div className="mah-row-sub mah-mono">{a.masaar_id || String(a.shipment_id).slice(0, 8)} · {getStateLabel(a.current_state)}</div>
+                        </td>
+                        <td>{a.mah_name || '—'}</td>
+                        <td>
+                          <div className="mah-row-title">{checkLabel(a.check_type)}</div>
+                          {a.details && <div className="mah-row-sub" title={a.details}>{a.details.length > 110 ? `${a.details.slice(0, 110)}…` : a.details}</div>}
+                        </td>
+                        <td><span className={`int-sev int-sev-${a.severity}`}>{a.severity}</span></td>
+                        <td className="mah-nowrap">{a.days_in_state ?? '—'}d</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+    </section>
+  );
+}
+
+export default function AdminDashboard({ token, shipments, organisations, users, orgsById, productsById, shipmentsById, alerts, cancelAuditAvailable, openShipment, navigate }) {
   const counts = Object.fromEntries(SHIPMENT_STATES.map(st => [st, 0]));
   for (const s of shipments) if (counts[stateOf(s)] != null) counts[stateOf(s)] += 1;
   const active = shipments.filter(s => !isClosedState(s)).length;
@@ -69,6 +134,8 @@ export default function AdminDashboard({ shipments, organisations, users, orgsBy
                 </div>
               ))}
           </section>
+
+          <IntegrityAlerts token={token} shipmentsById={shipmentsById} productsById={productsById} openShipment={openShipment} />
 
           <section className="mah-card">
             <div className="mah-card-head">

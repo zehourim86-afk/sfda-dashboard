@@ -1,7 +1,7 @@
 // MAH portal — Shipment detail with sub-tabs:
-// Timeline | Documents | Validation | Customs | Intelligence | Objection
+// Timeline | Documents | Validation | Customs | Intelligence | Objection | Certificate (CLOSED_RELEASED)
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { getStateLabel } from './constants';
+import { API_URL, getStateLabel } from './constants';
 import {
   apiFetch, stateOf, StateBadge, SectorBadge, shipmentName, shipmentRef, shipmentSector,
   CLOSED_STATES, objectionDeadline, daysUntil, fmtDate, fmtDateTime,
@@ -10,6 +10,8 @@ import {
 import RoadmapBanner from './RoadmapBanner';
 import { RiskPanel } from './MahNewShipment';
 import ServiceAgreementModal from './ServiceAgreementModal';
+import IntegrityDashboard from './IntegrityDashboard';
+import ClearanceCertificate from './ClearanceCertificate';
 
 const READINESS_TONES = { READY: 'green', WARNING: 'amber', MISSING_INFO: 'amber', CRITICAL_ISSUE: 'red' };
 const CUSTOMS_STEPS = ['PENDING', 'DECLARATION_FILED', 'DUTIES_PAID', 'CUSTOMS_RELEASED'];
@@ -98,6 +100,7 @@ export default function MahShipmentDetail({
     { key: 'customs', label: 'Customs' },
     { key: 'intelligence', label: 'Intelligence' },
     ...(showObjection ? [{ key: 'objection', label: 'Objection' }] : []),
+    ...(state === 'CLOSED_RELEASED' ? [{ key: 'certificate', label: 'Certificate' }] : []),
   ];
   const activeTab = tabs.some(t => t.key === tab) ? tab : 'timeline';
 
@@ -167,6 +170,9 @@ export default function MahShipmentDetail({
       )}
       {activeTab === 'objection' && showObjection && (
         <ObjectionTab token={token} shipment={shipment} onChanged={refresh} />
+      )}
+      {activeTab === 'certificate' && state === 'CLOSED_RELEASED' && (
+        <ClearanceCertificate shipment={shipment} token={token} apiUrl={API_URL} />
       )}
 
       {(canDelete || canCancel) && (
@@ -715,6 +721,7 @@ function ValidationTab({ token, shipment, reqs, broker, onChanged, goTo, showToa
   const [moveError, setMoveError] = useState(null);
   const [missingBlock, setMissingBlock] = useState(0);
   const [recommendedWarning, setRecommendedWarning] = useState(false);
+  const [integrityKey, setIntegrityKey] = useState(0); // bumped to reload the integrity dashboard
 
   // proceed = the MAH chose "Proceed anyway" past the recommended-documents warning
   async function advance(proceed = false) {
@@ -734,6 +741,12 @@ function ValidationTab({ token, shipment, reqs, broker, onChanged, goTo, showToa
       await apiFetch(token, `/shipments/${shipment.id}/transition`, {
         method: 'PUT', body: { to_state: step.to, notes: step.notes },
       });
+      // Starting preparation runs the integrity checks (the API runs them itself on READY_TO_SUBMIT).
+      // A failed check run doesn't undo the move — the dashboard offers a manual run.
+      if (step.to === 'PREPARING') {
+        await apiFetch(token, `/shipments/${shipment.id}/integrity-check`, { method: 'POST' }).catch(() => {});
+      }
+      setIntegrityKey(k => k + 1);
       await onChanged();
       showToast?.(step.toast);
     } catch (e) {
@@ -773,6 +786,12 @@ function ValidationTab({ token, shipment, reqs, broker, onChanged, goTo, showToa
           custom: reqs?.custom_count ?? 0,
         }}
       />
+
+      <section className="int-section" aria-labelledby="int-section-title">
+        <h2 className="int-section-title" id="int-section-title">Regulatory Integrity Checks</h2>
+        <IntegrityDashboard shipmentId={shipment.id} token={token} apiUrl={API_URL}
+          sector={shipmentSector(shipment)} refreshKey={integrityKey} />
+      </section>
 
       {step && (
         <section className="mah-card mah-state-step">

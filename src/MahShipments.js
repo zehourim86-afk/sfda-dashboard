@@ -128,6 +128,11 @@ export default function MahShipments({ token, shipments, productsById, suppliers
                     <td>{fmtDate(s.eta)}</td>
                     <td className="mah-muted">{timeAgo(s.updated_at)}</td>
                     <td className="mah-kebab-cell" onClick={e => e.stopPropagation()}>
+                      {stateOf(s) === 'CLOSED_RELEASED' && (
+                        <button className="mah-link-btn mah-nowrap mah-cert-link" onClick={() => openShipment(s, 'certificate')}>
+                          View Certificate →
+                        </button>
+                      )}
                       <div className="mah-kebab-wrap">
                         <button className="mah-kebab" aria-label="Row actions" aria-haspopup="menu"
                           onClick={() => setOpenMenuId(openMenuId === s.id ? null : s.id)}>⋯</button>
