@@ -607,15 +607,15 @@ const truncate = (text, n) => (text.length > n ? `${text.slice(0, n - 1)}…` : 
 // hex colour + alpha (0–1) as #RRGGBBAA
 const alpha = (hex, a) => `${hex}${Math.round(a * 255).toString(16).padStart(2, '0')}`;
 const docScore = (d) => d.validation_result?.score ?? null;
-// A score the AI actually gave: binary uploads come back as 0 or with no score
-const realScore = (d) => (docScore(d) > 0 ? docScore(d) : null);
-// The validator could not read the file (binary PDF / image)
-const isBinaryWarning = (d) => {
+// The validator says it could not read the file (binary PDF / image) — whatever score it gave
+const UNREADABLE_RE = /binary|extract|cannot|could not|unreadable|not be read|no text|text layer/i;
+const isUnreadable = (d) => {
   const v = d.validation_result || {};
   return [v.summary, ...(v.issues || []), ...(v.recommendations || [])]
-    .some(m => typeof m === 'string' && /binary|extract|cannot/i.test(m));
+    .some(m => typeof m === 'string' && UNREADABLE_RE.test(m));
 };
-const isUnreadable = (d) => realScore(d) == null && isBinaryWarning(d);
+// A score that means something: a readable document the AI scored above 0
+const realScore = (d) => (!isUnreadable(d) && docScore(d) > 0 ? docScore(d) : null);
 const listNames = (items) => items.map(i => i.name).join(', ');
 
 // Donut score: integrity score and the AI score of readable documents, 60/40 when both exist.
