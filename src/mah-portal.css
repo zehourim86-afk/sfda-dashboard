@@ -547,21 +547,47 @@ textarea.mah-input { resize: vertical; min-height: 60px; }
 .mah-modal.mah-modal-sm { width: min(460px, 100%); }
 
 /* AI validation summary */
-.mah-ai-summary { border: 1.5px solid; border-radius: 12px; padding: 20px 24px; margin-bottom: 20px; }
-.mah-ai-summary-loading { background: #F8FAFC; border-color: #E2E8F0; display: flex; flex-direction: column; gap: 12px; }
 .mah-ai-summary-pulse { font-size: 13px; font-weight: 700; color: #64748B; animation: mah-ai-pulse 1.4s ease-in-out infinite; }
 @keyframes mah-ai-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
-.mah-ai-summary-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-.mah-ai-summary-brand { font-size: 13px; font-weight: 700; margin-right: 8px; }
+@media (prefers-reduced-motion: reduce) { .mah-ai-summary-pulse { animation: none; } }
+.mah-ai-summary-brand { font-size: 13px; font-weight: 700; margin-right: 6px; }
 .mah-ai-summary-title { font-size: 15px; font-weight: 700; color: #0F1A4A; }
-.mah-ai-summary-pill { color: #fff; border-radius: 20px; padding: 4px 12px; font-size: 12px; font-weight: 600; white-space: nowrap; }
-.mah-ai-summary-score { margin-top: 12px; display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-.mah-ai-summary-num { font-size: 32px; font-weight: 700; line-height: 1; }
-.mah-ai-summary-max { color: #94A3B8; font-size: 14px; margin-left: 2px; }
-.mah-ai-summary-stats { font-size: 12px; color: #64748B; }
-.mah-ai-summary-track { margin-top: 12px; height: 6px; border-radius: 3px; background: rgba(0, 0, 0, 0.08); overflow: hidden; }
-.mah-ai-summary-fill { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
-.mah-ai-summary-text { margin: 14px 0 0; font-size: 13px; color: #334155; line-height: 1.6; }
+
+/* AI validation summary — score donut | layer cards | document score bars */
+.mah-ais { background: #fff; border: 1.5px solid #E2E8F0; border-radius: 12px; padding: 20px 24px; margin-bottom: 20px; }
+.mah-ais-loading { background: #F8FAFC; display: flex; flex-direction: column; gap: 12px; }
+.mah-ais-head { display: flex; align-items: center; justify-content: space-between; gap: 8px 12px; flex-wrap: wrap; padding-bottom: 14px; border-bottom: 1px solid #EEF2F6; }
+.mah-ais-stats { font-size: 12px; color: #64748B; }
+.mah-ais-cols { display: flex; gap: 20px; margin-top: 16px; align-items: flex-start; }
+.mah-ais-col-score { width: 160px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.mah-ais-donut { display: block; }
+.mah-ais-pill { border-radius: 20px; padding: 4px 14px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+.mah-ais-caption { font-size: 12px; color: #94A3B8; }
+.mah-ais-col-layers { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+.mah-ais-layer { background: #fff; border: 1px solid #E2E8F0; border-radius: 8px; padding: 10px 14px; display: flex; align-items: center; }
+.mah-ais-layer-icon { flex-shrink: 0; width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; color: #fff; font-size: 11px; font-weight: 700; line-height: 1; }
+.mah-ais-layer-icon.is-PASSED { background: #00B87A; }
+.mah-ais-layer-icon.is-WARNING { background: #E8900A; }
+.mah-ais-layer-icon.is-FAILED { background: #E0334C; }
+.mah-ais-layer-icon.is-PENDING { background: #94A3B8; }
+.mah-ais-layer-text { flex: 1; min-width: 0; margin: 0 10px; }
+.mah-ais-layer-name { font-size: 13px; color: #0F1A4A; font-weight: 500; }
+.mah-ais-layer-status { font-size: 11px; color: #64748B; margin-top: 1px; }
+.mah-ais-col-docs { width: 220px; flex-shrink: 0; display: flex; flex-direction: column; gap: 9px; }
+.mah-ais-docs-title { font-size: 13px; color: #0F1A4A; font-weight: 600; margin-bottom: 1px; }
+.mah-ais-docs-empty { margin: 0; font-size: 12px; color: #94A3B8; font-style: italic; }
+.mah-ais-doc-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 3px; }
+.mah-ais-doc-name { font-size: 12px; color: #334155; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mah-ais-doc-score { font-size: 11px; font-weight: 600; flex-shrink: 0; }
+.mah-ais-doc-track { height: 6px; border-radius: 3px; background: #E2E8F0; overflow: hidden; }
+.mah-ais-doc-fill { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
+.mah-ais-text { margin: 16px 0 0; padding-top: 12px; border-top: 1px solid #EEF2F6; font-size: 13px; font-style: italic; color: #334155; line-height: 1.6; }
+@media (max-width: 700px) {
+  .mah-ais { padding: 16px; }
+  .mah-ais-cols { flex-direction: column; align-items: stretch; }
+  .mah-ais-col-score, .mah-ais-col-docs { width: auto; }
+}
+@media (prefers-reduced-motion: reduce) { .mah-ais-doc-fill { transition: none; } }
 
 /* Broker engagement (migration 020) */
 .mah-app .mah-btn-blue { background: var(--blue); color: #fff; }

@@ -596,11 +596,16 @@ function BrokerStatusBanner({ token, shipment, organisations, onChanged, showToa
 // ── Validation ───────────────────────────────────────
 // ── AI validation summary ────────────────────────────
 const VERDICTS = [
-  { min: 85, label: 'Ready for submission', color: '#00B87A', bg: '#F0FDF4' },
-  { min: 70, label: 'Review recommended', color: '#E8900A', bg: '#FFFBEB' },
-  { min: 50, label: 'Issues found', color: '#E8700A', bg: '#FFF7ED' },
-  { min: 0, label: 'Critical issues', color: '#E0334C', bg: '#FFF1F2' },
+  { min: 85, label: 'Ready', color: '#00B87A' },
+  { min: 70, label: 'Review', color: '#E8900A' },
+  { min: 50, label: 'Issues', color: '#E8700A' },
+  { min: 0, label: 'Critical', color: '#E0334C' },
 ];
+const GREY = '#E2E8F0';
+const barColor = (score) => (score == null ? GREY : score >= 70 ? '#00B87A' : score >= 40 ? '#E8900A' : '#E0334C');
+const truncate = (text, n) => (text.length > n ? `${text.slice(0, n - 1)}…` : text);
+// hex colour + alpha (0–1) as #RRGGBBAA
+const alpha = (hex, a) => `${hex}${Math.round(a * 255).toString(16).padStart(2, '0')}`;
 const docScore = (d) => d.validation_result?.score ?? null;
 const isBinaryWarning = (d) => {
   const v = d.validation_result || {};
@@ -608,11 +613,9 @@ const isBinaryWarning = (d) => {
 };
 const listNames = (items) => items.map(i => i.name).join(', ');
 
-// TODO: Replace generateSummaryText() with
-// Anthropic API call after demo
+// TODO: Replace with Anthropic API call after demo
 // POST https://api.anthropic.com/v1/messages
-// Pass document scores + sector as context
-// Return AI-generated summary paragraph
+// Pass document scores + sector as context, return an AI-generated summary paragraph
 function generateSummaryText({ documents, required, reviewed, score, layer1Complete }) {
   const docLine = `${documents.length} of ${required} documents uploaded, ${reviewed} analyzed by AI.`;
 
@@ -634,51 +637,137 @@ function generateSummaryText({ documents, required, reviewed, score, layer1Compl
   return `${docLine} ${issueLine} ${advice}`;
 }
 
+// Score donut: 140px, ring from radius 42 to 60
+function SummaryDonut({ score, color }) {
+  const r = 51;
+  const c = 2 * Math.PI * r;
+  return (
+    <svg className="mah-ais-donut" width="140" height="140" viewBox="0 0 140 140" role="img" aria-label={`MASAAR AI score ${score} out of 100`}>
+      <circle cx="70" cy="70" r={r} fill="none" stroke={GREY} strokeWidth="18" />
+      <circle cx="70" cy="70" r={r} fill="none" stroke={color} strokeWidth="18"
+        strokeDasharray={`${(Math.max(0, Math.min(100, score)) / 100) * c} ${c}`} transform="rotate(-90 70 70)" />
+      <text x="70" y="66" textAnchor="middle" dominantBaseline="central" fontSize="32" fontWeight="700" fill={color}>{score}</text>
+      <text x="70" y="92" textAnchor="middle" fontSize="13" fill="#94A3B8">/100</text>
+    </svg>
+  );
+}
+
+const LAYER_ICONS = { PASSED: '✓', WARNING: '⚠', FAILED: '✗', PENDING: '◷' };
+const LAYER_STATUS_LABELS = { PASSED: 'Passed', WARNING: 'Warning', FAILED: 'Failed', PENDING: 'Pending' };
+
+function LayerCard({ name, status, text, badge }) {
+  return (
+    <div className="mah-ais-layer">
+      <span className={`mah-ais-layer-icon is-${status}`} title={LAYER_STATUS_LABELS[status]} aria-label={LAYER_STATUS_LABELS[status]}>
+        {LAYER_ICONS[status]}
+      </span>
+      <div className="mah-ais-layer-text">
+        <div className="mah-ais-layer-name">{name}</div>
+        <div className="mah-ais-layer-status">{text}</div>
+      </div>
+      {badge && <span className={`mah-badge mah-tone-${badge.tone}`}>{badge.text}</span>}
+    </div>
+  );
+}
+
+const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
+
 // tiers: { mandatory: [uploaded, total], recommended: [uploaded, total], custom } from the checklist
-function AiValidationSummary({ documents, required, layer1Complete, shipmentSector, loading, tiers }) {
+// integrityScore: latest MASAAR integrity score, or null if never run
+function AiValidationSummary({ documents, required, layer1Complete, shipmentSector, loading, tiers, integrityScore }) {
   if (loading) {
     return (
-      <section className="mah-ai-summary mah-ai-summary-loading" aria-busy="true">
-        <div className="mah-ai-summary-pulse">✦ Analyzing documents...</div>
+      <section className="mah-ais mah-ais-loading" aria-busy="true">
+        <div className="mah-ai-summary-pulse">✦ Analyzing...</div>
         <span className="mah-skel-bar" style={{ width: '40%' }} />
-        <span className="mah-skel-bar" style={{ width: '100%', height: 6 }} />
-        <span className="mah-skel-bar" style={{ width: '85%' }} />
+        <span className="mah-skel-bar" style={{ width: '100%' }} />
+        <span className="mah-skel-bar" style={{ width: '75%' }} />
       </section>
     );
   }
 
   const scores = documents.map(d => docScore(d) ?? 0);
   const score = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
-  const reviewed = documents.filter(d => docScore(d) != null).length;
+  const reviewedDocs = documents.filter(d => docScore(d) != null);
+  const reviewed = reviewedDocs.length;
+  const reviewedAvg = reviewed ? Math.round(reviewedDocs.reduce((a, d) => a + docScore(d), 0) / reviewed) : null;
   const issueCount = documents.filter(d => (docScore(d) ?? 0) < 70 || d.readiness_status === 'CRITICAL_ISSUE').length;
   const verdict = VERDICTS.find(v => score >= v.min);
   const text = generateSummaryText({ documents, required, reviewed, score, layer1Complete, shipmentSector });
 
+  // Layer 1 — completeness
+  const mandatoryMissing = tiers.mandatory[1] - tiers.mandatory[0];
+  const recommendedMissing = tiers.recommended[1] - tiers.recommended[0];
+  const layer1 = mandatoryMissing > 0
+    ? { status: 'FAILED', text: `${plural(mandatoryMissing, 'mandatory doc')} missing`, badge: { tone: 'red', text: `${mandatoryMissing} missing` } }
+    : recommendedMissing > 0
+      ? { status: 'WARNING', text: `${plural(recommendedMissing, 'recommended doc')} missing`, badge: { tone: 'amber', text: plural(recommendedMissing, 'warning') } }
+      : { status: 'PASSED', text: 'All mandatory documents uploaded' };
+  // Layer 3 — AI review of the uploaded documents
+  const weakDocs = reviewedDocs.filter(d => docScore(d) < 70).length;
+  const layer3 = reviewedAvg == null
+    ? { status: 'PENDING', text: 'No documents reviewed yet' }
+    : {
+      status: reviewedAvg >= 70 ? 'PASSED' : reviewedAvg >= 50 ? 'WARNING' : 'FAILED',
+      text: `${plural(reviewed, 'document')} reviewed · avg ${reviewedAvg}/100`,
+      badge: weakDocs ? { tone: reviewedAvg < 50 ? 'red' : 'amber', text: `${weakDocs} below 70` } : null,
+    };
+  // Layer 4 — integrity score
+  const layer4 = integrityScore == null
+    ? { status: 'PENDING', text: 'Run integrity check below' }
+    : {
+      status: integrityScore >= 85 ? 'PASSED' : integrityScore >= 60 ? 'WARNING' : 'FAILED',
+      text: `Integrity score: ${integrityScore}/100`,
+    };
+
   return (
-    <section className="mah-ai-summary" style={{ background: verdict.bg, borderColor: `${verdict.color}4D` }}>
-      <div className="mah-ai-summary-head">
+    <section className="mah-ais" style={{ borderColor: alpha(verdict.color, 0.2) }}>
+      <div className="mah-ais-head">
         <div>
           <span className="mah-ai-summary-brand" style={{ color: verdict.color }}>✦ MASAAR AI</span>
           <span className="mah-ai-summary-title">Validation Summary</span>
         </div>
-        <span className="mah-ai-summary-pill" style={{ background: verdict.color }}>{verdict.label}</span>
-      </div>
-      <div className="mah-ai-summary-score">
-        <div>
-          <span className="mah-ai-summary-num" style={{ color: verdict.color }}>{score}</span>
-          <span className="mah-ai-summary-max">/100</span>
-        </div>
-        <div className="mah-ai-summary-stats">
-          Mandatory: {tiers.mandatory[0]}/{tiers.mandatory[1]}{tiers.mandatory[0] === tiers.mandatory[1] ? ' ✓' : ''}
-          {' · '}Recommended: {tiers.recommended[0]}/{tiers.recommended[1]}
-          {' · '}Custom: {tiers.custom}
-          {' · '}Issues: {issueCount}
+        <div className="mah-ais-stats">
+          {documents.length}/{required} docs complete · AI reviewed: {reviewed}/{documents.length} · Issues: {issueCount}
         </div>
       </div>
-      <div className="mah-ai-summary-track">
-        <div className="mah-ai-summary-fill" style={{ width: `${score}%`, background: verdict.color }} />
+
+      <div className="mah-ais-cols">
+        <div className="mah-ais-col-score">
+          <SummaryDonut score={score} color={verdict.color} />
+          <span className="mah-ais-pill" style={{ background: alpha(verdict.color, 0.15), color: verdict.color }}>{verdict.label}</span>
+          <span className="mah-ais-caption">MASAAR AI Score</span>
+        </div>
+
+        <div className="mah-ais-col-layers">
+          <LayerCard name="Layer 1 · Completeness" {...layer1} />
+          <LayerCard name="Layer 2 · Consistency" status="PENDING" text="Cross-document checks coming soon" />
+          <LayerCard name="Layer 3 · AI Advisory" {...layer3} />
+          <LayerCard name="Layer 4 · Integrity" {...layer4} />
+        </div>
+
+        <div className="mah-ais-col-docs">
+          <div className="mah-ais-docs-title">Document Scores</div>
+          {documents.length === 0 ? <p className="mah-ais-docs-empty">Upload documents to see scores</p>
+            : documents.map(d => {
+              const s = docScore(d);
+              const color = barColor(s);
+              return (
+                <div key={d.document_type} className="mah-ais-doc">
+                  <div className="mah-ais-doc-head">
+                    <span className="mah-ais-doc-name" title={d.name}>{truncate(d.name, 20)}</span>
+                    <span className="mah-ais-doc-score" style={{ color: s == null ? '#94A3B8' : color }}>{s ?? '—'}</span>
+                  </div>
+                  <div className="mah-ais-doc-track" role="img" aria-label={s == null ? `${d.name}: no score` : `${d.name}: ${s} out of 100`}>
+                    <div className="mah-ais-doc-fill" style={{ width: s == null ? '100%' : `${Math.max(0, Math.min(100, s))}%`, background: color }} />
+                  </div>
+                </div>
+              );
+            })}
+        </div>
       </div>
-      <p className="mah-ai-summary-text">{text}</p>
+
+      <p className="mah-ais-text">{text}</p>
     </section>
   );
 }
@@ -722,6 +811,8 @@ function ValidationTab({ token, shipment, reqs, broker, onChanged, goTo, showToa
   const [missingBlock, setMissingBlock] = useState(0);
   const [recommendedWarning, setRecommendedWarning] = useState(false);
   const [integrityKey, setIntegrityKey] = useState(0); // bumped to reload the integrity dashboard
+  // Latest integrity score for the summary's Layer 4: the shipment's, then whatever the dashboard loads or runs
+  const [integrityScore, setIntegrityScore] = useState(shipment.integrity_score ?? null);
 
   // proceed = the MAH chose "Proceed anyway" past the recommended-documents warning
   async function advance(proceed = false) {
@@ -785,12 +876,13 @@ function ValidationTab({ token, shipment, reqs, broker, onChanged, goTo, showToa
           recommended: [reqs?.recommended_uploaded ?? 0, reqs?.recommended_count ?? 0],
           custom: reqs?.custom_count ?? 0,
         }}
+        integrityScore={integrityScore}
       />
 
       <section className="int-section" aria-labelledby="int-section-title">
         <h2 className="int-section-title" id="int-section-title">Regulatory Integrity Checks</h2>
         <IntegrityDashboard shipmentId={shipment.id} token={token} apiUrl={API_URL}
-          sector={shipmentSector(shipment)} refreshKey={integrityKey} />
+          sector={shipmentSector(shipment)} refreshKey={integrityKey} onScore={setIntegrityScore} />
       </section>
 
       {step && (

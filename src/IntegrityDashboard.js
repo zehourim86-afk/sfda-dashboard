@@ -1,6 +1,7 @@
 // MASAAR integrity check results for one shipment (GET/POST /shipments/:id/integrity-check).
 // Four layers: document completeness, cross-document consistency, AI advisory, market intelligence.
-// Props: { shipmentId, token, apiUrl?, sector?, refreshKey? } — bump refreshKey to reload after an outside re-run.
+// Props: { shipmentId, token, apiUrl?, sector?, refreshKey?, onScore? } — bump refreshKey to reload after an outside
+// re-run; onScore(score | null) is called whenever a result is loaded or run.
 // Also exports the score verdicts and the donut, used by ClearanceCertificate.js.
 import { useCallback, useEffect, useState } from 'react';
 import { API_URL } from './constants';
@@ -62,8 +63,9 @@ const fmtWhen = (v) => (v ? new Date(v).toLocaleString('en-GB', {
   day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit',
 }) : '—');
 
-export default function IntegrityDashboard({ shipmentId, token, apiUrl, sector, refreshKey }) {
+export default function IntegrityDashboard({ shipmentId, token, apiUrl, sector, refreshKey, onScore }) {
   const [data, setData] = useState(null);
+  useEffect(() => { if (data) onScore?.(data.score ?? null); }, [data, onScore]);
   const [error, setError] = useState(null);
   const [running, setRunning] = useState(false);
   const [open, setOpen] = useState({}); // layer → expanded, overrides the default
