@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import {
   PIPELINE, ACTION_ORDER, actionFor, actionKey, stateOf, needsAction, isInProgress, StateBadge, SectorBadge,
-  shipmentName, shipmentRef, shipmentSector, objectionDeadline, objectionDaysLeft, deadlineUrgency, daysUntil, fmtDate, timeAgo,
+  shipmentName, shipmentRef, shipmentSector, objectionDeadline, objectionDaysLeft, deadlineUrgency, rejectionDate, daysUntil, fmtDate, timeAgo,
   expiryStatus, Ring, Empty, Icon,
 } from './mahShared';
 
@@ -25,8 +25,16 @@ const OBJECTION_ACTION = { key: 'OBJECTION_FILED', tone: 'red', button: 'Finish 
 const keyOf = (s) => actionKey(s) || (objectionOpen(s) ? 'OBJECTION_FILED' : null);
 const itemFor = (s) => actionFor(s) || (objectionOpen(s) ? OBJECTION_ACTION : null);
 const ORDER = ['SFDA_REJECTED', 'OBJECTION_FILED', ...ACTION_ORDER.filter(k => k !== 'SFDA_REJECTED')];
-// Days left on the objection window for rejected / objecting shipments, else null
-const deadlineDays = (s) => (['SFDA_REJECTED', 'OBJECTION_FILED'].includes(keyOf(s)) ? objectionDaysLeft(s) : null);
+const isObjectionItem = (s) => ['SFDA_REJECTED', 'OBJECTION_FILED'].includes(keyOf(s));
+// Rejected before migration 006 (2026-11-05): old timestamps, so no countdown — reviewed manually
+const LEGACY_CUTOFF = new Date('2026-11-05T00:00:00Z');
+const isLegacyRejection = (s) => {
+  const d = rejectionDate(s);
+  return !!d && d < LEGACY_CUTOFF;
+};
+const LEGACY_BADGE = { tone: 'grey', text: 'Legacy shipment — review required' };
+// Days left on the objection window for rejected / objecting shipments (not legacy ones), else null
+const deadlineDays = (s) => (isObjectionItem(s) && !isLegacyRejection(s) ? objectionDaysLeft(s) : null);
 // Critical deadlines (3 days or less) first, then by action type, then the closest deadline
 function compareActions(a, b) {
   const da = deadlineDays(a);
@@ -61,7 +69,7 @@ export default function MahOverview({ shipments, products, productsById, openShi
 
   // Closest deadline: objection windows and upcoming ETAs
   const deadlines = [
-    ...shipments.filter(s => ['SFDA_REJECTED', 'OBJECTION_FILED'].includes(stateOf(s)) && !s.objection_submitted_at)
+    ...shipments.filter(s => ['SFDA_REJECTED', 'OBJECTION_FILED'].includes(stateOf(s)) && !s.objection_submitted_at && !isLegacyRejection(s))
       .map(s => ({ s, date: objectionDeadline(s), what: 'Objection deadline' })),
     ...shipments.filter(isInProgress).filter(s => s.eta).map(s => ({ s, date: s.eta, what: 'ETA' })),
   ]
@@ -129,7 +137,7 @@ export default function MahOverview({ shipments, products, productsById, openShi
                 ? <Empty title="No action items match">Try a different search or filter.</Empty>
                 : visibleActions.map(s => {
                 const a = itemFor(s);
-                const urgency = deadlineUrgency(deadlineDays(s));
+                const urgency = isObjectionItem(s) && isLegacyRejection(s) ? LEGACY_BADGE : deadlineUrgency(deadlineDays(s));
                 return (
                   <div key={s.id} className={`mah-action-row mah-edge-${urgency?.tone || a.tone}${urgency ? ' mah-action-deadline' : ''}`}>
                     <div className="mah-action-main">
