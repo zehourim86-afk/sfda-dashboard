@@ -97,7 +97,7 @@ export default function ClearanceOverview({ shipments, productsById, openShipmen
               : matching.length === 0
                 ? <Empty title="No action items match">Try a different search.</Empty>
                 : matching.slice(0, ACTION_LIMIT).map(({ s, a }) => (
-                  <div key={s.id} className={`mah-action-row ${a.tone === 'purple' ? 'clr-edge-purple' : `mah-edge-${a.tone}`}`}>
+                  <div key={s.id} className={`mah-action-row ${['purple', 'navy'].includes(a.tone) ? `clr-edge-${a.tone}` : `mah-edge-${a.tone}`}`}>
                     <div className="mah-action-main">
                       <div className="mah-row-title">{shipmentName(s, productsById)}</div>
                       <div className="mah-row-sub">

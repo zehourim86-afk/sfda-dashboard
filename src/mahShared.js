@@ -339,7 +339,7 @@ export function Tabs({ tabs, active, onChange }) {
 }
 
 // Confirmation modal shared by MAH delete / cancellation flows.
-export function ConfirmDialog({ title, message, confirmLabel = 'Confirm', tone = 'red', onConfirm, onClose, busy, error, confirmDisabled, children }) {
+export function ConfirmDialog({ title, message, confirmLabel = 'Confirm', cancelLabel = 'Cancel', tone = 'red', onConfirm, onClose, busy, error, confirmDisabled, children }) {
   return (
     <div className="mah-modal-backdrop" onClick={onClose}>
       <div className="mah-modal mah-modal-sm" role="dialog" aria-modal="true" aria-label={title} onClick={e => e.stopPropagation()}>
@@ -353,7 +353,7 @@ export function ConfirmDialog({ title, message, confirmLabel = 'Confirm', tone =
           {error && <div className="mah-alert mah-alert-red" role="alert">{error}</div>}
         </div>
         <div className="mah-modal-foot">
-          <button className="mah-btn mah-btn-ghost" onClick={onClose} disabled={busy}>Cancel</button>
+          <button className="mah-btn mah-btn-ghost" onClick={onClose} disabled={busy}>{cancelLabel}</button>
           <button className={`mah-btn mah-btn-${tone}`} onClick={onConfirm} disabled={busy || confirmDisabled}>{busy ? 'Working…' : confirmLabel}</button>
         </div>
       </div>

@@ -44,7 +44,9 @@ export function daysBetween(from, to) {
   const ms = new Date(to) - new Date(from);
   return Number.isNaN(ms) ? null : Math.max(0, Math.floor(ms / 86400000));
 }
-export const objectionFiled = (s) => Number(s.objection_count) > 0 || !!s.objection_submitted_at;
+// An objection was filed at some point: a rejected round, the current filing (migration 026), or the pre-026 flag
+export const objectionFiled = (s) => Number(s.objection_count) > 0 || s.objection_status === 'FILED_WITH_SFDA'
+  || !!s.objection_submitted_at;
 export const fmtDays = (d) => (d == null ? '—' : `${d}d`);
 
 export function matchesSearch(s, q, productsById, extra = []) {

@@ -22,6 +22,15 @@ export const REJECTED_STATES = ['SFDA_REJECTED', 'OBJECTION_FILED', 'DISPOSITION
 // What the broker has to do next, if anything: { tone, why, button, tab }
 export function brokerAction(s) {
   const st = stateOf(s);
+  // The MAH submitted its objection dossier: review it, then file with SFDA or return it (migration 026)
+  if (st === 'SFDA_REJECTED' && s.objection_status === 'SUBMITTED_TO_CLEARANCE') {
+    const n = s.objection_reason_count ?? 0;
+    const m = s.objection_response_count ?? 0;
+    return {
+      tone: 'navy', button: 'Review dossier →', tab: 'objection',
+      why: `Objection dossier ready for review — ${n} reason${n === 1 ? '' : 's'}, ${m} response${m === 1 ? '' : 's'}`,
+    };
+  }
   if (st === 'WITH_BROKER') return { tone: 'amber', why: 'File Faseh declaration', button: 'File →', tab: 'faseh' };
   if (st === 'SFDA_INFO_REQUESTED') return { tone: 'red', why: 'SFDA information request pending', button: 'Respond →', tab: 'sfda' };
   if (st === 'SAMPLING' && s.sampling_state === 'SAMPLE_AT_LAB') {
@@ -29,7 +38,8 @@ export function brokerAction(s) {
   }
   return null;
 }
-export const ACTION_ORDER = { red: 0, amber: 1, purple: 2 };
+// Objection dossiers (navy) come right after SFDA info requests, ahead of Faseh filing (amber)
+export const ACTION_ORDER = { red: 0, navy: 1, amber: 2, purple: 3 };
 
 export const SAMPLING_STEPS = ['SAMPLING_ORDERED', 'SAMPLE_COLLECTED', 'SAMPLE_AT_LAB', 'RESULTS_SUBMITTED'];
 export const SAMPLING_LABELS = {

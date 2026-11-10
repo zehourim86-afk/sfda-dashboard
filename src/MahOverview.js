@@ -13,19 +13,26 @@ const AVG_CYCLE_DAYS = 18;
 const ACTIONS_PER_PAGE = 5;
 const ACTION_FILTERS = [
   { key: 'all', label: 'All', states: null },
-  { key: 'rejected', label: 'Rejected', states: ['SFDA_REJECTED', 'OBJECTION_FILED'] },
+  { key: 'rejected', label: 'Rejected', states: ['SFDA_REJECTED'] },
   // Everything blocked on the MAH's own work: validation issues, drafts, SFDA info requests
   { key: 'fix', label: 'Fix needed', states: ['PREPARING', 'DRAFT', 'SFDA_INFO_REQUESTED', 'BROKER_DECLINED', 'PENDING_AGREEMENT'] },
   { key: 'ready', label: 'Ready', states: ['READY_TO_SUBMIT'] },
 ];
 
-// An objection filed but the dossier not submitted yet: still on the 60-day clock, so it is an action item too
-const objectionOpen = (s) => stateOf(s) === 'OBJECTION_FILED' && !s.objection_submitted_at;
-const OBJECTION_ACTION = { key: 'OBJECTION_FILED', tone: 'red', button: 'Finish dossier →', tab: 'objection', why: 'Objection filed — dossier not submitted yet' };
-const keyOf = (s) => actionKey(s) || (objectionOpen(s) ? 'OBJECTION_FILED' : null);
-const itemFor = (s) => actionFor(s) || (objectionOpen(s) ? OBJECTION_ACTION : null);
-const ORDER = ['SFDA_REJECTED', 'OBJECTION_FILED', ...ACTION_ORDER.filter(k => k !== 'SFDA_REJECTED')];
-const isObjectionItem = (s) => ['SFDA_REJECTED', 'OBJECTION_FILED'].includes(keyOf(s));
+// Rejected shipments: the action depends on where the objection dossier is (objection_status, migration 026).
+// Once the clearance company files it (OBJECTION_FILED) it is no longer the MAH's action.
+const OBJECTION_ITEMS = {
+  DRAFTING: { button: 'Continue dossier →', why: 'Objection dossier in progress' },
+  RETURNED_TO_MAH: { button: 'Revise dossier →', why: 'Dossier returned by your clearance company — revise and resubmit' },
+  SUBMITTED_TO_CLEARANCE: { tone: 'blue', button: 'View dossier →', why: 'Dossier with your clearance company for filing' },
+};
+const keyOf = actionKey;
+const ORDER = ACTION_ORDER;
+const isObjectionItem = (s) => keyOf(s) === 'SFDA_REJECTED';
+function itemFor(s) {
+  const a = actionFor(s);
+  return a && isObjectionItem(s) ? { ...a, ...OBJECTION_ITEMS[s.objection_status] } : a;
+}
 // Rejected before migration 006 (2026-11-05): old timestamps, so no countdown — reviewed manually
 const LEGACY_CUTOFF = new Date('2026-11-05T00:00:00Z');
 const isLegacyRejection = (s) => {
@@ -51,7 +58,7 @@ export default function MahOverview({ shipments, products, productsById, openShi
   const [actionPage, setActionPage] = useState(1);
 
   const counts = PIPELINE.map(col => ({ ...col, count: shipments.filter(s => col.states.includes(stateOf(s))).length }));
-  const actions = shipments.filter(s => needsAction(s) || objectionOpen(s)).sort(compareActions);
+  const actions = shipments.filter(needsAction).sort(compareActions);
   const q = actionSearch.trim().toLowerCase();
   const filterStates = ACTION_FILTERS.find(f => f.key === actionFilter).states;
   const filteredActions = actions
@@ -62,14 +69,14 @@ export default function MahOverview({ shipments, products, productsById, openShi
   const pageStart = (page - 1) * ACTIONS_PER_PAGE;
   const visibleActions = filteredActions.slice(pageStart, pageStart + ACTIONS_PER_PAGE);
 
-  const inProgress = shipments.filter(s => isInProgress(s) && !objectionOpen(s))
+  const inProgress = shipments.filter(isInProgress)
     .sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
   // Shipments with an open cancellation request (flag from the shipments list endpoint)
   const cancelRequested = shipments.filter(s => s.cancellation_requested);
 
   // Closest deadline: objection windows and upcoming ETAs
   const deadlines = [
-    ...shipments.filter(s => ['SFDA_REJECTED', 'OBJECTION_FILED'].includes(stateOf(s)) && !s.objection_submitted_at && !isLegacyRejection(s))
+    ...shipments.filter(s => stateOf(s) === 'SFDA_REJECTED' && !isLegacyRejection(s))
       .map(s => ({ s, date: objectionDeadline(s), what: 'Objection deadline' })),
     ...shipments.filter(isInProgress).filter(s => s.eta).map(s => ({ s, date: s.eta, what: 'ETA' })),
   ]

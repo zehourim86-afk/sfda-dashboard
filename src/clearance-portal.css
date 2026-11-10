@@ -14,6 +14,7 @@
 
 /* Purple tone (sampling) */
 .clr-edge-purple { border-left: 4px solid var(--purple) !important; }
+.clr-edge-navy { border-left: 4px solid var(--navy) !important; }
 .clr-app .clr-btn-purple { background: var(--purple); color: #fff; }
 
 /* Metric row that opens a page */

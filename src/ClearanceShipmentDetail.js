@@ -1,5 +1,6 @@
 // Clearance Portal — Shipment detail with sub-tabs:
-// Timeline | Documents | Faseh & Filing | SFDA Track | Customs | Disposition (only in DISPOSITION_PENDING)
+// Timeline | Documents | Faseh & Filing | SFDA Track | Objection (SFDA_REJECTED / OBJECTION_FILED) | Customs
+// | Disposition (only in DISPOSITION_PENDING)
 // The broker records Faseh filing, SFDA outcomes, sampling steps, customs steps and disposition here.
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
@@ -10,7 +11,7 @@ import RoadmapBanner from './RoadmapBanner';
 import ServiceAgreementModal from './ServiceAgreementModal';
 import { RISK_TONES, isPendingRequest } from './ClearanceOverview';
 import { COUNTRY_FLAGS } from './mahMarketData';
-import { TimelineTab } from './MahShipmentDetail';
+import { TimelineTab, DossierReasons, ObjectionCountdown, ObjectionSteps } from './MahShipmentDetail';
 import {
   SAMPLING_STEPS, SAMPLING_LABELS, CUSTOMS_STEPS, CUSTOMS_LABELS, INFO_REQUEST_LABELS,
   todayISO, fmtSAR, Toast,
@@ -85,6 +86,7 @@ export default function ClearanceShipmentDetail({
     { key: 'documents', label: 'Documents' },
     { key: 'faseh', label: 'Faseh & Filing' },
     { key: 'sfda', label: 'SFDA Track' },
+    ...(['SFDA_REJECTED', 'OBJECTION_FILED'].includes(state) ? [{ key: 'objection', label: 'Objection' }] : []),
     { key: 'customs', label: 'Customs' },
     ...(state === 'DISPOSITION_PENDING' ? [{ key: 'disposition', label: 'Disposition' }] : []),
   ];
@@ -198,6 +200,7 @@ export default function ClearanceShipmentDetail({
       {activeTab === 'documents' && <DocumentsTab shipment={shipment} sector={sector} docs={docs} shared={shared} />}
       {activeTab === 'faseh' && <FasehTab {...ctx} />}
       {activeTab === 'sfda' && <SfdaTab {...ctx} />}
+      {activeTab === 'objection' && <ObjectionTab {...ctx} />}
       {activeTab === 'customs' && <CustomsTab {...ctx} />}
       {activeTab === 'disposition' && <DispositionTab {...ctx} />}
 
@@ -532,9 +535,10 @@ function SfdaTab(ctx) {
       {state === 'SFDA_REJECTED' && <RejectedPanel {...ctx} reasons={reasons} onReasons={loadReasons} />}
       {state === 'OBJECTION_FILED' && (
         <section className="mah-card">
-          <div className="mah-card-head"><h2>Objection filed by the MAH</h2></div>
+          <div className="mah-card-head"><h2>Objection filed with SFDA</h2></div>
           <p className="mah-muted mah-small">
-            {shipment.objection_submitted_at ? `Dossier submitted ${fmtDateTime(shipment.objection_submitted_at)}.` : 'The MAH is still preparing the dossier.'}
+            {shipment.objection_faseh_ref ? `Faseh reference ${shipment.objection_faseh_ref}` : 'Objection filed'}
+            {shipment.objection_filed_at ? ` on ${fmtDateTime(shipment.objection_filed_at)}` : ''}.
             {' '}Record SFDA's answer to the objection below when it arrives.
           </p>
           <DecisionButtons {...ctx} decisions={['SFDA_RELEASED', 'SFDA_REJECTED']} onReasons={loadReasons} />
@@ -555,7 +559,7 @@ function SfdaTab(ctx) {
 const DECISION_LABELS = { SFDA_RELEASED: 'Record SFDA release', PARTIALLY_RELEASED: 'Record SFDA partial release', SFDA_REJECTED: 'Record SFDA rejection' };
 
 // Released / partially released / rejected buttons with their confirm or reasons form
-function DecisionButtons({ shipment, state, busy, run, transition, token, decisions, onReasons }) {
+function DecisionButtons({ shipment, state, busy, run, transition, token, decisions, onReasons, labels = DECISION_LABELS }) {
   const [open, setOpen] = useState(null);
   return (
     <>
@@ -563,7 +567,7 @@ function DecisionButtons({ shipment, state, busy, run, transition, token, decisi
         {decisions.map(d => (
           <button key={d} className={`mah-btn ${d === 'SFDA_REJECTED' ? 'mah-btn-red' : d === 'PARTIALLY_RELEASED' ? 'mah-btn-amber' : 'mah-btn-green'}${open === d ? ' clr-is-open' : ''}`}
             onClick={() => setOpen(open === d ? null : d)} disabled={busy !== null}>
-            {DECISION_LABELS[d]}
+            {labels[d]}
           </button>
         ))}
       </div>
@@ -949,6 +953,187 @@ function DispositionTab({ busy, run, transition }) {
           {busy === 'destroy' ? 'Saving…' : 'Confirm Destruction →'}
         </button>
       </form>
+    </div>
+  );
+}
+
+// ── Objection (SFDA_REJECTED / OBJECTION_FILED) ──────
+// The MAH prepares the dossier; the broker reviews it, then files it with SFDA via Faseh or returns it
+// with a note (GET /objection/dossier, POST /objection/return-to-mah, POST /objection/file-with-sfda).
+const MIN_RETURN_NOTE = 10;
+const OBJECTION_DECISION_LABELS = {
+  SFDA_RELEASED: 'Record objection upheld → SFDA Released',
+  SFDA_REJECTED: 'Record objection rejected → Back to SFDA Rejected',
+};
+
+function ObjectionTab(ctx) {
+  const { token, shipment, state, busy, run } = ctx;
+  const [dossier, setDossier] = useState(null);
+  const [loadError, setLoadError] = useState(null);
+  const [note, setNote] = useState('');
+  const [mode, setMode] = useState(null); // null | 'return' | 'file'
+  const [fasehRef, setFasehRef] = useState('');
+  const [filingNotes, setFilingNotes] = useState('');
+
+  const load = useCallback(async () => {
+    try {
+      const d = await apiFetch(token, `/shipments/${shipment.id}/objection/dossier`);
+      setDossier(d);
+      setNote(d.objection_clearance_note || '');
+      setLoadError(null);
+    } catch (e) {
+      setLoadError(e.message);
+    }
+  }, [token, shipment.id]);
+  useEffect(() => { load(); }, [load, shipment.updated_at]);
+
+  if (!dossier) {
+    return (
+      <section className="mah-card">
+        {loadError ? <div className="mah-alert mah-alert-red">Could not load the objection dossier: {loadError}</div>
+          : <div className="mah-loading">Loading objection dossier…</div>}
+      </section>
+    );
+  }
+
+  const status = dossier.objection_status || (state === 'OBJECTION_FILED' ? 'FILED_WITH_SFDA' : null);
+  const mahName = shipment.mah_org_name || shipment.importer_name || 'The MAH';
+  const noteOk = note.trim().length >= MIN_RETURN_NOTE;
+
+  const returnToMah = async () => {
+    const ok = await run('obj-return', () => apiFetch(token, `/shipments/${shipment.id}/objection/return-to-mah`, {
+      method: 'POST', body: { note: note.trim() },
+    }), 'Dossier returned to MAH with comments');
+    if (ok) setMode(null);
+  };
+  const fileWithSfda = async (e) => {
+    e.preventDefault();
+    const ref = fasehRef.trim();
+    const ok = await run('obj-file', () => apiFetch(token, `/shipments/${shipment.id}/objection/file-with-sfda`, {
+      method: 'POST', body: { faseh_objection_ref: ref, filing_notes: filingNotes.trim() || undefined },
+    }), `Objection filed with SFDA. Faseh reference: ${ref}`);
+    if (ok) { setMode(null); setFasehRef(''); setFilingNotes(''); }
+  };
+
+  // ── MAH still preparing ──
+  if (!status || status === 'DRAFTING') {
+    return (
+      <section className="mah-card mah-obj-waiting">
+        <h2>MAH is preparing the objection dossier</h2>
+        <p className="mah-muted">
+          {status === 'DRAFTING'
+            ? `Dossier in progress — ${dossier.reason_count} reason${dossier.reason_count === 1 ? '' : 's'} entered so far`
+            : 'No objection started yet'}
+        </p>
+        <p className="mah-small mah-muted">You will be notified when the MAH submits the dossier for your review.</p>
+        {state === 'SFDA_REJECTED' && <ObjectionCountdown days={dossier.days_remaining} rejectionDate={dossier.rejection_date} />}
+      </section>
+    );
+  }
+
+  // ── Waiting for this broker ──
+  if (status === 'SUBMITTED_TO_CLEARANCE') {
+    return (
+      <div className="mah-stack">
+        <section className="mah-obj-banner is-navy">
+          <strong>Objection dossier ready for review</strong>
+          <span>Submitted by {mahName} on {fmtDateTime(dossier.objection_submitted_to_clearance_at)}</span>
+          <span>Review the dossier below and either file it with SFDA via Faseh or return it to MAH with comments.</span>
+        </section>
+        <ObjectionCountdown days={dossier.days_remaining} rejectionDate={dossier.rejection_date} />
+        <ObjectionSteps done={2} />
+        <DossierReasons reasons={dossier.reasons} />
+
+        <section className="mah-card mah-stack">
+          <label className="mah-field">
+            <span>Add a customs note (optional)</span>
+            <textarea className="mah-input" rows={3} maxLength={2000} value={note} onChange={e => setNote(e.target.value)}
+              placeholder="Comments on the dossier" />
+            <small>This note is for your internal reference and will be visible to the MAH if you return the dossier</small>
+          </label>
+
+          <div className="clr-action-buttons">
+            <button className={`mah-btn mah-btn-outline-amber${mode === 'return' ? ' clr-is-open' : ''}`}
+              onClick={() => setMode(mode === 'return' ? null : 'return')} disabled={busy !== null || !noteOk}
+              title={noteOk ? '' : `Write a note of at least ${MIN_RETURN_NOTE} characters to return the dossier`}>
+              Return to MAH
+            </button>
+            <button className={`mah-btn mah-btn-navy${mode === 'file' ? ' clr-is-open' : ''}`}
+              onClick={() => setMode(mode === 'file' ? null : 'file')} disabled={busy !== null}>
+              File with SFDA via Faseh →
+            </button>
+          </div>
+          {!noteOk && <p className="mah-small mah-muted">Returning the dossier needs a note of at least {MIN_RETURN_NOTE} characters.</p>}
+
+          {mode === 'return' && (
+            <div className="clr-confirm" role="alertdialog" aria-label="Return dossier to MAH">
+              <span>
+                <strong>Return dossier to MAH?</strong> MAH will be notified with your comments and must resubmit before you can file.
+              </span>
+              <button className="mah-btn mah-btn-ghost mah-btn-sm" onClick={() => setMode(null)}>Cancel</button>
+              <button className="mah-btn mah-btn-sm mah-btn-amber" disabled={busy !== null || !noteOk} onClick={returnToMah}>
+                {busy === 'obj-return' ? 'Returning…' : 'Return to MAH'}
+              </button>
+            </div>
+          )}
+          {mode === 'file' && (
+            <form className="clr-inline-panel" onSubmit={fileWithSfda}>
+              <label className="mah-field">
+                <span>Faseh objection reference number *</span>
+                <input className="mah-input" value={fasehRef} onChange={e => setFasehRef(e.target.value)} maxLength={100}
+                  placeholder="FASEH-OBJ-2026-XXXXX" required autoFocus />
+              </label>
+              <label className="mah-field">
+                <span>Filing notes (optional)</span>
+                <textarea className="mah-input" rows={2} maxLength={2000} value={filingNotes} onChange={e => setFilingNotes(e.target.value)} />
+              </label>
+              <div className="mah-row-actions">
+                <span className="mah-small mah-muted">The shipment moves to Objection Filed and the MAH is notified.</span>
+                <button type="submit" className="mah-btn mah-btn-navy" disabled={busy !== null || !fasehRef.trim()}>
+                  {busy === 'obj-file' ? 'Filing…' : 'Confirm filing →'}
+                </button>
+              </div>
+            </form>
+          )}
+        </section>
+      </div>
+    );
+  }
+
+  // ── Returned to the MAH ──
+  if (status === 'RETURNED_TO_MAH') {
+    const returned = (shipment.audit_log || []).find(e => e.action === 'OBJECTION_RETURNED_TO_MAH');
+    return (
+      <div className="mah-stack">
+        <section className="mah-obj-returned">
+          <strong>Dossier returned to MAH</strong>
+          <span>Returned on {fmtDateTime(returned?.occurred_at)} with your comments</span>
+          {dossier.objection_clearance_note && <p className="mah-obj-note">{dossier.objection_clearance_note}</p>}
+          <span>Waiting for MAH to revise and resubmit</span>
+        </section>
+        {state === 'SFDA_REJECTED' && <ObjectionCountdown days={dossier.days_remaining} rejectionDate={dossier.rejection_date} />}
+        <DossierReasons reasons={dossier.reasons} />
+      </div>
+    );
+  }
+
+  // ── Filed with SFDA ──
+  return (
+    <div className="mah-stack">
+      <section className="mah-obj-banner is-green">
+        <strong>✓ Objection filed with SFDA</strong>
+        <span>Faseh reference: <strong className="mah-mono">{dossier.objection_faseh_ref || '—'}</strong></span>
+        <span>Filed on {fmtDateTime(dossier.objection_filed_at)}</span>
+      </section>
+      <ObjectionSteps done={3} />
+      <DossierReasons reasons={dossier.reasons} />
+      {state === 'OBJECTION_FILED' && (
+        <section className="mah-card clr-action-card">
+          <div className="mah-card-head"><h2>Record SFDA objection decision</h2></div>
+          <p className="mah-small mah-muted">When SFDA responds to the objection, record its decision here.</p>
+          <DecisionButtons {...ctx} decisions={['SFDA_RELEASED', 'SFDA_REJECTED']} labels={OBJECTION_DECISION_LABELS} onReasons={load} />
+        </section>
+      )}
     </div>
   );
 }

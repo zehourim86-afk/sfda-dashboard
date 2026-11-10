@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { API_URL, getStateLabel } from './constants';
 import {
   apiFetch, stateOf, StateBadge, SectorBadge, shipmentName, shipmentRef, shipmentSector,
-  CLOSED_STATES, objectionDeadline, daysUntil, fmtDate, fmtDateTime,
+  CLOSED_STATES, fmtDate, fmtDateTime,
   Tabs, Empty, Icon, ConfirmDialog, readFileForUpload, PRE_BROKER_STATES, agreementInEffect,
 } from './mahShared';
 import RoadmapBanner from './RoadmapBanner';
@@ -178,7 +178,8 @@ export default function MahShipmentDetail({
         </div>
       )}
       {activeTab === 'objection' && showObjection && (
-        <ObjectionTab token={token} shipment={shipment} onChanged={refresh} />
+        <ObjectionTab token={token} shipment={shipment} name={shipmentName(shipment, productsById)}
+          onChanged={refresh} showToast={showToast} />
       )}
       {activeTab === 'disposition' && showDisposition && (
         <DispositionTab token={token} shipment={shipment} name={shipmentName(shipment, productsById)}
@@ -1330,166 +1331,351 @@ function DemaraGuidance({ reason }) {
   );
 }
 
-function ObjectionTab({ token, shipment, onChanged }) {
-  const [data, setData] = useState(null);
-  const [drafts, setDrafts] = useState({});
-  const [newReasons, setNewReasons] = useState([{ reason_text: '', response_text: '' }]);
-  const [busy, setBusy] = useState(null);
+// ── Objection dossier: shared pieces (also used by the Clearance Portal) ──
+// GET /shipments/:id/objection/dossier drives both sides. objection_status (migration 026):
+//   null → DRAFTING → SUBMITTED_TO_CLEARANCE ⇄ RETURNED_TO_MAH → FILED_WITH_SFDA (shipment OBJECTION_FILED)
+const OBJECTION_STEPS = ['Prepare dossier', 'Submit to clearance', 'Clearance files with SFDA'];
+const filled = (text) => !!(text || '').trim();
+const DOSSIER_PRINT_CLASS = 'dossier-printing';
+
+// done = number of finished steps (0–3); the next one is shown as in progress
+export function ObjectionSteps({ done }) {
+  return (
+    <ol className="mah-obj-steps" aria-label="Objection progress">
+      {OBJECTION_STEPS.map((label, i) => {
+        const cls = i < done ? 'is-done' : i === done ? 'is-active' : '';
+        return (
+          <li key={label} className={cls}>
+            <span className="mah-step-num">{i < done ? '✓' : i === done && i === 2 ? '⏳' : i + 1}</span>
+            <span>Step {i + 1}: {label}</span>
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
+// Days left on the 60-day objection window
+export function ObjectionCountdown({ days, rejectionDate }) {
+  const deadline = rejectionDate ? new Date(new Date(rejectionDate).getTime() + 60 * 24 * 60 * 60 * 1000) : null;
+  return (
+    <section className={`mah-card mah-countdown${days !== null && days <= 10 ? ' is-urgent' : ''}`}>
+      <div className="mah-countdown-days">{days === null || days === undefined ? '—' : Math.max(days, 0)}<span>days left</span></div>
+      <div>
+        <strong>Objection deadline · {fmtDate(deadline)}</strong>
+        <div className="mah-row-sub">SFDA allows 60 days from the rejection to file a reasoned objection.</div>
+      </div>
+    </section>
+  );
+}
+
+// Read-only reasons and responses
+export function DossierReasons({ reasons }) {
+  if (!reasons?.length) return <p className="mah-muted mah-small">No rejection reasons in this dossier.</p>;
+  return reasons.map((r, i) => (
+    <section key={r.reason_index} className={`mah-card mah-reason-card mah-edge-${filled(r.response_text) ? 'green' : 'amber'}`}>
+      <div className="mah-reason-head">
+        <span className="mah-reason-num">Reason {i + 1}</span>
+        <span className={`mah-small mah-text-${filled(r.response_text) ? 'green' : 'amber'}`}>
+          {filled(r.response_text) ? '✓ Response added' : '⚠ Response needed'}
+        </span>
+      </div>
+      <div className="mah-dossier-label">SFDA rejection reason</div>
+      <div className="mah-row-title">{r.reason_text || '—'}</div>
+      <div className="mah-dossier-label">MAH response</div>
+      <p className="mah-dossier-response">{filled(r.response_text) ? r.response_text : <span className="mah-muted">No response yet</span>}</p>
+    </section>
+  ));
+}
+
+function DossierProgress({ reasons }) {
+  const total = reasons.length;
+  const answered = reasons.filter(r => filled(r.response_text)).length;
+  const pct = total ? Math.round((answered / total) * 100) : 0;
+  return (
+    <div className="mah-obj-progress">
+      <div className="mah-small"><strong>{answered} of {total}</strong> reason{total === 1 ? ' has a response' : 's have responses'}</div>
+      <div className="mah-obj-progress-track" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
+        <div className="mah-obj-progress-fill" style={{ width: `${pct}%` }} />
+      </div>
+    </div>
+  );
+}
+
+// Prints only the dossier (window.print on .mah-dossier-print)
+function printDossier() {
+  const done = () => { document.body.classList.remove(DOSSIER_PRINT_CLASS); window.removeEventListener('afterprint', done); };
+  window.addEventListener('afterprint', done);
+  document.body.classList.add(DOSSIER_PRINT_CLASS);
+  window.print();
+}
+
+function ObjectionTab({ token, shipment, name, onChanged, showToast }) {
+  const [dossier, setDossier] = useState(null);
+  const [loadError, setLoadError] = useState(null);
   const [error, setError] = useState(null);
-  const state = stateOf(shipment);
+  const [busy, setBusy] = useState(null);
+  const [drafts, setDrafts] = useState({});      // reason_index → { reason_text, response_text }
+  const [saveState, setSaveState] = useState({}); // reason_index → 'saving' | 'saved' | 'error'
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const load = useCallback(async () => {
     try {
-      const d = await apiFetch(token, `/shipments/${shipment.id}/objection`);
-      setData(d);
-      setDrafts(Object.fromEntries(d.objections.map(o => [o.reason_index, o.response_text || ''])));
+      const d = await apiFetch(token, `/shipments/${shipment.id}/objection/dossier`);
+      setDossier(d);
+      setDrafts(Object.fromEntries(d.reasons.map(r => [r.reason_index, { reason_text: r.reason_text || '', response_text: r.response_text || '' }])));
+      setLoadError(null);
     } catch (e) {
-      setError(e.message);
+      setLoadError(e.message);
     }
   }, [token, shipment.id]);
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { load(); }, [load, shipment.current_state]);
 
-  const deadline = objectionDeadline(shipment);
-  const daysLeft = daysUntil(deadline);
-  const rows = data?.objections || [];
-  const submitted = !!(data?.submitted_at || shipment.objection_submitted_at);
-  const allAnswered = rows.length > 0 && rows.every(o => (o.response_text || '').trim());
-  // Round being worked on: objection_count rounds were rejected already
-  const round = data?.round ?? (shipment.objection_count || 0) + 1;
+  const state = stateOf(shipment);
+  const status = dossier?.objection_status || (state === 'OBJECTION_FILED' ? 'FILED_WITH_SFDA' : null);
+  const reasons = dossier?.reasons || [];
+  const clearanceName = dossier?.clearance_company_name || 'your clearance company';
+  const round = dossier ? dossier.current_round : (shipment.objection_count || 0) + 1;
 
   const run = async (key, fn) => {
     setBusy(key);
     setError(null);
-    try { await fn(); } catch (e) { setError(e.message); } finally { setBusy(null); }
+    try { return await fn(); } catch (e) { setError(e.message); return false; } finally { setBusy(null); }
   };
 
-  const fileObjection = () => run('file', async () => {
-    const reasons = newReasons.filter(r => r.reason_text.trim())
-      .map((r, i) => ({ reason_index: i, reason_text: r.reason_text.trim(), response_text: r.response_text.trim() || null }));
-    await apiFetch(token, `/shipments/${shipment.id}/objection`, { method: 'POST', body: { rejection_reasons: reasons } });
+  // Saves one field if it changed since the last save. Returns false on failure.
+  async function saveField(idx, field) {
+    const reason = reasons.find(r => r.reason_index === idx);
+    const value = (drafts[idx]?.[field] || '').trim();
+    if (!reason || value === (reason[field] || '').trim()) return true;
+    setSaveState(prev => ({ ...prev, [idx]: 'saving' }));
+    try {
+      const { objection } = await apiFetch(token, `/shipments/${shipment.id}/objection/${idx}`, {
+        method: 'PUT', body: { [field]: field === 'response_text' ? value || null : value },
+      });
+      setDossier(prev => ({ ...prev, reasons: prev.reasons.map(r => (r.reason_index === idx ? { ...r, ...objection } : r)) }));
+      setSaveState(prev => ({ ...prev, [idx]: 'saved' }));
+      return true;
+    } catch (e) {
+      setSaveState(prev => ({ ...prev, [idx]: 'error' }));
+      setError(e.message);
+      return false;
+    }
+  }
+  async function saveAll() {
+    for (const r of reasons) {
+      if (!(await saveField(r.reason_index, 'reason_text'))) return false;
+      if (!(await saveField(r.reason_index, 'response_text'))) return false;
+    }
+    return true;
+  }
+  const setDraft = (idx, field, value) => setDrafts(prev => ({ ...prev, [idx]: { ...prev[idx], [field]: value } }));
+
+  const startDossier = () => run('start', async () => {
+    await apiFetch(token, `/shipments/${shipment.id}/objection`, {
+      method: 'POST', body: { rejection_reasons: [{ reason_index: 0, reason_text: '' }] },
+    });
     await load();
     await onChanged();
   });
-  // Reasons the clearance company recorded from the SFDA notice: file them with the MAH's responses
-  const recorded = state === 'SFDA_REJECTED' && rows.length > 0;
-  const fileRecorded = () => run('file', async () => {
-    const reasons = rows.map(o => ({
-      reason_index: o.reason_index, reason_text: o.reason_text, response_text: (drafts[o.reason_index] || '').trim() || null,
-    }));
-    await apiFetch(token, `/shipments/${shipment.id}/objection`, { method: 'POST', body: { rejection_reasons: reasons } });
-    await load();
-    await onChanged();
+  const addReason = () => run('add', async () => {
+    const next = reasons.reduce((m, r) => Math.max(m, r.reason_index), -1) + 1;
+    const { objection } = await apiFetch(token, `/shipments/${shipment.id}/objection/${next}`, { method: 'PUT', body: { reason_text: '' } });
+    setDossier(prev => ({ ...prev, reasons: [...prev.reasons, objection] }));
+    setDrafts(prev => ({ ...prev, [next]: { reason_text: '', response_text: '' } }));
   });
-  const save = (idx) => run(`save-${idx}`, async () => {
-    await apiFetch(token, `/shipments/${shipment.id}/objection/${idx}`, { method: 'PUT', body: { response_text: drafts[idx]?.trim() || null } });
-    await load();
+  const removeReason = (idx) => run(`remove-${idx}`, async () => {
+    await apiFetch(token, `/shipments/${shipment.id}/objection/${idx}`, { method: 'DELETE' });
+    setDossier(prev => ({ ...prev, reasons: prev.reasons.filter(r => r.reason_index !== idx) }));
   });
+  const saveProgress = () => run('save', async () => { if (await saveAll()) showToast?.('Progress saved'); });
   const submit = () => run('submit', async () => {
-    await apiFetch(token, `/shipments/${shipment.id}/objection/submit`, { method: 'POST' });
+    if (!(await saveAll())) return;
+    await apiFetch(token, `/shipments/${shipment.id}/objection/submit-to-clearance`, { method: 'POST' });
+    setConfirmOpen(false);
+    showToast?.(`Dossier submitted to ${clearanceName}`);
     await load();
     await onChanged();
   });
 
-  return (
-    <div className="mah-stack">
-      <section className={`mah-card mah-countdown${daysLeft !== null && daysLeft <= 10 ? ' is-urgent' : ''}`}>
-        <div className="mah-countdown-days">{daysLeft === null ? '—' : Math.max(daysLeft, 0)}<span>days left</span></div>
-        <div>
-          <strong>Objection deadline · {fmtDate(deadline)}</strong>
-          <div className="mah-row-sub">SFDA allows 60 days from the rejection to file a reasoned objection.</div>
-          {data && <div className="mah-small">{data.completion_pct}% of reasons answered{submitted && ` · submitted ${fmtDateTime(data.submitted_at)}`}</div>}
-        </div>
+  if (!dossier) {
+    return (
+      <section className="mah-card">
+        {loadError ? <div className="mah-alert mah-alert-red">Could not load the objection dossier: {loadError}</div>
+          : <div className="mah-loading">Loading objection dossier…</div>}
       </section>
+    );
+  }
 
-      {error && <div className="mah-alert mah-alert-red">{error}</div>}
+  const countdown = state === 'SFDA_REJECTED' && <ObjectionCountdown days={dossier.days_remaining} rejectionDate={dossier.rejection_date} />;
+  const errorBox = error && <div className="mah-alert mah-alert-red" role="alert">{error}</div>;
 
-      {round >= 2 && !submitted && (
-        <section className="mah-round-warning" role="alert">
-          <div className="mah-round-warning-title">⚠ Second Objection Round</div>
-          <p>
-            You are filing a second objection for this shipment. SFDA allows limited objection rounds. If this objection is
-            rejected, further escalation will require referral to the SFDA Grievance Committee through your DEMARA advisor.
+  // ── No dossier yet ──
+  if (!status) {
+    return (
+      <div className="mah-stack">
+        {countdown}
+        {errorBox}
+        <section className="mah-card mah-obj-start">
+          <h2>Start your objection dossier</h2>
+          <p className="mah-muted">
+            Enter each rejection reason from the SFDA notice below. You can save your progress and return at any time.
+            When complete, submit to your clearance company for filing.
           </p>
-          <p>
-            <strong>DEMARA Recommendation:</strong> Before filing, ensure your dossier is complete and addresses ALL previous
-            rejection reasons with new supporting evidence. Repeating the same response will not succeed.
-          </p>
-          <a className="mah-btn mah-btn-sm mah-btn-outline-amber" href={`mailto:${DEMARA_ADVICE_EMAIL}`}>Contact DEMARA Advisor →</a>
+          <button className="mah-btn mah-btn-navy mah-self-start" onClick={startDossier} disabled={busy !== null}>
+            {busy === 'start' ? 'Starting…' : 'Start dossier →'}
+          </button>
         </section>
-      )}
+      </div>
+    );
+  }
 
-      {state === 'SFDA_REJECTED' && data && rows.length === 0 && (
-        <section className="mah-card">
-          <div className="mah-card-head"><h2>Start objection dossier</h2></div>
-          <p className="mah-muted mah-small">Enter each rejection reason from the SFDA notice. You can write responses now or later.</p>
-          {newReasons.map((r, i) => (
-            <div key={i} className="mah-reason-card">
-              <div className="mah-reason-num">Reason {i + 1}</div>
-              <input className="mah-input" placeholder="SFDA rejection reason" value={r.reason_text}
-                onChange={e => setNewReasons(prev => prev.map((x, j) => (j === i ? { ...x, reason_text: e.target.value } : x)))} />
-              <textarea className="mah-input" rows={2} placeholder="Your response (optional for now)" value={r.response_text}
-                onChange={e => setNewReasons(prev => prev.map((x, j) => (j === i ? { ...x, response_text: e.target.value } : x)))} />
-              {r.reason_text.trim() && <DemaraGuidance reason={r.reason_text} />}
-            </div>
-          ))}
-          <div className="mah-row-actions">
-            <button className="mah-btn mah-btn-ghost" onClick={() => setNewReasons(prev => [...prev, { reason_text: '', response_text: '' }])}>
-              <Icon name="plus" size={16} /> Add reason
+  // ── Drafting / returned: editable ──
+  if (status === 'DRAFTING' || status === 'RETURNED_TO_MAH') {
+    const answered = reasons.filter(r => filled(drafts[r.reason_index]?.response_text)).length;
+    return (
+      <div className="mah-stack">
+        {countdown}
+        {status === 'RETURNED_TO_MAH' && (
+          <section className="mah-obj-returned" role="alert">
+            <strong>⚠ Returned by {clearanceName}</strong>
+            {dossier.objection_clearance_note && <p className="mah-obj-note">{dossier.objection_clearance_note}</p>}
+            <span>Please address the comments above and resubmit when ready.</span>
+          </section>
+        )}
+        {round >= 2 && (
+          <section className="mah-round-warning" role="alert">
+            <div className="mah-round-warning-title">⚠ Second Objection Round</div>
+            <p>
+              You are filing a second objection for this shipment. SFDA allows limited objection rounds. If this objection is
+              rejected, further escalation will require referral to the SFDA Grievance Committee through your DEMARA advisor.
+            </p>
+            <p>
+              <strong>DEMARA Recommendation:</strong> Before filing, ensure your dossier is complete and addresses ALL previous
+              rejection reasons with new supporting evidence. Repeating the same response will not succeed.
+            </p>
+            <a className="mah-btn mah-btn-sm mah-btn-outline-amber" href={`mailto:${DEMARA_ADVICE_EMAIL}`}>Contact DEMARA Advisor →</a>
+          </section>
+        )}
+        <ObjectionSteps done={0} />
+        {errorBox}
+
+        {reasons.map((r, i) => {
+          const d = drafts[r.reason_index] || { reason_text: '', response_text: '' };
+          const saving = saveState[r.reason_index];
+          return (
+            <section key={r.reason_index} className={`mah-card mah-reason-card mah-edge-${filled(d.response_text) ? 'green' : 'amber'}`}>
+              <div className="mah-reason-head">
+                <span className="mah-reason-num">Reason {i + 1}</span>
+                <span className="mah-small mah-muted" aria-live="polite">
+                  {saving === 'saving' ? 'Saving…' : saving === 'saved' ? '✓ Saved' : saving === 'error' ? 'Not saved' : ''}
+                </span>
+              </div>
+              <label className="mah-field">
+                <span>SFDA rejection reason</span>
+                <input className="mah-input" value={d.reason_text} maxLength={2000} placeholder="As written in the SFDA rejection notice"
+                  onChange={e => setDraft(r.reason_index, 'reason_text', e.target.value)}
+                  onBlur={() => saveField(r.reason_index, 'reason_text')} />
+              </label>
+              {filled(d.reason_text) && <DemaraGuidance reason={d.reason_text} />}
+              <label className="mah-field">
+                <span>Your response to SFDA</span>
+                <textarea className="mah-input" rows={4} maxLength={10000}
+                  placeholder="Address this rejection reason specifically with supporting evidence"
+                  value={d.response_text} onChange={e => setDraft(r.reason_index, 'response_text', e.target.value)}
+                  onBlur={() => saveField(r.reason_index, 'response_text')} />
+              </label>
+              <div className="mah-row-actions">
+                <span className={`mah-small mah-text-${filled(d.response_text) ? 'green' : 'amber'}`}>
+                  {filled(d.response_text) ? '✓ Response added' : '⚠ Response needed'}
+                </span>
+                {reasons.length > 1 && (
+                  <button className="mah-link-btn mah-small" onClick={() => removeReason(r.reason_index)} disabled={busy !== null}>
+                    Remove reason
+                  </button>
+                )}
+              </div>
+            </section>
+          );
+        })}
+
+        <button className="mah-btn mah-btn-ghost mah-self-start" onClick={addReason} disabled={busy !== null}>
+          <Icon name="plus" size={16} /> {busy === 'add' ? 'Adding…' : 'Add another reason'}
+        </button>
+
+        <section className="mah-card mah-stack">
+          <DossierProgress reasons={reasons.map(r => ({ response_text: drafts[r.reason_index]?.response_text }))} />
+          <div className="mah-obj-actions">
+            <button className="mah-btn mah-btn-ghost" onClick={saveProgress} disabled={busy !== null}>
+              {busy === 'save' ? 'Saving…' : 'Save progress'}
             </button>
-            <button className="mah-btn mah-btn-red" onClick={fileObjection}
-              disabled={busy !== null || !newReasons.some(r => r.reason_text.trim())}>
-              {busy === 'file' ? 'Filing…' : 'File objection'}
+            <button className="mah-btn mah-btn-navy" onClick={() => { setError(null); setConfirmOpen(true); }} disabled={busy !== null}>
+              Submit to clearance →
             </button>
           </div>
         </section>
-      )}
 
-      {recorded && (
-        <div className="mah-alert mah-alert-amber">
-          Your clearance company recorded {rows.length} rejection reason{rows.length === 1 ? '' : 's'} from the SFDA notice.
-          Write your responses below, then file the objection.
-        </div>
-      )}
-
-      {rows.map(o => {
-        const dirty = (drafts[o.reason_index] || '') !== (o.response_text || '');
-        return (
-          <section key={o.id} className={`mah-card mah-reason-card mah-edge-${(o.response_text || '').trim() ? 'green' : 'red'}`}>
-            <div className="mah-reason-num">Reason {o.reason_index + 1}</div>
-            <div className="mah-row-title">{o.reason_text}</div>
-            <textarea className="mah-input" rows={3} placeholder="Your response to this reason" disabled={submitted}
-              value={drafts[o.reason_index] ?? ''} onChange={e => setDrafts(prev => ({ ...prev, [o.reason_index]: e.target.value }))} />
-            <DemaraGuidance reason={o.reason_text} />
-            {!submitted && !recorded && (
-              <div className="mah-row-actions">
-                <span className="mah-small mah-muted">{o.responded_at ? `Saved ${fmtDateTime(o.responded_at)}` : 'Not answered yet'}</span>
-                <button className="mah-btn mah-btn-sm mah-btn-primary" disabled={!dirty || busy !== null} onClick={() => save(o.reason_index)}>
-                  {busy === `save-${o.reason_index}` ? 'Saving…' : 'Save response'}
-                </button>
+        {confirmOpen && (
+          <ConfirmDialog title={`Submit dossier to ${clearanceName}?`} confirmLabel="Submit anyway" cancelLabel="Continue editing"
+            tone="navy" busy={busy === 'submit'} error={error} onConfirm={submit}
+            onClose={() => { if (busy !== 'submit') setConfirmOpen(false); }}>
+            <p>
+              Once submitted, you cannot edit the dossier until your clearance company reviews it and either files it or
+              returns it with comments.
+            </p>
+            <p className="mah-small"><strong>{answered} of {reasons.length}</strong> reasons have responses</p>
+            {answered < reasons.length && (
+              <div className="mah-alert mah-alert-amber">
+                {reasons.length - answered} reason{reasons.length - answered === 1 ? ' has' : 's have'} no response yet. Your clearance
+                company can return the dossier if it is incomplete.
               </div>
             )}
-          </section>
-        );
-      })}
+          </ConfirmDialog>
+        )}
+      </div>
+    );
+  }
 
-      {recorded && (
-        <section className="mah-card mah-row-actions">
-          <span className="mah-small mah-muted">Responses can also be added after filing, before you submit the dossier.</span>
-          <button className="mah-btn mah-btn-red" disabled={busy !== null} onClick={fileRecorded}>
-            {busy === 'file' ? 'Filing…' : 'File objection'}
-          </button>
+  // ── Submitted to clearance: locked ──
+  if (status === 'SUBMITTED_TO_CLEARANCE') {
+    return (
+      <div className="mah-stack">
+        {countdown}
+        <section className="mah-obj-banner is-blue">
+          <strong>✓ Dossier submitted to clearance</strong>
+          <span>Submitted on {fmtDateTime(dossier.objection_submitted_to_clearance_at)}</span>
+          <span>
+            {clearanceName} is reviewing your dossier and will file it with SFDA via Faseh. You will be notified when it is filed.
+          </span>
         </section>
-      )}
+        <ObjectionSteps done={2} />
+        <div className="mah-alert mah-alert-grey">🔒 Locked for review — cannot edit while clearance is reviewing</div>
+        <DossierReasons reasons={reasons} />
+      </div>
+    );
+  }
 
-      {rows.length > 0 && !submitted && !recorded && (
-        <section className="mah-card mah-row-actions">
-          <span className="mah-small mah-muted">{allAnswered ? 'All reasons answered — ready to submit.' : 'Every reason needs a saved response before you can submit.'}</span>
-          <button className="mah-btn mah-btn-red" disabled={!allAnswered || busy !== null} onClick={submit}>
-            {busy === 'submit' ? 'Submitting…' : 'Submit objection dossier'}
-          </button>
-        </section>
-      )}
-      {submitted && <div className="mah-alert mah-alert-green">Objection dossier submitted {fmtDateTime(data?.submitted_at)}.</div>}
+  // ── Filed with SFDA ──
+  return (
+    <div className="mah-stack">
+      <section className="mah-obj-banner is-green">
+        <strong>✓ Objection filed with SFDA</strong>
+        <span>Filed on {fmtDateTime(dossier.objection_filed_at)}</span>
+        <span>Faseh reference: <strong className="mah-mono">{dossier.objection_faseh_ref || '—'}</strong></span>
+        <span>SFDA will review your objection and respond. This typically takes 2-4 weeks.</span>
+      </section>
+      <ObjectionSteps done={3} />
+      <button className="mah-btn mah-btn-ghost mah-self-start" onClick={printDossier}>Download dossier PDF</button>
+      <div className="mah-dossier-print">
+        <div className="mah-dossier-print-head">
+          <h2>Objection dossier — {name}</h2>
+          <div className="mah-row-sub">
+            <span className="mah-mono">{dossier.masaar_id}</span> · Round {round} · Faseh {dossier.objection_faseh_ref || '—'}
+            {' '}· Filed {fmtDateTime(dossier.objection_filed_at)} · Clearance: {clearanceName}
+          </div>
+        </div>
+        <DossierReasons reasons={reasons} />
+      </div>
     </div>
   );
 }
