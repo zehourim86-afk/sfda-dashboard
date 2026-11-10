@@ -50,6 +50,7 @@ export default function ClearancePortal({ user, token: tokenProp, onLogout }) {
   const [currentPage, setCurrentPage] = useState('overview');
   const [currentShipment, setCurrentShipment] = useState(null);
   const [detailTab, setDetailTab] = useState('timeline');
+  const [settingsTab, setSettingsTab] = useState(null);
   // sidebarCollapsed = locked closed (logo click); hovering a collapsed sidebar expands it temporarily
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [sidebarHovered, setSidebarHovered] = useState(false);
@@ -102,7 +103,9 @@ export default function ClearancePortal({ user, token: tokenProp, onLogout }) {
   const activeCount = shipments.filter(s => !COMPLETED_STATES.includes(stateOf(s))).length;
   const myOrg = organisations.find(o => o.id === user?.organisation_id) || null;
 
-  const navigate = (page) => {
+  // opts.settingsTab opens Settings on that tab (e.g. 'accounts' from "Connect Faseh →")
+  const navigate = (page, opts = {}) => {
+    setSettingsTab(page === 'settings' ? opts.settingsTab || null : null);
     setCurrentPage(page);
     if (page !== 'shipment-detail') setCurrentShipment(null);
   };
@@ -140,7 +143,7 @@ export default function ClearancePortal({ user, token: tokenProp, onLogout }) {
       case 'faseh': return <ClearanceFaseh {...shared} />;
       case 'sfda': return <ClearanceSFDATrack {...shared} />;
       case 'customs': return <ClearanceCustoms {...shared} />;
-      case 'settings': return <ClearanceSettings {...shared} />;
+      case 'settings': return <ClearanceSettings {...shared} key={settingsTab || 'settings'} initialTab={settingsTab} />;
       default: return <ClearanceOverview {...shared} />;
     }
   };

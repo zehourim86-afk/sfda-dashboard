@@ -939,3 +939,35 @@ textarea.mah-input { resize: vertical; min-height: 60px; }
   body.dossier-printing .mah-dossier-print-head { display: block; margin-bottom: 16px; }
   body.dossier-printing .mah-dossier-print .mah-card { break-inside: avoid; box-shadow: none; }
 }
+
+/* ── Faseh sync (FasehSync.js) ───────────────────────── */
+.faseh-live { display: flex; align-items: center; gap: 12px; background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 12px; padding: 14px 18px; }
+.faseh-live-compact { padding: 10px 14px; border-radius: 10px; }
+.faseh-live-text { flex: 1; display: flex; flex-direction: column; gap: 2px; font-size: 13px; color: #166534; }
+.faseh-live-text strong { font-size: 14px; }
+.faseh-live-dot { width: 10px; height: 10px; border-radius: 50%; background: #16A34A; flex-shrink: 0; position: relative; }
+.faseh-live-dot::after { content: ''; position: absolute; inset: -4px; border-radius: 50%; border: 2px solid #16A34A; animation: faseh-pulse 1.8s ease-out infinite; }
+@keyframes faseh-pulse { from { transform: scale(0.6); opacity: 0.8; } to { transform: scale(1.6); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .faseh-live-dot::after { animation: none; opacity: 0; } }
+.faseh-roadmap { display: flex; flex-direction: column; gap: 6px; }
+.faseh-roadmap > .mah-link-btn { align-self: flex-end; }
+.faseh-manual-note { font-size: 13px; }
+
+.faseh-card { background: #fff; border: 1px solid #E2E8F0; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+.faseh-card-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.faseh-card-title { display: flex; align-items: center; gap: 10px; font-weight: 700; color: var(--navy); font-size: 15px; }
+.faseh-logo { width: 32px; height: 32px; border-radius: 50%; background: #0099EE; color: #fff; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; }
+.faseh-desc { margin: 0; font-size: 13px; color: #334155; line-height: 1.5; }
+.faseh-benefits { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 4px; font-size: 12px; color: #64748B; }
+.faseh-consent { background: #EEF8FE; border: 1px solid #BCE3FA; border-radius: 8px; padding: 10px 14px; font-size: 12px; color: #00669E; line-height: 1.5; }
+.faseh-form { display: flex; flex-direction: column; gap: 10px; max-width: 420px; }
+.faseh-password { display: flex; align-items: center; gap: 8px; }
+.faseh-password .mah-input { flex: 1; }
+.faseh-security { margin: 0; font-size: 12px; color: #64748B; }
+.faseh-sync-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.faseh-sync-row > div { display: flex; flex-direction: column; gap: 4px; }
+.faseh-mode { margin-left: 8px; }
+.faseh-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+.faseh-stats > div { border: 1px solid #E2E8F0; border-radius: 8px; padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; }
+.faseh-stats span { font-size: 11px; color: #64748B; text-transform: uppercase; letter-spacing: 0.04em; }
+.faseh-stats strong { font-size: 18px; color: var(--navy); }

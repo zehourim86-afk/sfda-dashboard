@@ -1,6 +1,8 @@
-// Clearance Portal — Settings. Demo data until the company profile backend exists.
+// Clearance Portal — Settings. Company profile and users are demo data until their backend exists;
+// the Faseh connection under Connected Accounts is live (FasehSync.js).
 import { useState } from 'react';
 import { Tabs, DemoBanner } from './mahShared';
+import { FasehConnectionCard } from './FasehSync';
 
 const PROFILE = {
   name: 'Al Faris Customs Clearance',
@@ -20,13 +22,12 @@ const USERS = [
   { name: 'Yousef Bakr', role: 'Customs Agent (Port)', email: 'yousef@alfaris-clearance.example', status: 'Invited' },
 ];
 const ACCOUNTS = [
-  { name: 'Faseh', desc: 'SFDA electronic clearance — declarations, info requests and decisions', status: 'Connected' },
   { name: 'Fasah (ZATCA)', desc: 'Customs declarations, duties payment and gate-out', status: 'Connected' },
   { name: 'MASAAR platform', desc: 'Shipments handed over by MAHs, with their documents', status: 'Connected' },
 ];
 
-export default function ClearanceSettings() {
-  const [tab, setTab] = useState('profile');
+export default function ClearanceSettings({ token, initialTab }) {
+  const [tab, setTab] = useState(initialTab || 'profile');
   return (
     <div className="mah-page">
       <div className="mah-page-head">
@@ -41,7 +42,7 @@ export default function ClearanceSettings() {
         { key: 'accounts', label: 'Connected Accounts' },
       ]} />
 
-      <DemoBanner>company profile, users and connections are illustrative</DemoBanner>
+      {tab !== 'accounts' && <DemoBanner>company profile and users are illustrative</DemoBanner>}
 
       {tab === 'profile' && (
         <section className="mah-card">
@@ -81,6 +82,7 @@ export default function ClearanceSettings() {
 
       {tab === 'accounts' && (
         <div className="mah-stack">
+          <FasehConnectionCard token={token} />
           {ACCOUNTS.map(a => (
             <section key={a.name} className="mah-card clr-account">
               <div className="mah-action-main">

@@ -12,6 +12,7 @@ import { RiskPanel } from './MahNewShipment';
 import ServiceAgreementModal from './ServiceAgreementModal';
 import IntegrityDashboard from './IntegrityDashboard';
 import ClearanceCertificate from './ClearanceCertificate';
+import { FasehSyncBar } from './FasehSync';
 
 const READINESS_TONES = { READY: 'green', WARNING: 'amber', MISSING_INFO: 'amber', CRITICAL_ISSUE: 'red' };
 const CUSTOMS_STEPS = ['PENDING', 'DECLARATION_FILED', 'DUTIES_PAID', 'CUSTOMS_RELEASED'];
@@ -171,10 +172,12 @@ export default function MahShipmentDetail({
             {intelError ? <div className="mah-alert mah-alert-red">{intelError}</div>
               : intel ? <RiskPanel intel={intel} /> : <div className="mah-loading">Scoring shipment…</div>}
           </section>
-          {['SUBMITTED', 'SAMPLING'].includes(state) && (
-            <RoadmapBanner compact title="Faseh & SFDA Sync" badge="Coming soon"
-              description="MASAAR will automatically track SFDA decisions for this shipment via Faseh sync. Your clearance company will be notified of any SFDA action instantly." />
-          )}
+          {['SUBMITTED', 'SAMPLING'].includes(state) && (shipment.faseh_sync_active
+            ? <FasehSyncBar compact lastSyncAt={shipment.faseh_last_synced_at || shipment.faseh_connection_last_sync_at} />
+            : (
+              <RoadmapBanner compact title="Faseh & SFDA Sync" badge="Coming soon"
+                description="MASAAR will automatically track SFDA decisions for this shipment via Faseh sync. Your clearance company will be notified of any SFDA action instantly." />
+            ))}
         </div>
       )}
       {activeTab === 'objection' && showObjection && (

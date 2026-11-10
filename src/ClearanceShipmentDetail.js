@@ -12,6 +12,7 @@ import ServiceAgreementModal from './ServiceAgreementModal';
 import { RISK_TONES, isPendingRequest } from './ClearanceOverview';
 import { COUNTRY_FLAGS } from './mahMarketData';
 import { TimelineTab, DossierReasons, ObjectionCountdown, ObjectionSteps } from './MahShipmentDetail';
+import { useFasehStatus, ClearanceFasehBar } from './FasehSync';
 import {
   SAMPLING_STEPS, SAMPLING_LABELS, CUSTOMS_STEPS, CUSTOMS_LABELS, INFO_REQUEST_LABELS,
   todayISO, fmtSAR, Toast,
@@ -92,7 +93,7 @@ export default function ClearanceShipmentDetail({
   ];
   const activeTab = tabs.some(t => t.key === tab) ? tab : 'timeline';
   const sector = shipmentSector(shipment);
-  const ctx = { token, shipment, state, busy, run, transition };
+  const ctx = { token, shipment, state, busy, run, transition, navigate };
 
   // A pending engagement request: only the limited summary and accept / decline
   if (isPendingRequest(shipment)) {
@@ -493,9 +494,14 @@ function FasehTab({ shipment, state, busy, run, transition }) {
 }
 
 // ── SFDA Track ───────────────────────────────────────
+// States where the broker records SFDA outcomes by hand (manual fallback once Faseh sync is on)
+const MANUAL_DECISION_STATES = ['SUBMITTED', 'SFDA_INFO_REQUESTED', 'SAMPLING', 'OBJECTION_FILED'];
+
 function SfdaTab(ctx) {
-  const { token, shipment, state } = ctx;
+  const { token, shipment, state, navigate } = ctx;
   const [reasons, setReasons] = useState(null);
+  const { status: faseh, reload: reloadFaseh } = useFasehStatus(token);
+  const fasehOn = !!faseh?.connected;
 
   const loadReasons = useCallback(async () => {
     try {
@@ -525,9 +531,22 @@ function SfdaTab(ctx) {
         </div>
       </section>
 
-      {['SUBMITTED', 'SAMPLING'].includes(state) && (
-        <RoadmapBanner title="Faseh Auto-Sync — Coming in next release" badge="Roadmap"
-          description="In production, MASAAR will sync with Faseh every 15 minutes. SFDA decisions will update automatically and both MAH and clearance will be notified instantly — no manual recording needed." />
+      {['SUBMITTED', 'SAMPLING'].includes(state) && (fasehOn
+        ? <ClearanceFasehBar token={token} status={faseh} reload={reloadFaseh} />
+        : (
+          <div className="faseh-roadmap">
+            <RoadmapBanner title="Faseh Auto-Sync — Coming in next release" badge="Roadmap"
+              description="In production, MASAAR will sync with Faseh every 15 minutes. SFDA decisions will update automatically and both MAH and clearance will be notified instantly — no manual recording needed." />
+            {faseh && (
+              <button className="mah-link-btn" onClick={() => navigate('settings', { settingsTab: 'accounts' })}>Connect Faseh →</button>
+            )}
+          </div>
+        ))}
+      {fasehOn && MANUAL_DECISION_STATES.includes(state) && (
+        <div className="mah-alert mah-alert-green faseh-manual-note" role="note">
+          Faseh sync is active — SFDA decisions will update automatically. Use buttons below only if you receive a
+          decision before the next sync.
+        </div>
       )}
       {state === 'SUBMITTED' && <SubmittedActions {...ctx} onReasons={loadReasons} />}
       {state === 'SFDA_INFO_REQUESTED' && <InfoRequestActions {...ctx} />}
