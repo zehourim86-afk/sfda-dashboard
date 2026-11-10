@@ -239,9 +239,33 @@ export function timeAgo(value) {
 }
 
 export const OBJECTION_WINDOW_DAYS = 60;
+// Start of the objection window: the latest move into SFDA_REJECTED — rejected_at from the shipments list,
+// else the detail's audit log, else when the shipment entered its current (rejected) state
+export function rejectionDate(s) {
+  if (s.rejected_at) return toDate(s.rejected_at);
+  const entry = (s.audit_log || [])
+    .filter(e => e.to_state === 'SFDA_REJECTED' && e.from_state !== 'SFDA_REJECTED')
+    .sort((a, b) => new Date(b.occurred_at) - new Date(a.occurred_at))[0];
+  return toDate(entry?.occurred_at || s.state_entered_at || s.updated_at);
+}
 export function objectionDeadline(s) {
-  const base = toDate(s.state_entered_at || s.updated_at);
+  const base = rejectionDate(s);
   return base ? new Date(base.getTime() + OBJECTION_WINDOW_DAYS * DAY) : null;
+}
+// 60 minus whole days since the rejection (same rule as the backend reminders), or null
+export function objectionDaysLeft(s) {
+  const base = rejectionDate(s);
+  return base ? OBJECTION_WINDOW_DAYS - Math.floor((Date.now() - base.getTime()) / DAY) : null;
+}
+// Overview urgency for an open objection window: { tone, text, critical }
+export function deadlineUrgency(days) {
+  if (days == null) return null;
+  const n = Math.max(days, 0);
+  const left = `${n} day${n === 1 ? '' : 's'}`;
+  if (days <= 3) return { tone: 'red', text: `⚠ CRITICAL — ${left} left`, critical: true };
+  if (days <= 7) return { tone: 'red', text: `URGENT — ${left} left` };
+  if (days <= 30) return { tone: 'amber', text: `${left} remaining` };
+  return { tone: 'blue', text: `${left} remaining` };
 }
 
 // Registration expiry status for a product

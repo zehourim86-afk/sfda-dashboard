@@ -16,6 +16,18 @@ const TRANSPORT = [{ value: 'sea', label: 'Sea' }, { value: 'air', label: 'Air' 
 const STEPS = ['Basic info', 'Products', 'Pre-arrival intelligence', 'Confirm'];
 const emptyLine = () => ({ product_id: '', quantity: '', batch_number: '' });
 
+// Transport document field per mode: required for sea (B/L) and air (AWB), optional for land
+const TRANSPORT_DOC = {
+  sea: { label: 'Bill of Lading (B/L) number *', placeholder: 'e.g. MAEU1234567', required: true, helper: 'Required for sea freight' },
+  air: { label: 'Air Waybill (AWB) number *', placeholder: 'e.g. 176-12345678', required: true, helper: 'Required for air freight' },
+  land: { label: 'Waybill number (optional)', placeholder: 'e.g. CMR-2026-001', required: false, helper: 'Optional for land transport' },
+};
+// Error message, or null when the B/L / AWB is present or not needed
+function blAwbError(mode, value) {
+  if (!TRANSPORT_DOC[mode]?.required || (value || '').trim()) return null;
+  return `B/L or AWB number is required for ${mode} transport`;
+}
+
 // ETA dates as YYYY-MM-DD in the user's local time zone (toISOString would use UTC and can be a day off)
 const ETA_RE = /^\d{4}-\d{2}-\d{2}$/;
 const ETA_DEFAULT_DAYS = 30;
@@ -64,6 +76,7 @@ export default function MahNewShipment({ token, products, suppliers, organisatio
     bl_awb_number: '', preferred_clearance_company_id: '',
   });
   const [etaTouched, setEtaTouched] = useState(false);
+  const [blTouched, setBlTouched] = useState(false);
   const [lines, setLines] = useState([emptyLine()]);
   const [created, setCreated] = useState(null);
   const [intel, setIntel] = useState(null);
@@ -96,8 +109,9 @@ export default function MahNewShipment({ token, products, suppliers, organisatio
 
   async function createDraft(confirmDuplicate = false) {
     // The date input's value is already YYYY-MM-DD; check it before the API does
-    if (etaError(info.eta)) {
+    if (etaError(info.eta) || blAwbError(info.transport_mode, info.bl_awb_number)) {
       setEtaTouched(true);
+      setBlTouched(true);
       setStep(0);
       return;
     }
@@ -140,6 +154,8 @@ export default function MahNewShipment({ token, products, suppliers, organisatio
   const supplier = activeSuppliers.find(s => s.id === info.supplier_id);
   const broker = clearanceCompanies.find(o => o.id === info.preferred_clearance_company_id);
   const clearanceChosen = !!info.preferred_clearance_company_id;
+  const transportDoc = TRANSPORT_DOC[info.transport_mode] || TRANSPORT_DOC.sea;
+  const blError = blAwbError(info.transport_mode, info.bl_awb_number);
 
   // Leaving the wizard after the draft exists: send the engagement request once, then open the shipment.
   // A failed request is not fatal — the shipment page offers to send it again.
@@ -215,9 +231,13 @@ export default function MahNewShipment({ token, products, suppliers, organisatio
                 {etaTouched && !locked && etaError(info.eta) && <small className="mah-text-red">{etaError(info.eta)}</small>}
               </label>
               <label className="mah-field">
-                <span>{info.transport_mode === 'air' ? 'AWB number' : 'B/L or AWB number'}</span>
+                <span>{transportDoc.label}</span>
                 <input className="mah-input" value={info.bl_awb_number} onChange={setField('bl_awb_number')} maxLength={100}
-                  placeholder="e.g. MSCU1234567" disabled={locked} />
+                  placeholder={transportDoc.placeholder} disabled={locked} required={transportDoc.required}
+                  onBlur={() => setBlTouched(true)} aria-invalid={!!(blTouched && blError)} />
+                {blTouched && !locked && blError
+                  ? <small className="mah-text-red">{blError}</small>
+                  : <small>{transportDoc.helper}</small>}
               </label>
               <label className="mah-field">
                 <span>Clearance company *</span>
@@ -293,6 +313,11 @@ export default function MahNewShipment({ token, products, suppliers, organisatio
               <p className="mah-muted">Draft <strong className="mah-mono">{created?.masaar_id}</strong> created. Here's what MASAAR found before arrival:</p>
               {intel ? (
                 <>
+                  {intel.cold_chain_required && (
+                    <span className="mah-badge mah-tone-amber mah-coldchain-badge">
+                      ❄ Cold chain required — temperature logger certificate will be needed
+                    </span>
+                  )}
                   <RiskPanel intel={intel} />
                   <div>
                     <h3 className="mah-h3">Document checklist</h3>
@@ -338,7 +363,10 @@ export default function MahNewShipment({ token, products, suppliers, organisatio
           {step === 0 && (
             <button className="mah-btn mah-btn-primary" disabled={!clearanceChosen}
               title={clearanceChosen ? '' : 'Select a clearance company to continue'}
-              onClick={() => { if (!locked && etaError(info.eta)) { setEtaTouched(true); return; } setStep(1); }}>
+              onClick={() => {
+                if (!locked && (etaError(info.eta) || blError)) { setEtaTouched(true); setBlTouched(true); return; }
+                setStep(1);
+              }}>
               Next: products →
             </button>
           )}

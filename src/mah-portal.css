@@ -836,3 +836,64 @@ textarea.mah-input { resize: vertical; min-height: 60px; }
   body.cert-printing .cert { position: absolute; left: 0; top: 0; max-width: none; }
   body.cert-printing .cert-actions, body.cert-printing .cert-toast { display: none !important; }
 }
+
+/* ── Phase A ─────────────────────────────────────────── */
+/* Objection: DEMARA guidance per rejection reason */
+.mah-guidance { background: #F0F9FF; border-left: 3px solid #0099EE; border-radius: 0 8px 8px 0; padding: 12px 16px; margin-top: 8px; }
+.mah-guidance-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.mah-guidance-brand { font-size: 12px; color: #0099EE; font-weight: 600; }
+.mah-guidance-pill { font-size: 11px; font-weight: 600; padding: 2px 10px; border-radius: 999px; white-space: nowrap; }
+.mah-guidance-pill.is-critical { background: #FDE4E8; color: #C0223A; }
+.mah-guidance-pill.is-high { background: #FDF0DC; color: #B36B00; }
+.mah-guidance-pill.is-medium { background: #E0F2FE; color: #0077BB; }
+.mah-guidance-text { font-size: 13px; color: #334155; margin: 8px 0; line-height: 1.5; }
+.mah-guidance-action { background: #fff; border: 1px solid #E2E8F0; border-radius: 6px; padding: 8px 12px; display: flex; flex-direction: column; gap: 2px; }
+.mah-guidance-action strong { font-size: 12px; color: #0F1A4A; }
+.mah-guidance-action span { font-size: 13px; color: #334155; }
+
+/* Objection: second round warning */
+.mah-round-warning { background: #FFF7ED; border: 1.5px solid #E8900A; border-radius: 10px; padding: 16px 20px; margin-bottom: 16px; display: flex; flex-direction: column; gap: 8px; }
+.mah-round-warning-title { color: #E8900A; font-weight: 700; font-size: 15px; }
+.mah-round-warning p { margin: 0; font-size: 13px; color: #334155; line-height: 1.5; }
+.mah-round-warning .mah-btn { align-self: flex-start; text-decoration: none; }
+
+/* Overview: objection deadline urgency */
+.mah-app .mah-action-deadline { border-left-width: 3px !important; }
+.mah-deadline-badge { display: inline-block; margin-top: 4px; font-weight: 600; }
+.mah-deadline-badge.is-critical { background: #E0334C; color: #fff; }
+
+/* Shipment header: missing B/L / AWB */
+.mah-missing-flag { display: block; margin-top: 2px; font-size: 11px; font-weight: 600; color: #B36B00; background: #FDF0DC; border-radius: 4px; padding: 1px 6px; width: fit-content; }
+
+/* Documents: cold chain banner; wizard badge */
+.mah-coldchain-banner { background: #EEF8FE; border: 1px solid #BCE3FA; border-radius: 10px; padding: 12px 16px; margin: 12px 0; display: flex; flex-direction: column; gap: 4px; color: #00669E; font-size: 13px; }
+.mah-coldchain-banner strong { font-size: 14px; }
+.mah-coldchain-badge { align-self: flex-start; font-weight: 600; padding: 4px 10px; }
+
+/* Validation: Layer 2 consistency rows */
+.mah-l2-row { border: 1px solid var(--line, #E2E8F0); border-left: 3px solid #CBD5E1; border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; display: flex; flex-direction: column; gap: 4px; }
+.mah-l2-row.is-failed { border-left-color: #E0334C; background: #FFF8F9; }
+.mah-l2-row.is-warning { border-left-color: #E8900A; background: #FFFBF3; }
+.mah-l2-row.is-passed { border-left-color: #00B87A; }
+.mah-l2-note { font-size: 12px; font-weight: 600; color: #C0223A; }
+.mah-l2-empty { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.mah-l2-empty p { margin: 0; }
+.mah-l2-passed { margin-top: 4px; }
+
+/* Disposition tab */
+.mah-dispo-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.mah-dispo-head h2 { margin: 0; }
+.mah-dispo-options { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+.mah-dispo-option { display: flex; flex-direction: column; gap: 8px; }
+.mah-dispo-option h3 { margin: 0; font-size: 16px; }
+.mah-dispo-option p { margin: 0; font-size: 13px; color: #475569; line-height: 1.5; }
+.mah-dispo-option.is-active { border-color: var(--blue); box-shadow: 0 0 0 1px var(--blue); }
+.mah-dispo-icon { font-size: 26px; line-height: 1; }
+.mah-dispo-done { display: flex; flex-direction: column; gap: 12px; }
+.mah-dispo-done.is-reexported { background: #EDFAF4; border-color: #B5E8D3; }
+.mah-dispo-done.is-destroyed { background: #F8FAFC; border-color: #CBD5E1; }
+.mah-dispo-done-title { font-size: 16px; }
+.mah-dispo-done.is-reexported .mah-dispo-done-title { color: #006B47; }
+.mah-dispo-done.is-destroyed .mah-dispo-done-title { color: #475569; }
+.mah-app .mah-btn-outline-blue { background: #fff; border-color: #9FD6F7; color: var(--blue); }
+.mah-app .mah-btn-outline-blue:not(:disabled):hover { background: #E0F2FE; filter: none; }

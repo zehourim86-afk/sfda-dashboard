@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import {
   PIPELINE, ACTION_ORDER, actionFor, actionKey, stateOf, needsAction, isInProgress, StateBadge, SectorBadge,
-  shipmentName, shipmentRef, shipmentSector, objectionDeadline, daysUntil, fmtDate, timeAgo,
+  shipmentName, shipmentRef, shipmentSector, objectionDeadline, objectionDaysLeft, deadlineUrgency, daysUntil, fmtDate, timeAgo,
   expiryStatus, Ring, Empty, Icon,
 } from './mahShared';
 
@@ -13,11 +13,29 @@ const AVG_CYCLE_DAYS = 18;
 const ACTIONS_PER_PAGE = 5;
 const ACTION_FILTERS = [
   { key: 'all', label: 'All', states: null },
-  { key: 'rejected', label: 'Rejected', states: ['SFDA_REJECTED'] },
+  { key: 'rejected', label: 'Rejected', states: ['SFDA_REJECTED', 'OBJECTION_FILED'] },
   // Everything blocked on the MAH's own work: validation issues, drafts, SFDA info requests
   { key: 'fix', label: 'Fix needed', states: ['PREPARING', 'DRAFT', 'SFDA_INFO_REQUESTED', 'BROKER_DECLINED', 'PENDING_AGREEMENT'] },
   { key: 'ready', label: 'Ready', states: ['READY_TO_SUBMIT'] },
 ];
+
+// An objection filed but the dossier not submitted yet: still on the 60-day clock, so it is an action item too
+const objectionOpen = (s) => stateOf(s) === 'OBJECTION_FILED' && !s.objection_submitted_at;
+const OBJECTION_ACTION = { key: 'OBJECTION_FILED', tone: 'red', button: 'Finish dossier →', tab: 'objection', why: 'Objection filed — dossier not submitted yet' };
+const keyOf = (s) => actionKey(s) || (objectionOpen(s) ? 'OBJECTION_FILED' : null);
+const itemFor = (s) => actionFor(s) || (objectionOpen(s) ? OBJECTION_ACTION : null);
+const ORDER = ['SFDA_REJECTED', 'OBJECTION_FILED', ...ACTION_ORDER.filter(k => k !== 'SFDA_REJECTED')];
+// Days left on the objection window for rejected / objecting shipments, else null
+const deadlineDays = (s) => (['SFDA_REJECTED', 'OBJECTION_FILED'].includes(keyOf(s)) ? objectionDaysLeft(s) : null);
+// Critical deadlines (3 days or less) first, then by action type, then the closest deadline
+function compareActions(a, b) {
+  const da = deadlineDays(a);
+  const db = deadlineDays(b);
+  const ca = da != null && da <= 3;
+  const cb = db != null && db <= 3;
+  if (ca !== cb) return ca ? -1 : 1;
+  return ORDER.indexOf(keyOf(a)) - ORDER.indexOf(keyOf(b)) || (da ?? Infinity) - (db ?? Infinity);
+}
 
 export default function MahOverview({ shipments, products, productsById, openShipment, navigate, onNewShipment }) {
   const [actionSearch, setActionSearch] = useState('');
@@ -25,19 +43,18 @@ export default function MahOverview({ shipments, products, productsById, openShi
   const [actionPage, setActionPage] = useState(1);
 
   const counts = PIPELINE.map(col => ({ ...col, count: shipments.filter(s => col.states.includes(stateOf(s))).length }));
-  const actions = shipments.filter(needsAction)
-    .sort((a, b) => ACTION_ORDER.indexOf(actionKey(a)) - ACTION_ORDER.indexOf(actionKey(b)));
+  const actions = shipments.filter(s => needsAction(s) || objectionOpen(s)).sort(compareActions);
   const q = actionSearch.trim().toLowerCase();
   const filterStates = ACTION_FILTERS.find(f => f.key === actionFilter).states;
   const filteredActions = actions
-    .filter(s => !filterStates || filterStates.includes(actionKey(s)))
+    .filter(s => !filterStates || filterStates.includes(keyOf(s)))
     .filter(s => !q || shipmentName(s, productsById).toLowerCase().includes(q) || (s.masaar_id || '').toLowerCase().includes(q));
   const pageCount = Math.max(1, Math.ceil(filteredActions.length / ACTIONS_PER_PAGE));
   const page = Math.min(actionPage, pageCount);
   const pageStart = (page - 1) * ACTIONS_PER_PAGE;
   const visibleActions = filteredActions.slice(pageStart, pageStart + ACTIONS_PER_PAGE);
 
-  const inProgress = shipments.filter(isInProgress)
+  const inProgress = shipments.filter(s => isInProgress(s) && !objectionOpen(s))
     .sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
   // Shipments with an open cancellation request (flag from the shipments list endpoint)
   const cancelRequested = shipments.filter(s => s.cancellation_requested);
@@ -111,16 +128,20 @@ export default function MahOverview({ shipments, products, productsById, openShi
               : filteredActions.length === 0
                 ? <Empty title="No action items match">Try a different search or filter.</Empty>
                 : visibleActions.map(s => {
-                const a = actionFor(s);
-                const deadline = stateOf(s) === 'SFDA_REJECTED' ? objectionDeadline(s) : null;
+                const a = itemFor(s);
+                const urgency = deadlineUrgency(deadlineDays(s));
                 return (
-                  <div key={s.id} className={`mah-action-row mah-edge-${a.tone}`}>
+                  <div key={s.id} className={`mah-action-row mah-edge-${urgency?.tone || a.tone}${urgency ? ' mah-action-deadline' : ''}`}>
                     <div className="mah-action-main">
                       <div className="mah-row-title">{a.title || shipmentName(s, productsById)}</div>
                       <div className="mah-row-sub">
                         {a.title ? shipmentName(s, productsById) : <span className="mah-mono">{shipmentRef(s)}</span>} · {a.why}
-                        {deadline && <> · <strong className="mah-text-red">{daysUntil(deadline)} days left</strong></>}
                       </div>
+                      {urgency && (
+                        <span className={`mah-badge mah-tone-${urgency.tone} mah-deadline-badge${urgency.critical ? ' is-critical' : ''}`}>
+                          {urgency.text}
+                        </span>
+                      )}
                     </div>
                     <StateBadge state={s.current_state} />
                     <button className={`mah-btn mah-btn-sm mah-btn-${a.tone}`} onClick={() => openShipment(s, a.tab)}>{a.button}</button>

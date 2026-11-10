@@ -1,5 +1,5 @@
 // MAH portal — Shipment detail with sub-tabs:
-// Timeline | Documents | Validation | Customs | Intelligence | Objection | Certificate (CLOSED_RELEASED)
+// Timeline | Documents | Validation | Customs | Intelligence | Objection | Disposition | Certificate (CLOSED_RELEASED)
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { API_URL, getStateLabel } from './constants';
 import {
@@ -19,6 +19,7 @@ const CUSTOMS_LABELS = {
   PENDING: 'Pending', DECLARATION_FILED: 'Declaration filed', DUTIES_PAID: 'Duties paid', CUSTOMS_RELEASED: 'Customs released',
 };
 const TRANSPORT_LABELS = { sea: 'Sea', air: 'Air', land: 'Land' };
+const DISPOSITION_STATES = ['DISPOSITION_PENDING', 'CLOSED_REEXPORTED', 'CLOSED_DESTROYED'];
 
 export default function MahShipmentDetail({
   token, user, shipment: initial, initialTab, productsById, suppliersById, organisations, navigate, reloadShipments, showToast,
@@ -93,6 +94,7 @@ export default function MahShipmentDetail({
     }
   };
   const showObjection = ['SFDA_REJECTED', 'OBJECTION_FILED'].includes(state);
+  const showDisposition = DISPOSITION_STATES.includes(state);
   const tabs = [
     { key: 'timeline', label: 'Timeline' },
     { key: 'documents', label: 'Documents' },
@@ -100,6 +102,7 @@ export default function MahShipmentDetail({
     { key: 'customs', label: 'Customs' },
     { key: 'intelligence', label: 'Intelligence' },
     ...(showObjection ? [{ key: 'objection', label: 'Objection' }] : []),
+    ...(showDisposition ? [{ key: 'disposition', label: 'Disposition' }] : []),
     ...(state === 'CLOSED_RELEASED' ? [{ key: 'certificate', label: 'Certificate' }] : []),
   ];
   const activeTab = tabs.some(t => t.key === tab) ? tab : 'timeline';
@@ -131,7 +134,13 @@ export default function MahShipmentDetail({
           <div><span>Port</span><strong>{shipment.port_of_entry || '—'}</strong></div>
           <div><span>Transport</span><strong>{TRANSPORT_LABELS[shipment.transport_mode] || '—'}</strong></div>
           <div><span>ETA</span><strong>{fmtDate(shipment.eta)}</strong></div>
-          <div><span>B/L / AWB</span><strong>{shipment.bl_awb_number || '—'}</strong></div>
+          <div>
+            <span>B/L / AWB</span>
+            <strong>{shipment.bl_awb_number || '—'}</strong>
+            {!shipment.bl_awb_number && ['sea', 'air'].includes(shipment.transport_mode) && (
+              <span className="mah-missing-flag">Missing — required for customs</span>
+            )}
+          </div>
           <div><span>Clearance company</span><strong>{broker?.name_en || shipment.clearance_company_name || '—'}</strong></div>
           <div><span>Customs</span><strong>{CUSTOMS_LABELS[shipment.customs_state] || '—'}</strong></div>
         </div>
@@ -170,6 +179,11 @@ export default function MahShipmentDetail({
       )}
       {activeTab === 'objection' && showObjection && (
         <ObjectionTab token={token} shipment={shipment} onChanged={refresh} />
+      )}
+      {activeTab === 'disposition' && showDisposition && (
+        <DispositionTab token={token} shipment={shipment} name={shipmentName(shipment, productsById)}
+          supplierCountry={suppliersById[shipment.supplier_id]?.country || shipment.shipment_country}
+          onChanged={refresh} showToast={showToast} />
       )}
       {activeTab === 'certificate' && state === 'CLOSED_RELEASED' && (
         <ClearanceCertificate shipment={shipment} token={token} apiUrl={API_URL} />
@@ -394,6 +408,16 @@ function DocumentsTab({ token, shipment, reqs, reqError, onChanged }) {
         <span className="mah-badge mah-tone-amber">● {reqs.recommended_uploaded}/{reqs.recommended_count} Recommended</span>
         <span className="mah-badge mah-tone-grey">+ {optional.length} Optional/Custom</span>
       </div>
+      {reqs.cold_chain?.required && (
+        <div className="mah-coldchain-banner" role="note">
+          <strong>❄ Cold chain product — temperature logger certificate required</strong>
+          <span>
+            This product requires continuous cold chain from {reqs.cold_chain.supplier_country || 'the supplier country'} to{' '}
+            {reqs.cold_chain.port_of_entry || shipment.port_of_entry || 'the port of entry'}. Upload the temperature logger
+            certificate from your shipping company.
+          </span>
+        </div>
+      )}
       {error && <div className="mah-alert mah-alert-red">{error}</div>}
 
       <div className="mah-tier mah-tier-mandatory">
@@ -694,7 +718,7 @@ const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
 
 // tiers: { mandatory: [uploaded, total], recommended: [uploaded, total], custom } from the checklist
 // integrityScore: latest MASAAR integrity score, or null if never run
-function AiValidationSummary({ documents, required, layer1Complete, shipmentSector, loading, tiers, integrityScore }) {
+function AiValidationSummary({ documents, required, layer1Complete, shipmentSector, loading, tiers, integrityScore, layer2 }) {
   if (loading) {
     return (
       <section className="mah-ais mah-ais-loading" aria-busy="true">
@@ -766,7 +790,7 @@ function AiValidationSummary({ documents, required, layer1Complete, shipmentSect
 
         <div className="mah-ais-col-layers">
           <LayerCard name="Layer 1 · Completeness" {...layer1} />
-          <LayerCard name="Layer 2 · Consistency" status="PENDING" text="Cross-document checks coming soon" />
+          <LayerCard name="Layer 2 · Consistency" {...layer2} />
           <LayerCard name="Layer 3 · AI Advisory" {...layer3} />
           <LayerCard name="Layer 4 · Integrity" {...layer4} />
         </div>
@@ -798,6 +822,99 @@ function AiValidationSummary({ documents, required, layer1Complete, shipmentSect
       </div>
 
       <p className="mah-ais-text">{text}</p>
+    </section>
+  );
+}
+
+// ── Layer 2 · Consistency (integrity engine, check_layer 2) ──
+const SEVERITY_TONES = { CRITICAL: 'red', HIGH: 'red', MEDIUM: 'amber', LOW: 'blue', INFO: 'grey' };
+const CHECK_STATUS_TONES = { PASSED: 'green', WARNING: 'amber', FAILED: 'red', PENDING: 'grey', NOT_APPLICABLE: 'grey' };
+
+// Summary card for Layer 2. integrity: GET /integrity-check result (undefined while loading)
+function layer2Status(integrity) {
+  const ran = !!integrity?.checked_at;
+  const checks = (integrity?.checks || []).filter(c => c.check_layer === 2);
+  const failed = checks.filter(c => c.status === 'FAILED').length;
+  const warnings = checks.filter(c => c.status === 'WARNING').length;
+  if (!ran) return { status: 'PENDING', text: 'Run integrity check to see consistency results' };
+  if (failed) {
+    return { status: 'FAILED', text: `${plural(failed, 'consistency failure')} — review before submission`, badge: { tone: 'red', text: `${failed} failed` } };
+  }
+  if (warnings) return { status: 'WARNING', text: plural(warnings, 'consistency warning'), badge: { tone: 'amber', text: plural(warnings, 'warning') } };
+  return { status: 'PASSED', text: 'All consistency checks passed' };
+}
+
+function ConsistencyRow({ check }) {
+  return (
+    <div className={`mah-l2-row is-${check.status.toLowerCase()}`}>
+      <div className="mah-tl-head">
+        <strong>{check.label}</strong>
+        <span className={`mah-badge mah-tone-${SEVERITY_TONES[check.severity] || 'grey'}`}>{check.severity || 'INFO'}</span>
+      </div>
+      {check.details && <div className="mah-small">{check.details}</div>}
+      {check.status === 'FAILED' && <div className="mah-l2-note">This issue may cause SFDA rejection</div>}
+    </div>
+  );
+}
+
+function ConsistencySection({ integrity, error, running, onRun }) {
+  const [open, setOpen] = useState(false);
+  const checks = (integrity?.checks || []).filter(c => c.check_layer === 2);
+  const failed = checks.filter(c => c.status === 'FAILED');
+  const warnings = checks.filter(c => c.status === 'WARNING');
+  const rest = checks.filter(c => c.status !== 'FAILED' && c.status !== 'WARNING');
+  const passed = rest.filter(c => c.status === 'PASSED').length;
+  const summary = layer2Status(integrity);
+  const ran = !!integrity?.checked_at;
+
+  let body;
+  if (integrity === undefined && !error) body = <div className="mah-loading">Loading consistency checks…</div>;
+  else if (!ran) {
+    body = (
+      <div className="mah-l2-empty">
+        <p className="mah-muted">Run integrity check to see consistency results</p>
+        <button className="mah-btn mah-btn-sm mah-btn-primary" onClick={onRun} disabled={running}>{running ? 'Running…' : 'Run check →'}</button>
+      </div>
+    );
+  } else if (checks.length === 0) body = <p className="mah-text-green">No consistency issues found</p>;
+  else {
+    body = (
+      <>
+        {failed.map(c => <ConsistencyRow key={c.check_type} check={c} />)}
+        {warnings.map(c => <ConsistencyRow key={c.check_type} check={c} />)}
+        {rest.length > 0 && (
+          <div className="mah-l2-passed">
+            <button className="mah-tier-head" onClick={() => setOpen(o => !o)} aria-expanded={open}>
+              <span>
+                <span className="mah-badge mah-tone-green">{failed.length + warnings.length === 0 ? 'All passed' : `${passed} passed`}</span>
+                {rest.length > passed && <span className="mah-small mah-muted"> · {rest.length - passed} not applicable or pending</span>}
+              </span>
+              <span className="mah-small mah-muted">{open ? 'Hide ▾' : 'Show checks ▸'}</span>
+            </button>
+            {open && rest.map(c => (
+              <div key={c.check_type} className="mah-l2-row is-passed">
+                <div className="mah-tl-head">
+                  <strong>{c.label}</strong>
+                  <span className={`mah-badge mah-tone-${CHECK_STATUS_TONES[c.status] || 'grey'}`}>{c.status.replace(/_/g, ' ')}</span>
+                </div>
+                {c.details && <div className="mah-small">{c.details}</div>}
+              </div>
+            ))}
+          </div>
+        )}
+      </>
+    );
+  }
+
+  const badgeTone = { PASSED: 'green', WARNING: 'amber', FAILED: 'red', PENDING: 'grey' }[summary.status];
+  return (
+    <section className="mah-card">
+      <div className="mah-card-head">
+        <h2>Layer 2 · Consistency</h2>
+        <span className={`mah-badge mah-tone-${badgeTone}`}>{ran ? LAYER_STATUS_LABELS[summary.status] : 'Not run'}</span>
+      </div>
+      {error && <div className="mah-alert mah-alert-red">{error}</div>}
+      {body}
     </section>
   );
 }
@@ -843,6 +960,34 @@ function ValidationTab({ token, shipment, reqs, broker, onChanged, goTo, showToa
   const [integrityKey, setIntegrityKey] = useState(0); // bumped to reload the integrity dashboard
   // Latest integrity score for the summary's Layer 4: the shipment's, then whatever the dashboard loads or runs
   const [integrityScore, setIntegrityScore] = useState(shipment.integrity_score ?? null);
+  // Stored integrity result (GET /integrity-check) for Layer 2; undefined while loading
+  const [integrity, setIntegrity] = useState(undefined);
+  const [integrityError, setIntegrityError] = useState(null);
+  const [integrityRunning, setIntegrityRunning] = useState(false);
+  const loadIntegrity = useCallback(async () => {
+    try {
+      setIntegrity(await apiFetch(token, `/shipments/${shipment.id}/integrity-check`));
+      setIntegrityError(null);
+    } catch (e) {
+      setIntegrity(null);
+      setIntegrityError(`Could not load consistency checks: ${e.message}`);
+    }
+  }, [token, shipment.id]);
+  useEffect(() => { loadIntegrity(); }, [loadIntegrity, integrityKey]);
+  // The dashboard reports a score whenever it loads or runs the checks — refresh Layer 2 with it
+  const handleScore = useCallback((score) => { setIntegrityScore(score); loadIntegrity(); }, [loadIntegrity]);
+  async function runIntegrity() {
+    setIntegrityRunning(true);
+    setIntegrityError(null);
+    try {
+      setIntegrity(await apiFetch(token, `/shipments/${shipment.id}/integrity-check`, { method: 'POST' }));
+      setIntegrityKey(k => k + 1); // reload the dashboard too
+    } catch (e) {
+      setIntegrityError(`Integrity check failed: ${e.message}`);
+    } finally {
+      setIntegrityRunning(false);
+    }
+  }
 
   // proceed = the MAH chose "Proceed anyway" past the recommended-documents warning
   async function advance(proceed = false) {
@@ -907,12 +1052,13 @@ function ValidationTab({ token, shipment, reqs, broker, onChanged, goTo, showToa
           custom: reqs?.custom_count ?? 0,
         }}
         integrityScore={integrityScore}
+        layer2={layer2Status(integrity)}
       />
 
       <section className="int-section" aria-labelledby="int-section-title">
         <h2 className="int-section-title" id="int-section-title">Regulatory Integrity Checks</h2>
         <IntegrityDashboard shipmentId={shipment.id} token={token} apiUrl={API_URL}
-          sector={shipmentSector(shipment)} refreshKey={integrityKey} onScore={setIntegrityScore} />
+          sector={shipmentSector(shipment)} refreshKey={integrityKey} onScore={handleScore} />
       </section>
 
       {step && (
@@ -967,13 +1113,7 @@ function ValidationTab({ token, shipment, reqs, broker, onChanged, goTo, showToa
         )}
       </section>
 
-      <section className="mah-card">
-        <div className="mah-card-head">
-          <h2>Layer 2 · Consistency</h2>
-          <span className="mah-badge mah-tone-grey">Checking…</span>
-        </div>
-        <p className="mah-muted">Cross-document checks (names, batches, quantities, dates) are coming in a later release.</p>
-      </section>
+      <ConsistencySection integrity={integrity} error={integrityError} running={integrityRunning} onRun={runIntegrity} />
 
       <section className="mah-card">
         <div className="mah-card-head">
@@ -1113,6 +1253,83 @@ function CustomsTab({ token, user, shipment, onChanged }) {
 }
 
 // ── Objection ────────────────────────────────────────
+// DEMARA guidance per rejection reason: the first key the reason text contains wins, else 'default'
+const DEMARA_GUIDANCE = {
+  halal: {
+    title: 'Halal Certificate Issue',
+    guidance: 'SFDA only recognizes certificates from approved bodies: IFANCA, JAKIM, MUI, BPJPH, CICOT, and Turkey Diyanet. If your certificate is from another body, you must obtain a new one from an approved body before filing the objection. Contact your supplier immediately.',
+    action: 'Request new Halal certificate from SFDA-recognized body',
+    urgency: 'HIGH',
+  },
+  'certificate of analysis': {
+    title: 'CoA Issue',
+    guidance: 'SFDA requires CoA from an ISO 17025 accredited laboratory. Ensure the CoA includes: test methods, specification ranges, actual results, lab accreditation number, and analyst signature. A CoA missing any of these will be rejected again.',
+    action: 'Obtain new CoA from ISO 17025 lab with all required fields',
+    urgency: 'HIGH',
+  },
+  registration: {
+    title: 'SFDA Registration Issue',
+    guidance: 'Verify your product registration is active and covers the imported quantity and presentation. Check expiry date, dosage form, and pack size match exactly. If registration has lapsed, an objection cannot succeed — apply for renewal immediately.',
+    action: 'Verify registration status on SFDA eServices portal',
+    urgency: 'CRITICAL',
+  },
+  label: {
+    title: 'Labelling Issue',
+    guidance: 'Saudi labelling requirements mandate: Arabic language for all mandatory information, country of origin in Arabic, storage conditions, expiry date in Hijri or Gregorian calendar, and manufacturer details. Missing any of these is grounds for rejection.',
+    action: 'Prepare corrected label artwork addressing all SFDA comments',
+    urgency: 'MEDIUM',
+  },
+  ingredient: {
+    title: 'Ingredient/Composition Issue',
+    guidance: 'SFDA requires full INCI declaration for cosmetics and complete ingredient list for supplements. Verify all ingredients are on the SFDA permitted list. Prohibited ingredients cannot be objected — the product must be reformulated.',
+    action: 'Cross-check all ingredients against SFDA permitted list',
+    urgency: 'HIGH',
+  },
+  storage: {
+    title: 'Storage/Cold Chain Issue',
+    guidance: 'Cold chain products require continuous temperature monitoring from manufacture to port. Submit temperature logger data showing unbroken cold chain. If cold chain was breached, the objection cannot succeed for this batch.',
+    action: 'Obtain temperature logger certificate from shipping company',
+    urgency: 'HIGH',
+  },
+  stability: {
+    title: 'Stability Study Issue',
+    guidance: 'SFDA requires stability data under Saudi climatic conditions (Zone IVB: 40°C/75% RH). ICH Q1A guidelines apply. Studies must cover the full shelf life claimed on the label.',
+    action: 'Request stability study data from manufacturer covering Zone IVB conditions',
+    urgency: 'HIGH',
+  },
+  default: {
+    title: 'SFDA Rejection Response',
+    guidance: 'Review the SFDA rejection notice carefully and address each point specifically. Your objection must directly respond to the stated reason with supporting documentation. Vague responses are rejected. Contact your DEMARA advisor for case-specific guidance.',
+    action: 'Contact DEMARA advisor for case-specific guidance',
+    urgency: 'MEDIUM',
+  },
+};
+const URGENCY_LABELS = { CRITICAL: 'Critical', HIGH: 'High priority', MEDIUM: 'Advisory' };
+const DEMARA_ADVICE_EMAIL = 'advice@demara.sa';
+
+function guidanceFor(reasonText) {
+  const text = (reasonText || '').toLowerCase();
+  const key = Object.keys(DEMARA_GUIDANCE).find(k => k !== 'default' && text.includes(k));
+  return DEMARA_GUIDANCE[key || 'default'];
+}
+
+function DemaraGuidance({ reason }) {
+  const g = guidanceFor(reason);
+  return (
+    <div className="mah-guidance">
+      <div className="mah-guidance-head">
+        <span className="mah-guidance-brand">✦ DEMARA Guidance</span>
+        <span className={`mah-guidance-pill is-${g.urgency.toLowerCase()}`}>{URGENCY_LABELS[g.urgency]}</span>
+      </div>
+      <p className="mah-guidance-text"><strong>{g.title}.</strong> {g.guidance}</p>
+      <div className="mah-guidance-action">
+        <strong>→ Recommended action:</strong>
+        <span>{g.action}</span>
+      </div>
+    </div>
+  );
+}
+
 function ObjectionTab({ token, shipment, onChanged }) {
   const [data, setData] = useState(null);
   const [drafts, setDrafts] = useState({});
@@ -1137,6 +1354,8 @@ function ObjectionTab({ token, shipment, onChanged }) {
   const rows = data?.objections || [];
   const submitted = !!(data?.submitted_at || shipment.objection_submitted_at);
   const allAnswered = rows.length > 0 && rows.every(o => (o.response_text || '').trim());
+  // Round being worked on: objection_count rounds were rejected already
+  const round = data?.round ?? (shipment.objection_count || 0) + 1;
 
   const run = async (key, fn) => {
     setBusy(key);
@@ -1184,6 +1403,21 @@ function ObjectionTab({ token, shipment, onChanged }) {
 
       {error && <div className="mah-alert mah-alert-red">{error}</div>}
 
+      {round >= 2 && !submitted && (
+        <section className="mah-round-warning" role="alert">
+          <div className="mah-round-warning-title">⚠ Second Objection Round</div>
+          <p>
+            You are filing a second objection for this shipment. SFDA allows limited objection rounds. If this objection is
+            rejected, further escalation will require referral to the SFDA Grievance Committee through your DEMARA advisor.
+          </p>
+          <p>
+            <strong>DEMARA Recommendation:</strong> Before filing, ensure your dossier is complete and addresses ALL previous
+            rejection reasons with new supporting evidence. Repeating the same response will not succeed.
+          </p>
+          <a className="mah-btn mah-btn-sm mah-btn-outline-amber" href={`mailto:${DEMARA_ADVICE_EMAIL}`}>Contact DEMARA Advisor →</a>
+        </section>
+      )}
+
       {state === 'SFDA_REJECTED' && data && rows.length === 0 && (
         <section className="mah-card">
           <div className="mah-card-head"><h2>Start objection dossier</h2></div>
@@ -1195,6 +1429,7 @@ function ObjectionTab({ token, shipment, onChanged }) {
                 onChange={e => setNewReasons(prev => prev.map((x, j) => (j === i ? { ...x, reason_text: e.target.value } : x)))} />
               <textarea className="mah-input" rows={2} placeholder="Your response (optional for now)" value={r.response_text}
                 onChange={e => setNewReasons(prev => prev.map((x, j) => (j === i ? { ...x, response_text: e.target.value } : x)))} />
+              {r.reason_text.trim() && <DemaraGuidance reason={r.reason_text} />}
             </div>
           ))}
           <div className="mah-row-actions">
@@ -1224,6 +1459,7 @@ function ObjectionTab({ token, shipment, onChanged }) {
             <div className="mah-row-title">{o.reason_text}</div>
             <textarea className="mah-input" rows={3} placeholder="Your response to this reason" disabled={submitted}
               value={drafts[o.reason_index] ?? ''} onChange={e => setDrafts(prev => ({ ...prev, [o.reason_index]: e.target.value }))} />
+            <DemaraGuidance reason={o.reason_text} />
             {!submitted && !recorded && (
               <div className="mah-row-actions">
                 <span className="mah-small mah-muted">{o.responded_at ? `Saved ${fmtDateTime(o.responded_at)}` : 'Not answered yet'}</span>
@@ -1254,6 +1490,210 @@ function ObjectionTab({ token, shipment, onChanged }) {
         </section>
       )}
       {submitted && <div className="mah-alert mah-alert-green">Objection dossier submitted {fmtDateTime(data?.submitted_at)}.</div>}
+    </div>
+  );
+}
+
+// ── Disposition (Stage 9) ────────────────────────────
+// DISPOSITION_PENDING: the MAH asks its clearance company for re-export or supervised destruction
+// (POST /shipments/:id/disposition-request). The clearance company closes the shipment once done.
+const REEXPORT_COUNTRIES = [
+  'China', 'Egypt', 'France', 'Germany', 'India', 'Indonesia', 'Italy', 'Japan', 'Jordan', 'Malaysia',
+  'Netherlands', 'Pakistan', 'South Korea', 'Spain', 'Switzerland', 'Turkey', 'United Arab Emirates',
+  'United Kingdom', 'United States',
+];
+const DESTRUCTION_REASONS = [
+  'Re-export not feasible',
+  'Supplier refused return',
+  'Product safety concern',
+  'Cost of re-export exceeds product value',
+  'Other',
+];
+const DISPOSITION_RECORD_STATES = ['SFDA_REJECTED', 'DISPOSITION_PENDING', 'CLOSED_REEXPORTED', 'CLOSED_DESTROYED'];
+
+const HTML_ESCAPES = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+const escapeHtml = (v) => String(v ?? '').replace(/[&<>"']/g, c => HTML_ESCAPES[c]);
+
+// Downloads a self-contained HTML record of the disposition: shipment facts + disposition history
+function downloadDispositionRecord(shipment, name) {
+  const entries = (shipment.audit_log || []).filter(e => e.action === 'DISPOSITION_REQUEST_SENT'
+    || (DISPOSITION_RECORD_STATES.includes(e.to_state) && e.from_state !== e.to_state));
+  const facts = [
+    ['Shipment', name],
+    ['MASAAR ID', shipment.masaar_id],
+    ['Outcome', getStateLabel(stateOf(shipment))],
+    ['Completed', fmtDateTime(shipment.state_entered_at)],
+    ['Re-export reference', shipment.re_export_reference],
+    ['Destruction reference', shipment.destruction_reference],
+    ['Destruction witnessed by', shipment.destruction_witnessed_by],
+    ['Port of entry', shipment.port_of_entry],
+  ].filter(([, v]) => v);
+  const rows = entries.map(e => `<tr><td>${escapeHtml(fmtDateTime(e.occurred_at))}</td><td>${escapeHtml(e.trigger_event || e.action)}`
+    + `${e.notes ? `<br><span class="muted">${escapeHtml(e.notes)}</span>` : ''}</td></tr>`).join('');
+  const html = `<!doctype html><html><head><meta charset="utf-8">
+<title>Disposition record — ${escapeHtml(shipment.masaar_id || name)}</title>
+<style>body{font-family:system-ui,sans-serif;color:#0F1A4A;max-width:760px;margin:32px auto;padding:0 16px}
+table{border-collapse:collapse;width:100%;margin:16px 0}td,th{border:1px solid #E2E8F0;padding:8px;text-align:left;font-size:14px}
+th{background:#F8FAFC;width:35%}h1{font-size:22px}h2{font-size:16px;margin-top:28px}.muted{color:#64748B;font-size:12px}</style></head>
+<body><h1>MASAAR disposition record</h1><p class="muted">Generated ${escapeHtml(new Date().toLocaleString('en-GB'))}</p>
+<table>${facts.map(([k, v]) => `<tr><th>${escapeHtml(k)}</th><td>${escapeHtml(v)}</td></tr>`).join('')}</table>
+<h2>Disposition history</h2>
+<table><tr><th>When</th><th>Event</th></tr>${rows || '<tr><td colspan="2">No entries</td></tr>'}</table>
+</body></html>`;
+  const url = URL.createObjectURL(new Blob([html], { type: 'text/html' }));
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `disposition-record-${shipment.masaar_id || shipment.id}.html`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function DispositionTab({ token, shipment, name, supplierCountry, onChanged, showToast }) {
+  const state = stateOf(shipment);
+  const [form, setForm] = useState(null); // 'REEXPORT' | 'DESTRUCTION' | null
+  const [destination, setDestination] = useState(supplierCountry || '');
+  const [reexportReason, setReexportReason] = useState('SFDA rejected — returning to supplier');
+  const [destructionReason, setDestructionReason] = useState('');
+  const [notes, setNotes] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(null);
+
+  const countries = supplierCountry && !REEXPORT_COUNTRIES.includes(supplierCountry)
+    ? [supplierCountry, ...REEXPORT_COUNTRIES] : REEXPORT_COUNTRIES;
+  // audit_log is newest first
+  const lastRequest = (shipment.audit_log || []).find(e => e.action === 'DISPOSITION_REQUEST_SENT');
+
+  const open = (type) => { setError(null); setNotes(''); setForm(type); };
+  const canSend = form === 'REEXPORT' ? !!destination : !!destructionReason;
+
+  async function send(e) {
+    e.preventDefault();
+    setBusy(true);
+    setError(null);
+    const body = form === 'REEXPORT'
+      ? { type: 'REEXPORT', destination, reason: reexportReason.trim() || undefined, notes: notes.trim() || undefined }
+      : { type: 'DESTRUCTION', reason: destructionReason, notes: notes.trim() || undefined };
+    try {
+      await apiFetch(token, `/shipments/${shipment.id}/disposition-request`, { method: 'POST', body });
+      showToast?.(form === 'REEXPORT' ? 'Re-export request sent to your clearance company' : 'Destruction request sent to your clearance company');
+      setForm(null);
+      await onChanged();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const header = (
+    <section className="mah-card mah-dispo-head">
+      <h2>Disposition — Shipment {name}</h2>
+      <StateBadge state={shipment.current_state} />
+    </section>
+  );
+
+  if (state === 'CLOSED_REEXPORTED' || state === 'CLOSED_DESTROYED') {
+    const reexported = state === 'CLOSED_REEXPORTED';
+    return (
+      <div className="mah-stack">
+        {header}
+        <section className={`mah-card mah-dispo-done ${reexported ? 'is-reexported' : 'is-destroyed'}`}>
+          <strong className="mah-dispo-done-title">✓ {reexported ? 'Re-export completed' : 'Destruction completed'}</strong>
+          <div className="mah-facts">
+            {reexported
+              ? <div><span>Re-export reference</span><strong>{shipment.re_export_reference || '—'}</strong></div>
+              : (
+                <>
+                  <div><span>Destruction reference</span><strong>{shipment.destruction_reference || '—'}</strong></div>
+                  <div><span>Witnessed by</span><strong>{shipment.destruction_witnessed_by || '—'}</strong></div>
+                </>
+              )}
+            <div><span>Completion date</span><strong>{fmtDate(shipment.state_entered_at)}</strong></div>
+          </div>
+          <button className="mah-btn mah-btn-ghost mah-self-start" onClick={() => downloadDispositionRecord(shipment, name)}>
+            Download disposition record →
+          </button>
+        </section>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mah-stack">
+      {header}
+      <div className="mah-alert mah-alert-amber">
+        Your shipment has been rejected by SFDA and is pending disposition. You have two options: re-export the goods to the
+        country of origin, or arrange for supervised destruction. Your clearance company will coordinate with SFDA and customs.
+      </div>
+      {lastRequest && (
+        <div className="mah-alert mah-alert-blue">
+          Request sent {fmtDateTime(lastRequest.occurred_at)}: {lastRequest.notes || lastRequest.trigger_event}. Your clearance
+          company has been notified.
+        </div>
+      )}
+
+      <div className="mah-dispo-options">
+        <section className={`mah-card mah-dispo-option${form === 'REEXPORT' ? ' is-active' : ''}`}>
+          <div className="mah-dispo-icon" aria-hidden="true">✈</div>
+          <h3>Re-export</h3>
+          <p>Return goods to country of origin or another permitted destination. Requires SFDA re-export permit and customs coordination.</p>
+          <span className="mah-small mah-muted">Typically 14-30 days</span>
+          {form !== 'REEXPORT' && (
+            <button className="mah-btn mah-btn-outline-blue mah-self-start" onClick={() => open('REEXPORT')}>Request re-export →</button>
+          )}
+        </section>
+        <section className={`mah-card mah-dispo-option${form === 'DESTRUCTION' ? ' is-active' : ''}`}>
+          <div className="mah-dispo-icon" aria-hidden="true">🗑</div>
+          <h3>Supervised Destruction</h3>
+          <p>Goods destroyed under SFDA supervision at an approved facility. Required when re-export is not possible.</p>
+          <span className="mah-small mah-muted">Typically 7-21 days</span>
+          {form !== 'DESTRUCTION' && (
+            <button className="mah-btn mah-btn-outline-red mah-self-start" onClick={() => open('DESTRUCTION')}>Request destruction →</button>
+          )}
+        </section>
+      </div>
+
+      {form && (
+        <form className="mah-card mah-stack" onSubmit={send}>
+          <div className="mah-card-head"><h2>{form === 'REEXPORT' ? 'Re-export request' : 'Destruction request'}</h2></div>
+          {form === 'REEXPORT' ? (
+            <>
+              <label className="mah-field">
+                <span>Destination country *</span>
+                <select className="mah-input" value={destination} onChange={e => setDestination(e.target.value)} required>
+                  <option value="">Select a country…</option>
+                  {countries.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </label>
+              <label className="mah-field">
+                <span>Reason</span>
+                <input className="mah-input" value={reexportReason} maxLength={500} onChange={e => setReexportReason(e.target.value)} />
+              </label>
+            </>
+          ) : (
+            <label className="mah-field">
+              <span>Reason for destruction *</span>
+              <select className="mah-input" value={destructionReason} onChange={e => setDestructionReason(e.target.value)} required>
+                <option value="">Select a reason…</option>
+                {DESTRUCTION_REASONS.map(r => <option key={r} value={r}>{r}</option>)}
+              </select>
+            </label>
+          )}
+          <label className="mah-field">
+            <span>Notes (optional)</span>
+            <textarea className="mah-input" rows={3} maxLength={2000} value={notes} onChange={e => setNotes(e.target.value)} />
+          </label>
+          {error && <div className="mah-alert mah-alert-red">{error}</div>}
+          <div className="mah-remove-warning-actions">
+            <button type="button" className="mah-btn mah-btn-ghost" onClick={() => setForm(null)} disabled={busy}>Cancel</button>
+            <button type="submit" className="mah-btn mah-btn-primary" disabled={busy || !canSend}>
+              {busy ? 'Sending…' : 'Send request to clearance →'}
+            </button>
+          </div>
+        </form>
+      )}
     </div>
   );
 }
