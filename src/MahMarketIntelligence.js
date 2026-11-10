@@ -1,8 +1,9 @@
 // MAH portal — Market Intelligence:
 // Opportunity Scout | Supplier Intelligence | Regulatory Radar | Benchmarking
 // Content is demo seed data (mahMarketData.js); every tab says so.
+import { usePerformance, BENCHMARKS } from './MahIntelligence';
 import { useEffect, useRef, useState } from 'react';
-import { Tabs, DemoBanner, Icon, stateOf } from './mahShared';
+import { Tabs, DemoBanner, Icon } from './mahShared';
 import {
   CATEGORY_QUICK_PICKS, findCategoryReport,
   SUPPLIER_COUNTRIES, SUPPLIER_QUICK_PICKS, NEW_SUPPLIER_CHECKLIST, findSupplierProfile, COUNTRY_FLAGS,
@@ -49,7 +50,7 @@ function withFlag(entry) {
   return `${(m && COUNTRY_FLAGS[m[1]]) || '🌐'} ${entry}`;
 }
 
-export default function MahMarketIntelligence({ products = [], shipments = [], navigate }) {
+export default function MahMarketIntelligence({ token, products = [], shipments = [], navigate }) {
   const [tab, setTab] = useState('scout');
   return (
     <div className="mah-page">
@@ -68,7 +69,7 @@ export default function MahMarketIntelligence({ products = [], shipments = [], n
       {tab === 'scout' && <OpportunityScout navigate={navigate} />}
       {tab === 'supplier' && <SupplierIntel />}
       {tab === 'radar' && <RegulatoryRadar products={products} />}
-      {tab === 'bench' && <Benchmarking shipments={shipments} />}
+      {tab === 'bench' && <Benchmarking token={token} />}
     </div>
   );
 }
@@ -344,9 +345,7 @@ function RegulatoryRadar({ products }) {
 }
 
 // ── Benchmarking ─────────────────────────────────────
-// States that mean SFDA rejected the shipment at some point
-const REJECTED_STATES = ['SFDA_REJECTED', 'OBJECTION_FILED', 'DISPOSITION_PENDING', 'CLOSED_REEXPORTED', 'CLOSED_DESTROYED'];
-
+// "Yours" comes from GET /analytics/performance; industry figures are MASAAR platform aggregates.
 function BenchmarkCard({ title, yours, unit = '', median, top, bottom, lowerIsBetter, betterLabel, worseLabel, noDataLabel, industryNote }) {
   const hasData = yours !== null && yours !== undefined;
   const better = hasData && (lowerIsBetter ? yours <= median : yours >= median);
@@ -380,31 +379,44 @@ function BenchmarkCard({ title, yours, unit = '', median, top, bottom, lowerIsBe
   );
 }
 
-function Benchmarking({ shipments }) {
-  const rejected = shipments.filter(s => REJECTED_STATES.includes(stateOf(s))).length;
-  const rejectionRate = shipments.length ? Math.round((rejected / shipments.length) * 100) : null;
+function Benchmarking({ token }) {
+  const { data, error, loading } = usePerformance(token);
+  const r1 = (v) => (v == null ? null : Math.round(v * 10) / 10);
+  if (error) return <div className="mah-alert mah-alert-red">Could not load your performance figures: {error}</div>;
+  if (loading) return <div className="mah-loading">Loading your performance figures…</div>;
+  const B = BENCHMARKS;
 
   return (
     <div className="mah-stack">
       <DemoBanner>industry figures based on MASAAR platform aggregates</DemoBanner>
       <div className="mah-card-grid">
-        <BenchmarkCard title="First-time-right rate" yours={78} unit="%" median={71} top={89} bottom={50}
-          betterLabel="Above industry median ✓" worseLabel="Below industry median — review SFDA query causes" />
-        <BenchmarkCard title="Average clearance cycle time" yours={18} unit=" days" median={23} top={14} bottom={35} lowerIsBetter
-          betterLabel="Faster than industry median ✓" worseLabel="Slower than industry median" />
-        <BenchmarkCard title="SFDA query rate" yours={22} unit="%" median={31} top={12} bottom={50} lowerIsBetter
-          betterLabel="Below industry median ✓" worseLabel="Above industry median — tighten documents before submission" />
-        <BenchmarkCard title="Rejection rate" yours={rejectionRate} unit="%" median={11} top={4} bottom={25} lowerIsBetter
+        <BenchmarkCard title="First-time-right rate" yours={r1(data.first_time_right_rate)} unit="%"
+          median={B.first_time_right.median} top={B.first_time_right.top} bottom={50}
+          betterLabel="Above industry median ✓" worseLabel="Below industry median — review SFDA query causes"
+          noDataLabel="No closed shipments yet" />
+        <BenchmarkCard title="Average clearance cycle time" yours={r1(data.avg_cycle_time_days)} unit=" days"
+          median={B.cycle_time.median} top={B.cycle_time.top} bottom={35} lowerIsBetter
+          betterLabel="Faster than industry median ✓" worseLabel="Slower than industry median"
+          noDataLabel="No completed shipments yet" />
+        <BenchmarkCard title="SFDA query rate" yours={r1(data.sfda_query_rate)} unit="%"
+          median={B.query_rate.median} top={B.query_rate.top} bottom={50} lowerIsBetter
+          betterLabel="Below industry median ✓" worseLabel="Above industry median — tighten documents before submission"
+          noDataLabel="No submitted shipments yet" />
+        <BenchmarkCard title="Rejection rate" yours={r1(data.rejection_rate)} unit="%"
+          median={B.rejection_rate.median} top={B.rejection_rate.top} bottom={25} lowerIsBetter
           betterLabel="Below industry median ✓" worseLabel="Above industry median — review rejection causes"
-          noDataLabel="No shipments yet" />
+          noDataLabel="No submitted shipments yet" />
         <BenchmarkCard title="Objection success rate" yours={null} unit="%" median={43} top={71} bottom={10}
           noDataLabel="Start filing objections to track this metric" />
-        <BenchmarkCard title="Avg days to file objection after rejection" yours={null} unit=" days" median={18} top={7} bottom={55} lowerIsBetter
+        <BenchmarkCard title="Avg days to file objection after rejection" yours={r1(data.avg_days_to_object)} unit=" days"
+          median={18} top={7} bottom={55} lowerIsBetter
           industryNote="Industry: Avg 18 days (60-day window)"
+          betterLabel="Faster than industry ✓" worseLabel="Slower than industry — file early"
           noDataLabel="File early — SFDA responds faster to early-filed objections" />
       </div>
       <p className="mah-small mah-muted">
-        Rejection rate is calculated from your shipments ({rejected} of {shipments.length} rejected by SFDA). First-time-right, cycle time and query rate are demo values until enough history exists.
+        Your figures come from {data.total_shipments} shipment{data.total_shipments === 1 ? '' : 's'}
+        {' '}({data.total_submitted} submitted to SFDA, {data.total_closed} closed as released).
       </p>
     </div>
   );

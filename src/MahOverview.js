@@ -1,14 +1,19 @@
 // MAH portal — Overview: pipeline, action items, in-progress list, live metrics.
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
-  PIPELINE, ACTION_ORDER, actionFor, actionKey, stateOf, needsAction, isInProgress, StateBadge, SectorBadge,
+  apiFetch, PIPELINE, ACTION_ORDER, actionFor, actionKey, stateOf, needsAction, isInProgress, StateBadge, SectorBadge,
   shipmentName, shipmentRef, shipmentSector, objectionDeadline, objectionDaysLeft, deadlineUrgency, rejectionDate, daysUntil, fmtDate, timeAgo,
-  expiryStatus, Ring, Empty, Icon,
+  Ring, Empty, Icon,
 } from './mahShared';
+import { usePerformance } from './MahIntelligence';
 
-// Hardcoded until the metrics backend exists
-const FIRST_TIME_RIGHT_PCT = 78;
-const AVG_CYCLE_DAYS = 18;
+const REG_ACTION_DAYS = 30; // expiring registrations become action items at 30 days or less
+const truncate = (text, n) => (text && text.length > n ? `${text.slice(0, n - 1)}…` : text);
+// Badge for days until a registration expires (GET /products/expiring)
+function expiryBadge(days) {
+  if (days < 0) return { tone: 'red', text: `Expired ${-days}d ago` };
+  return { tone: days <= 7 ? 'red' : days <= 30 ? 'amber' : 'blue', text: `Expires in ${days}d` };
+}
 
 const ACTIONS_PER_PAGE = 5;
 const ACTION_FILTERS = [
@@ -52,8 +57,20 @@ function compareActions(a, b) {
   return ORDER.indexOf(keyOf(a)) - ORDER.indexOf(keyOf(b)) || (da ?? Infinity) - (db ?? Infinity);
 }
 
-export default function MahOverview({ shipments, products, productsById, openShipment, navigate, onNewShipment }) {
+export default function MahOverview({ token, shipments, productsById, openShipment, navigate, onNewShipment }) {
   const [actionSearch, setActionSearch] = useState('');
+  const { data: perf } = usePerformance(token);
+  // Registrations expiring within 90 days (or expired), soonest first
+  const [expiring, setExpiring] = useState(null);
+  const [expiringError, setExpiringError] = useState(null);
+  useEffect(() => {
+    let cancelled = false;
+    apiFetch(token, '/products/expiring')
+      .then(d => { if (!cancelled) { setExpiring(d.products || []); setExpiringError(null); } })
+      .catch(e => { if (!cancelled) setExpiringError(e.message); });
+    return () => { cancelled = true; };
+  }, [token]);
+  const expiringSoon = (expiring || []).filter(p => p.days_until_expiry <= REG_ACTION_DAYS);
   const [actionFilter, setActionFilter] = useState('all');
   const [actionPage, setActionPage] = useState(1);
 
@@ -85,9 +102,6 @@ export default function MahOverview({ shipments, products, productsById, openShi
     .sort((a, b) => a.days - b.days);
   const closest = deadlines[0];
 
-  const expiring = products
-    .filter(p => p.is_active !== false && ['expiring', 'expired'].includes(expiryStatus(p).key))
-    .sort((a, b) => String(a.sfda_reg_expiry).localeCompare(String(b.sfda_reg_expiry)));
 
   return (
     <div className="mah-page">
@@ -113,7 +127,7 @@ export default function MahOverview({ shipments, products, productsById, openShi
           <section className="mah-card">
             <div className="mah-card-head">
               <h2>Action items</h2>
-              <span className="mah-count-pill mah-tone-red">{actions.length}</span>
+              <span className="mah-count-pill mah-tone-red">{actions.length + expiringSoon.length}</span>
             </div>
             {actions.length > 0 && (
               <div className="mah-action-tools">
@@ -138,8 +152,21 @@ export default function MahOverview({ shipments, products, productsById, openShi
                 <StateBadge state={s.current_state} />
               </div>
             ))}
+            {expiringSoon.map(p => (
+              <div key={`reg-${p.id}`} className="mah-action-row mah-edge-amber">
+                <div className="mah-action-main">
+                  <div className="mah-row-title">Registration expiring — {p.name_en}</div>
+                  <div className="mah-row-sub">
+                    {p.days_until_expiry < 0 ? `Expired ${-p.days_until_expiry} days ago` : `${p.days_until_expiry} days until expiry`}
+                    {p.sfda_reg_number && <> · <span className="mah-mono">{p.sfda_reg_number}</span></>}
+                    {p.active_shipments_count > 0 && <> · {p.active_shipments_count} active shipment{p.active_shipments_count === 1 ? '' : 's'}</>}
+                  </div>
+                </div>
+                <button className="mah-btn mah-btn-sm mah-btn-amber" onClick={() => navigate('products')}>Renew →</button>
+              </div>
+            ))}
             {actions.length === 0
-              ? (cancelRequested.length === 0 && <Empty title="Nothing needs your action">New shipments and SFDA decisions will appear here.</Empty>)
+              ? (cancelRequested.length === 0 && expiringSoon.length === 0 && <Empty title="Nothing needs your action">New shipments and SFDA decisions will appear here.</Empty>)
               : filteredActions.length === 0
                 ? <Empty title="No action items match">Try a different search or filter.</Empty>
                 : visibleActions.map(s => {
@@ -201,7 +228,8 @@ export default function MahOverview({ shipments, products, productsById, openShi
           <section className="mah-card">
             <div className="mah-card-head"><h2>Live metrics</h2></div>
             <div className="mah-metric-gauge">
-              <Ring value={FIRST_TIME_RIGHT_PCT} size={96} stroke={9} label={`${FIRST_TIME_RIGHT_PCT}%`} />
+              <Ring value={perf?.first_time_right_rate ?? 0} size={96} stroke={9}
+                label={perf?.first_time_right_rate == null ? '—' : `${Math.round(perf.first_time_right_rate)}%`} />
               <div>
                 <div className="mah-metric-name">First-time-right rate</div>
                 <div className="mah-muted mah-small">Shipments released without an SFDA query</div>
@@ -209,7 +237,7 @@ export default function MahOverview({ shipments, products, productsById, openShi
             </div>
             <div className="mah-metric-line">
               <span>Avg cycle time</span>
-              <strong>{AVG_CYCLE_DAYS}d</strong>
+              <strong>{perf?.avg_cycle_time_days == null ? '—' : `${perf.avg_cycle_time_days}d`}</strong>
             </div>
           </section>
 
@@ -229,22 +257,31 @@ export default function MahOverview({ shipments, products, productsById, openShi
           <section className="mah-card">
             <div className="mah-card-head">
               <h2>Registrations expiring</h2>
-              <span className={`mah-count-pill mah-tone-${expiring.length ? 'amber' : 'green'}`}>{expiring.length}</span>
+              {expiring && (
+                <span className={`mah-count-pill mah-tone-${expiring.length ? 'amber' : 'green'}`}>{expiring.length}</span>
+              )}
             </div>
-            {expiring.length === 0
-              ? <Empty title="No registrations expire in the next 90 days" />
-              : expiring.slice(0, 5).map(p => {
-                const st = expiryStatus(p);
-                return (
-                  <button key={p.id} className="mah-list-row" onClick={() => navigate('products')}>
-                    <div className="mah-action-main">
-                      <div className="mah-row-title">{p.name_en}</div>
-                      <div className="mah-row-sub">{p.sfda_reg_number || 'No reg. number'}</div>
-                    </div>
-                    <span className={`mah-badge mah-tone-${st.tone}`}>{st.label}</span>
-                  </button>
-                );
-              })}
+            {expiringError ? <div className="mah-alert mah-alert-red">{expiringError}</div>
+              : !expiring ? <div className="mah-loading">Checking registrations…</div>
+                : expiring.length === 0
+                  ? <Empty title="No registrations expiring in the next 90 days ✓" />
+                  : expiring.slice(0, 6).map(p => {
+                    const badge = expiryBadge(p.days_until_expiry);
+                    return (
+                      <button key={p.id} className="mah-list-row mah-expiry-row" onClick={() => navigate('products')}>
+                        <div className="mah-action-main">
+                          <div className="mah-row-title" title={p.name_en}>{truncate(p.name_en, 25)}</div>
+                          <div className="mah-row-sub mah-mono">{p.sfda_reg_number || 'No reg. number'}</div>
+                          {p.active_shipments_count > 0 && (
+                            <div className="mah-small mah-text-amber">
+                              {p.active_shipments_count} active shipment{p.active_shipments_count === 1 ? '' : 's'} affected
+                            </div>
+                          )}
+                        </div>
+                        <span className={`mah-badge mah-tone-${badge.tone}`}>{badge.text}</span>
+                      </button>
+                    );
+                  })}
           </section>
         </aside>
       </div>

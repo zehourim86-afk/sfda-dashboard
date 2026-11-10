@@ -971,3 +971,34 @@ textarea.mah-input { resize: vertical; min-height: 60px; }
 .faseh-stats > div { border: 1px solid #E2E8F0; border-radius: 8px; padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; }
 .faseh-stats span { font-size: 11px; color: #64748B; text-transform: uppercase; letter-spacing: 0.04em; }
 .faseh-stats strong { font-size: 18px; color: var(--navy); }
+
+/* ── Phase B: performance, supplier scoring, registration expiry ── */
+.mah-grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (max-width: 900px) { .mah-grid-2 { grid-template-columns: 1fr; } }
+.mah-perf-kpis { gap: 12px; }
+.mah-perf-kpi { display: flex; flex-direction: column; gap: 6px; }
+.mah-perf-kpi-label { font-size: 12px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.04em; }
+.mah-perf-kpi-value { font-size: 28px; font-weight: 700; color: var(--navy); line-height: 1.1; }
+.mah-perf-kpi-value small { font-size: 14px; font-weight: 600; color: #64748B; }
+.mah-perf-kpi-empty { font-size: 14px; font-weight: 600; }
+.mah-perf-skel { display: flex; flex-direction: column; gap: 10px; min-height: 140px; }
+.mah-month-chart { width: 100%; height: auto; max-height: 220px; display: block; }
+.mah-reason-list { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 8px; font-size: 13px; color: #334155; }
+.mah-reason-list li > span:first-child { margin-right: 8px; }
+
+.mah-score-breakdown { margin-top: 16px; border-top: 1px solid #E2E8F0; padding-top: 12px; display: flex; flex-direction: column; gap: 8px; }
+.mah-score-breakdown .mah-h3 { margin: 0; }
+.mah-factor { display: grid; grid-template-columns: minmax(150px, 1.2fr) minmax(60px, 1fr) minmax(140px, 1.4fr) 56px; align-items: center; gap: 12px; font-size: 13px; }
+.mah-factor-label { font-weight: 600; color: var(--navy); }
+.mah-factor-bar { height: 8px; background: #F1F5F9; border-radius: 999px; overflow: hidden; }
+.mah-factor-fill { display: block; height: 100%; border-radius: 999px; }
+.mah-factor-value { color: #475569; }
+.mah-factor-impact { justify-self: end; font-weight: 700; min-width: 44px; text-align: center; }
+.mah-factor-total { grid-template-columns: 1fr auto; border-top: 1px solid #E2E8F0; padding-top: 8px; font-size: 14px; }
+@media (max-width: 640px) {
+  .mah-factor { grid-template-columns: 1fr auto; }
+  .mah-factor-bar { grid-column: 1 / -1; order: 3; }
+}
+
+.mah-pill { border-radius: 999px; }
+.mah-expiry-row .mah-row-title { white-space: nowrap; }

@@ -277,6 +277,19 @@ export function expiryStatus(product) {
   return { key: 'valid', label: `Valid to ${fmtDate(product.sfda_reg_expiry)}`, tone: 'green' };
 }
 
+// Registration status pill for the products table and expiry lists (Phase B3)
+//   no expiry grey · expired red · ≤ 7 days red · 8–30 amber · 31–90 blue · later green
+export function registrationStatus(product) {
+  const days = daysUntil(product.sfda_reg_expiry);
+  if (days === null) return { key: 'none', label: 'No expiry set', tone: 'grey', days };
+  if (days < 0) return { key: 'expired', label: 'Expired', tone: 'red', days };
+  if (days <= 90) return { key: 'expiring', label: `Expires in ${days}d`, tone: days <= 7 ? 'red' : days <= 30 ? 'amber' : 'blue', days };
+  return { key: 'valid', label: `Valid — ${fmtDate(product.sfda_reg_expiry)}`, tone: 'green', days };
+}
+
+// Supplier compliance score colour: 90+ green · 70–89 blue · 50–69 amber · below 50 red
+export const supplierScoreTone = (score) => (score >= 90 ? 'green' : score >= 70 ? 'blue' : score >= 50 ? 'amber' : 'red');
+
 // ── Visual pieces ────────────────────────────────────
 export const COLORS = {
   navy: '#0F1A4A', blue: '#0099EE', green: '#00B87A', amber: '#E8900A', red: '#E0334C',

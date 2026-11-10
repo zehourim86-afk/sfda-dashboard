@@ -1,7 +1,7 @@
 // MAH portal — Suppliers (cards, expandable profile).
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
-  apiFetch, Ring, Tabs, StateBadge, Empty, Icon, stateOf, shipmentName, shipmentRef, fmtDate, timeAgo,
+  apiFetch, Ring, Tabs, StateBadge, Empty, Icon, stateOf, shipmentName, shipmentRef, fmtDate, timeAgo, supplierScoreTone,
 } from './mahShared';
 
 const REJECTED_STATES = ['SFDA_REJECTED', 'OBJECTION_FILED', 'DISPOSITION_PENDING', 'CLOSED_REEXPORTED', 'CLOSED_DESTROYED'];
@@ -12,7 +12,7 @@ const supplierShipments = (supplier, shipments) => shipments.filter(s =>
   s.supplier_id === supplier.id
   || (!s.supplier_id && s.supplier_name && s.supplier_name.trim().toLowerCase() === supplier.name.trim().toLowerCase()));
 
-export default function MahSuppliers({ token, suppliers, shipments, productsById, openShipment, reloadSuppliers }) {
+export default function MahSuppliers({ token, suppliers, shipments, productsById, openShipment, reloadSuppliers, showToast }) {
   const [openId, setOpenId] = useState(null);
   const [adding, setAdding] = useState(false);
   const [form, setForm] = useState(blank);
@@ -94,7 +94,7 @@ export default function MahSuppliers({ token, suppliers, shipments, productsById
             return (
               <div key={sup.id} className={`mah-card mah-supplier-card${open ? ' is-open' : ''}`}>
                 <button className="mah-supplier-summary" onClick={() => setOpenId(open ? null : sup.id)} aria-expanded={open}>
-                  <Ring value={sup.compliance_score ?? 100} size={64} />
+                  <Ring value={sup.compliance_score ?? 100} size={64} tone={supplierScoreTone(sup.compliance_score ?? 100)} />
                   <div className="mah-grow">
                     <div className="mah-row-title">{sup.name}</div>
                     <div className="mah-row-sub">{sup.country || 'Country not set'}{sup.is_first_time && ' · first-time supplier'}</div>
@@ -104,7 +104,10 @@ export default function MahSuppliers({ token, suppliers, shipments, productsById
                     </div>
                   </div>
                 </button>
-                {open && <SupplierProfile supplier={sup} list={list} productsById={productsById} openShipment={openShipment} />}
+                {open && (
+                  <SupplierProfile supplier={sup} list={list} productsById={productsById} openShipment={openShipment}
+                    token={token} reloadSuppliers={reloadSuppliers} showToast={showToast} />
+                )}
               </div>
             );
           })}
@@ -114,7 +117,7 @@ export default function MahSuppliers({ token, suppliers, shipments, productsById
   );
 }
 
-function SupplierProfile({ supplier, list, productsById, openShipment }) {
+function SupplierProfile({ supplier, list, productsById, openShipment, token, reloadSuppliers, showToast }) {
   const [tab, setTab] = useState('overview');
   const productIds = [...new Set(list.flatMap(s => [s.product_id, ...(Array.isArray(s.line_items) ? s.line_items.map(l => l.product_id) : [])]).filter(Boolean))];
   const rejections = list.filter(s => REJECTED_STATES.includes(stateOf(s)));
@@ -126,6 +129,7 @@ function SupplierProfile({ supplier, list, productsById, openShipment }) {
         { key: 'history', label: 'Shipment history' }, { key: 'compliance', label: 'Compliance history' },
       ]} />
       {tab === 'overview' && (
+        <>
         <div className="mah-facts">
           <div><span>Compliance score</span><strong>{supplier.compliance_score ?? 100}/100</strong></div>
           <div><span>Country</span><strong>{supplier.country || '—'}</strong></div>
@@ -134,6 +138,8 @@ function SupplierProfile({ supplier, list, productsById, openShipment }) {
           <div><span>Supplier since</span><strong>{fmtDate(supplier.created_at)}</strong></div>
           <div><span>Status</span><strong>{supplier.is_first_time ? 'First-time' : 'Established'}</strong></div>
         </div>
+        <ScoreBreakdown supplier={supplier} token={token} reloadSuppliers={reloadSuppliers} showToast={showToast} />
+        </>
       )}
       {tab === 'products' && (productIds.length === 0
         ? <Empty title="No products linked yet" />
@@ -158,5 +164,88 @@ function SupplierProfile({ supplier, list, productsById, openShipment }) {
           </div>
         )))}
     </div>
+  );
+}
+
+// ── Compliance score breakdown (POST /suppliers/:id/recalculate, GET /suppliers/:id/score-breakdown) ──
+const sign = (n) => (n > 0 ? `+${n}` : n < 0 ? `${n}` : '0');
+const MAX_IMPACT = 30; // largest single factor (rejection rate)
+
+function FactorRow({ label, value, impact }) {
+  const tone = impact > 0 ? 'green' : impact < 0 ? 'red' : 'grey';
+  return (
+    <div className="mah-factor">
+      <span className="mah-factor-label">{label}</span>
+      <span className="mah-factor-bar" aria-hidden="true">
+        <span className={`mah-factor-fill mah-fill-${tone}`} style={{ width: `${Math.min(100, (Math.abs(impact) / MAX_IMPACT) * 100)}%` }} />
+      </span>
+      <span className="mah-factor-value">{value}</span>
+      <span className={`mah-badge mah-tone-${tone} mah-factor-impact`}>{sign(Math.round(impact * 10) / 10)}</span>
+    </div>
+  );
+}
+
+function ScoreBreakdown({ supplier, token, reloadSuppliers, showToast }) {
+  const [data, setData] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(null);
+
+  const load = useCallback(async () => {
+    try {
+      setData(await apiFetch(token, `/suppliers/${supplier.id}/score-breakdown`));
+      setError(null);
+    } catch (e) {
+      setError(e.message);
+    }
+  }, [token, supplier.id]);
+  useEffect(() => { load(); }, [load]);
+
+  async function recalculate() {
+    setBusy(true);
+    setError(null);
+    try {
+      const r = await apiFetch(token, `/suppliers/${supplier.id}/recalculate`, { method: 'POST' });
+      setData({ ...r, stored_score: r.score });
+      await reloadSuppliers?.();
+      showToast?.(`Score updated: ${r.previous_score ?? '—'} → ${r.score}/100`);
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const f = data?.factors;
+  return (
+    <section className="mah-score-breakdown">
+      <div className="mah-card-head">
+        <h3 className="mah-h3">Compliance Score Breakdown</h3>
+        <button className="mah-btn mah-btn-sm mah-btn-ghost" onClick={recalculate} disabled={busy}>
+          {busy ? 'Recalculating…' : 'Recalculate'}
+        </button>
+      </div>
+      {error && <div className="mah-alert mah-alert-red">{error}</div>}
+      {!f ? (!error && <div className="mah-loading">Calculating…</div>) : (
+        <>
+          <FactorRow label="SFDA rejection rate" impact={-f.rejection_rate.deduction}
+            value={f.rejection_rate.total ? `${f.rejection_rate.value}% rejection rate` : 'No shipments yet'} />
+          <FactorRow label="Supplier history" impact={-f.first_time.deduction}
+            value={f.first_time.value ? 'First-time supplier' : `${f.first_time.shipments_submitted} shipments completed`} />
+          <FactorRow label="Document quality" impact={f.document_quality.adjustment}
+            value={f.document_quality.avg_score != null ? `Avg AI score: ${Math.round(f.document_quality.avg_score)}/100` : 'No data'} />
+          <FactorRow label="Average clearance time" impact={f.clearance_speed.adjustment}
+            value={f.clearance_speed.avg_days != null ? `${f.clearance_speed.avg_days} days avg` : 'No completed shipments'} />
+          <FactorRow label="Integrity check failures" impact={-f.integrity_flags.deduction}
+            value={`${f.integrity_flags.count} critical/high failure${f.integrity_flags.count === 1 ? '' : 's'}`} />
+          <div className="mah-factor mah-factor-total">
+            <span>Compliance score: <strong className={`mah-text-${supplierScoreTone(data.score)}`}>{data.score}/100</strong></span>
+            {data.stored_score != null && data.stored_score !== data.score && (
+              <span className="mah-small mah-muted">Stored score {data.stored_score} — recalculate to update</span>
+            )}
+          </div>
+          <p className="mah-small mah-muted">Based on {data.shipments_analyzed} shipment{data.shipments_analyzed === 1 ? '' : 's'} from this supplier.</p>
+        </>
+      )}
+    </section>
   );
 }

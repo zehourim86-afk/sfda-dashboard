@@ -1,13 +1,14 @@
 // MAH portal — Products & Registrations (product master).
 import { useState } from 'react';
-import { apiFetch, SECTOR_LABELS, SectorBadge, expiryStatus, Empty, Icon } from './mahShared';
+import { apiFetch, SECTOR_LABELS, SectorBadge, registrationStatus, Empty, Icon } from './mahShared';
 
 const FILTERS = [
   { key: 'all', label: 'All', test: () => true },
   { key: 'food_supplement', label: 'Food Supplement', test: p => p.sector === 'food_supplement' },
   { key: 'cosmetic', label: 'Cosmetics', test: p => p.sector === 'cosmetic' },
   { key: 'food', label: 'Food', test: p => p.sector === 'food' },
-  { key: 'expiring', label: 'Expiring', test: p => ['expiring', 'expired'].includes(expiryStatus(p).key) },
+  // Expires within 90 days, or already expired
+  { key: 'expiring', label: 'Expiring', test: p => ['expiring', 'expired'].includes(registrationStatus(p).key) },
 ];
 
 const FIELDS = [
@@ -120,11 +121,11 @@ export default function MahProducts({ token, products, shipments, reloadProducts
           <div className="mah-table-wrap">
             <table className="mah-table">
               <thead>
-                <tr><th>Product</th><th>Sector</th><th>SFDA reg. no.</th><th>Manufacturer</th><th>Registration</th><th>Shipments</th><th /></tr>
+                <tr><th>Product</th><th>Sector</th><th>SFDA reg. no.</th><th>Manufacturer</th><th>Registration Status</th><th>Shipments</th><th /></tr>
               </thead>
               <tbody>
                 {rows.map(p => {
-                  const st = expiryStatus(p);
+                  const st = registrationStatus(p);
                   return (
                     <tr key={p.id}>
                       <td>
@@ -137,7 +138,10 @@ export default function MahProducts({ token, products, shipments, reloadProducts
                         {p.manufacturer_name || <span className="mah-muted">—</span>}
                         {p.manufacturer_country && <div className="mah-row-sub">{p.manufacturer_country}</div>}
                       </td>
-                      <td><span className={`mah-badge mah-tone-${st.tone}`}>{st.label}</span></td>
+                      <td>
+                        {st.key === 'none' ? <span className="mah-muted mah-small">{st.label}</span>
+                          : <span className={`mah-badge mah-pill mah-tone-${st.tone}`}>{st.label}</span>}
+                      </td>
                       <td>{productShipmentCount(p, shipments)}</td>
                       <td><button className="mah-btn mah-btn-sm mah-btn-ghost" onClick={() => startEdit(p)}>Edit</button></td>
                     </tr>
