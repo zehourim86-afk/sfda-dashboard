@@ -1002,3 +1002,22 @@ textarea.mah-input { resize: vertical; min-height: 60px; }
 
 .mah-pill { border-radius: 999px; }
 .mah-expiry-row .mah-row-title { white-space: nowrap; }
+
+/* Demo spotlight (MahOverview) — DEMO-* shipments from demo_seed_v2.sql */
+.mah-demo-spotlight { background: linear-gradient(135deg, #0F1A4A 0%, #152060 100%); border-radius: 12px; padding: 16px 20px; margin-bottom: 20px; }
+.mah-demo-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.mah-demo-spotlight .mah-demo-title { color: #fff; font-weight: 700; font-size: 15px; margin: 0; }
+.mah-demo-pill { background: rgba(255,255,255,0.15); color: #fff; border-radius: 20px; padding: 3px 10px; font-size: 11px; }
+.mah-demo-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.mah-demo-card { display: block; width: 100%; text-align: left; font: inherit; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; padding: 12px 14px; cursor: pointer; transition: background 0.15s; }
+.mah-demo-card:hover, .mah-demo-card:focus-visible { background: rgba(255,255,255,0.14); }
+.mah-demo-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.mah-demo-ref { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color: rgba(255,255,255,0.5); font-size: 11px; }
+.mah-demo-name { color: #fff; font-size: 13px; font-weight: 500; margin: 4px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mah-demo-sector { color: rgba(255,255,255,0.6); font-size: 11px; }
+.mah-demo-score { font-size: 12px; font-weight: 600; }
+.mah-demo-score.is-green { color: #4ADE80; }
+.mah-demo-score.is-amber { color: #FBBF24; }
+.mah-demo-score.is-red { color: #F87171; }
+.mah-demo-score.is-none { color: rgba(255,255,255,0.45); }
+@media (max-width: 640px) { .mah-demo-grid { grid-template-columns: 1fr; } }

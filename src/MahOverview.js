@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import {
   apiFetch, PIPELINE, ACTION_ORDER, actionFor, actionKey, stateOf, needsAction, isInProgress, StateBadge, SectorBadge,
   shipmentName, shipmentRef, shipmentSector, objectionDeadline, objectionDaysLeft, deadlineUrgency, rejectionDate, daysUntil, fmtDate, timeAgo,
-  Ring, Empty, Icon,
+  Ring, Empty, Icon, SECTOR_LABELS,
 } from './mahShared';
 import { usePerformance } from './MahIntelligence';
 
@@ -55,6 +55,50 @@ function compareActions(a, b) {
   const cb = db != null && db <= 3;
   if (ca !== cb) return ca ? -1 : 1;
   return ORDER.indexOf(keyOf(a)) - ORDER.indexOf(keyOf(b)) || (da ?? Infinity) - (db ?? Infinity);
+}
+
+// Demo spotlight: the curated DEMO-* shipments from demo_seed_v2.sql, in masaar_id order
+const isDemo = (s) => (s.masaar_id || '').startsWith('DEMO-');
+// The seed stores the full shipment name (with batch) in notes; real shipments use the product name
+const demoName = (s, productsById) => s.shipment_name || s.notes || shipmentName(s, productsById);
+function demoScore(score) {
+  if (score == null) return { tone: 'none', text: '—' };
+  if (score >= 85) return { tone: 'green', text: `✓ ${score}/100` };
+  if (score >= 60) return { tone: 'amber', text: `⚠ ${score}/100` };
+  return { tone: 'red', text: `✗ ${score}/100` };
+}
+
+function DemoSpotlight({ shipments, productsById, openShipment }) {
+  const demos = shipments.filter(isDemo).sort((a, b) => a.masaar_id.localeCompare(b.masaar_id));
+  if (demos.length === 0) return null;
+  return (
+    <section className="mah-demo-spotlight" aria-label="Demo shipments">
+      <div className="mah-demo-head">
+        <h2 className="mah-demo-title">✦ Demo Shipments</h2>
+        <span className="mah-demo-pill">PIF Demo</span>
+      </div>
+      <div className="mah-demo-grid">
+        {demos.map(s => {
+          const name = demoName(s, productsById);
+          const score = demoScore(s.integrity_score);
+          const sector = shipmentSector(s);
+          return (
+            <button key={s.id} className="mah-demo-card" onClick={() => openShipment(s)}>
+              <div className="mah-demo-row">
+                <span className="mah-demo-ref">{shipmentRef(s)}</span>
+                <StateBadge state={s.current_state} />
+              </div>
+              <div className="mah-demo-name" title={name}>{truncate(name, 35)}</div>
+              <div className="mah-demo-row">
+                <span className="mah-demo-sector">{SECTOR_LABELS[sector] || sector || '—'}</span>
+                <span className={`mah-demo-score is-${score.tone}`}>{score.text}</span>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    </section>
+  );
 }
 
 export default function MahOverview({ token, shipments, productsById, openShipment, navigate, onNewShipment }) {
@@ -112,6 +156,8 @@ export default function MahOverview({ token, shipments, productsById, openShipme
         </div>
         <button className="mah-btn mah-btn-primary" onClick={onNewShipment}><Icon name="plus" size={16} /> New Shipment</button>
       </div>
+
+      <DemoSpotlight shipments={shipments} productsById={productsById} openShipment={openShipment} />
 
       <section className="mah-pipeline" aria-label="Shipment pipeline">
         {counts.map(col => (

@@ -69,7 +69,9 @@ export default function MahShipments({ token, shipments, productsById, suppliers
   const q = search.trim().toLowerCase();
   const rows = inSector
     .filter(byKey(STATUS_FILTERS, status).test)
-    .filter(s => !q || [shipmentName(s, productsById), s.masaar_id, s.faseh_request_number, s.bl_awb_number, s.supplier_name]
+    // Partial, case-insensitive match on IDs, names (shipment / product / seeded demo name in notes) and references
+    .filter(s => !q || [shipmentName(s, productsById), s.shipment_name, s.notes, s.product_name,
+      productsById?.[s.product_id]?.name_en, s.masaar_id, s.faseh_request_number, s.bl_awb_number, s.supplier_name]
       .some(v => v && String(v).toLowerCase().includes(q)))
     .sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
 
