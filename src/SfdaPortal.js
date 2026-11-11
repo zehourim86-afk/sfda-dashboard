@@ -15,6 +15,16 @@ import SfdaSubmissions from './SfdaSubmissions';
 import SfdaSampling from './SfdaSampling';
 import SfdaDecisions from './SfdaDecisions';
 import SfdaSettings from './SfdaSettings';
+import { PortalContent, SkeletonLoader, loadErrorFrom } from './PortalComponents';
+
+// Content-area skeleton while the portal's data loads
+const SKELETON = (
+  <div className="mah-page">
+    <div className="pc-skel-pipeline">{Array.from({ length: 6 }, (_, i) => <div key={i}><SkeletonLoader type="stat" /></div>)}</div>
+    <SkeletonLoader type="card" />
+    <SkeletonLoader type="table-row" count={5} />
+  </div>
+);
 
 const NAV = [
   { page: 'overview', label: 'Overview', icon: 'home' },
@@ -41,6 +51,7 @@ export default function SfdaPortal({ user, token: tokenProp, onLogout }) {
   const [organisations, setOrganisations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
+  const [reloadKey, setReloadKey] = useState(0); // bump to re-run the initial load ("Try again")
 
   const loadShipments = useCallback(async () => {
     const data = await apiFetch(token, '/shipments?limit=500');
@@ -61,11 +72,13 @@ export default function SfdaPortal({ user, token: tokenProp, onLogout }) {
         logoutRef.current();
         return;
       }
-      setLoadError(failed.length ? `Some data could not be loaded: ${failed[0].reason.message}` : null);
+      // The first request (shipments) failing is fatal: full-page error; the others show a banner
+      setLoadError(loadErrorFrom(results));
       setLoading(false);
     })();
     return () => { cancelled = true; };
-  }, [token, loadShipments]);
+  }, [token, loadShipments, reloadKey]);
+  const retryLoad = useCallback(() => setReloadKey(k => k + 1), []);
 
   const productsById = useMemo(() => productsFromShipments(shipments), [shipments]);
   const orgsById = useMemo(() => Object.fromEntries(organisations.map(o => [o.id, o])), [organisations]);
@@ -146,8 +159,7 @@ export default function SfdaPortal({ user, token: tokenProp, onLogout }) {
         </aside>
 
         <main className="mah-content">
-          {loadError && <div className="mah-alert mah-alert-amber">{loadError}</div>}
-          {loading ? <div className="mah-loading">Loading shipments…</div> : renderPage()}
+          <PortalContent loading={loading} error={loadError} onRetry={retryLoad} skeleton={SKELETON}>{renderPage()}</PortalContent>
         </main>
       </div>
 

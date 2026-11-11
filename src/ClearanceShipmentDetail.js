@@ -2,7 +2,7 @@
 // Timeline | Documents | Faseh & Filing | SFDA Track | Objection (SFDA_REJECTED / OBJECTION_FILED) | Customs
 // | Disposition (only in DISPOSITION_PENDING)
 // The broker records Faseh filing, SFDA outcomes, sampling steps, customs steps and disposition here.
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   apiFetch, stateOf, StateBadge, SectorBadge, shipmentName, shipmentRef, shipmentSector,
   SECTOR_CHECKLISTS, CHECKLIST_DOC_TYPES, fmtDate, fmtDateTime, Tabs, Icon, isDataUrl, SECTOR_LABELS,
@@ -15,12 +15,11 @@ import { TimelineTab, DossierReasons, ObjectionCountdown, ObjectionSteps } from 
 import { useFasehStatus, ClearanceFasehBar } from './FasehSync';
 import {
   SAMPLING_STEPS, SAMPLING_LABELS, CUSTOMS_STEPS, CUSTOMS_LABELS, INFO_REQUEST_LABELS,
-  todayISO, fmtSAR, Toast,
+  todayISO, fmtSAR,
 } from './clearanceShared';
 
 const READINESS_TONES = { READY: 'green', WARNING: 'amber', MISSING_INFO: 'amber', CRITICAL_ISSUE: 'red' };
 const TRANSPORT_LABELS = { sea: 'Sea', air: 'Air', land: 'Land' };
-const TOAST_MS = 3500;
 
 export default function ClearanceShipmentDetail({
   token, user, shipment: initial, initialTab, productsById, organisations = [], navigate, reloadShipments, showToast: portalToast,
@@ -32,8 +31,6 @@ export default function ClearanceShipmentDetail({
   const [tab, setTab] = useState(initialTab || 'timeline');
   const [busy, setBusy] = useState(null);
   const [actionError, setActionError] = useState(null);
-  const [toast, setToast] = useState(null);
-  const toastTimer = useRef(null);
 
   const [agreementOpen, setAgreementOpen] = useState(false);
 
@@ -51,13 +48,8 @@ export default function ClearanceShipmentDetail({
   }, [token, initial.id]);
 
   useEffect(() => { load(); }, [load]);
-  useEffect(() => () => clearTimeout(toastTimer.current), []);
-
-  const showToast = (message) => {
-    setToast(message);
-    clearTimeout(toastTimer.current);
-    toastTimer.current = setTimeout(() => setToast(null), TOAST_MS);
-  };
+  // The portal's toast stack (PortalComponents.useToast)
+  const showToast = (message, type) => portalToast?.(message, type);
 
   // Runs one broker action: fn() does the API calls; then the shipment and list reload.
   // Returns true on success so forms can reset.
@@ -216,7 +208,6 @@ export default function ClearanceShipmentDetail({
           }} />
       )}
 
-      <Toast message={toast} />
     </div>
   );
 }

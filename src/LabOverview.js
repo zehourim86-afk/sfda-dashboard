@@ -4,6 +4,7 @@ import { SectorBadge, shipmentName, shipmentRef, shipmentSector, Empty, Icon } f
 import { daysSince, isThisMonth } from './clearanceShared';
 import { mahCompany, SamplingBadge } from './sfdaShared';
 import { labStage, labAction, isRejected, hasResults, ColdChainTag } from './labShared';
+import { EmptyState } from './PortalComponents';
 
 // Hardcoded until the metrics backend exists
 const AVG_ANALYSIS_DAYS = 5;
@@ -60,7 +61,9 @@ export default function LabOverview({ samples, productsById, openSample, navigat
               <input className="mah-action-search" placeholder="Search by shipment name or MSR ID..." value={search}
                 onChange={e => setSearch(e.target.value)} aria-label="Search action queue" />
             )}
-            {actions.length === 0
+            {samples.length === 0
+              ? <EmptyState icon="🧪" title="No samples assigned" description="SFDA sampling orders will appear here" />
+              : actions.length === 0
               ? <Empty title="Nothing needs your action">Samples arriving at the lab and results pending upload appear here.</Empty>
               : actions.slice(0, ACTION_LIMIT).map(({ s, a }) => (
                 <div key={s.id} className={`mah-action-row mah-edge-${a.tone}`}>

@@ -1,9 +1,10 @@
 // Lab Portal — Samples: every sample assigned to this lab, filterable by stage.
 import { useState } from 'react';
-import { SectorBadge, shipmentName, shipmentRef, shipmentSector, fmtDate, Empty } from './mahShared';
+import { SectorBadge, shipmentName, shipmentRef, shipmentSector, fmtDate } from './mahShared';
 import { ChipRow, daysSince } from './clearanceShared';
 import { mahCompany, SamplingBadge, matchesSearch } from './sfdaShared';
 import { labStage, labAction, ColdChainTag } from './labShared';
+import { EmptyState } from './PortalComponents';
 
 const FILTERS = [
   { key: 'all', label: 'All', test: () => true },
@@ -41,7 +42,8 @@ export default function LabSamples({ samples, productsById, openSample }) {
       </div>
 
       <section className="mah-card mah-card-flush">
-        {rows.length === 0 ? <Empty title="No samples match" /> : (
+        {samples.length === 0 ? <EmptyState icon="🧪" title="No samples assigned" description="SFDA sampling orders will appear here" />
+          : rows.length === 0 ? <EmptyState icon="🔍" title="No samples match" description="Try another filter or search" /> : (
           <div className="mah-table-wrap">
             <table className="mah-table">
               <thead><tr><th>Shipment</th><th>MAH company</th><th>Sector</th><th>Sampling state</th><th>Received</th><th>Days at lab</th><th>Cold chain</th><th>Actions</th></tr></thead>

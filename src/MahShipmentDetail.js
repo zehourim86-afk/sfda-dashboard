@@ -13,6 +13,7 @@ import ServiceAgreementModal from './ServiceAgreementModal';
 import IntegrityDashboard from './IntegrityDashboard';
 import ClearanceCertificate from './ClearanceCertificate';
 import { FasehSyncBar } from './FasehSync';
+import { SkeletonLoader, ErrorBanner, Spinner } from './PortalComponents';
 
 const READINESS_TONES = { READY: 'green', WARNING: 'amber', MISSING_INFO: 'amber', CRITICAL_ISSUE: 'red' };
 const CUSTOMS_STEPS = ['PENDING', 'DECLARATION_FILED', 'DUTIES_PAID', 'CUSTOMS_RELEASED'];
@@ -37,6 +38,7 @@ export default function MahShipmentDetail({
   const [reason, setReason] = useState('');
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState(null);
+  const [loaded, setLoaded] = useState(false); // full record (incl. audit_log) has arrived
 
   const load = useCallback(async () => {
     const [detail, pre, requirements] = await Promise.allSettled([
@@ -45,7 +47,7 @@ export default function MahShipmentDetail({
       apiFetch(token, `/shipments/${initial.id}/document-requirements`),
     ]);
     if (requirements.status === 'fulfilled') { setReqs(requirements.value); setReqError(null); } else setReqError(requirements.reason.message);
-    if (detail.status === 'fulfilled') setShipment(detail.value.shipment);
+    if (detail.status === 'fulfilled') { setShipment(detail.value.shipment); setError(null); setLoaded(true); }
     else setError(detail.reason.message);
     if (pre.status === 'fulfilled') { setIntel(pre.value); setIntelError(null); } else setIntelError(pre.reason.message);
   }, [token, initial.id]);
@@ -73,7 +75,7 @@ export default function MahShipmentDetail({
       setBusy(false);
       if (e.status === 403) {
         setConfirmDelete(false);
-        showToast?.('Only draft shipments can be deleted. Contact your DEMARA advisor to cancel a submitted shipment.');
+        showToast?.('Only draft shipments can be deleted. Contact your DEMARA advisor to cancel a submitted shipment.', 'warning');
       } else {
         setActionError(e.message);
       }
@@ -116,6 +118,15 @@ export default function MahShipmentDetail({
     <div className="mah-page">
       <button className="mah-link-btn mah-back" onClick={() => navigate('shipments')}><Icon name="back" size={16} /> All shipments</button>
 
+      {!loaded && !shipment.masaar_id ? (
+        error ? null : (
+          <section className="mah-card mah-detail-head" aria-busy="true">
+            <SkeletonLoader type="line" width="45%" height={24} />
+            <SkeletonLoader type="line" width="25%" height={12} />
+            <div className="pc-skel-pipeline">{Array.from({ length: 7 }, (_, i) => <div key={i}><SkeletonLoader type="stat" height={16} /></div>)}</div>
+          </section>
+        )
+      ) : (
       <section className="mah-card mah-detail-head">
         <div className="mah-detail-title">
           <div>
@@ -146,17 +157,21 @@ export default function MahShipmentDetail({
           <div><span>Customs</span><strong>{CUSTOMS_LABELS[shipment.customs_state] || '—'}</strong></div>
         </div>
       </section>
+      )}
 
       {PRE_BROKER_STATES.includes(state) && (
         <BrokerStatusBanner token={token} shipment={shipment} organisations={organisations}
           onChanged={refresh} showToast={showToast} />
       )}
 
-      {error && <div className="mah-alert mah-alert-red">{error}</div>}
+      {error && (
+        <ErrorBanner error={error} message="Could not load this shipment" onRetry={() => { setError(null); load(); }} />
+      )}
 
       <Tabs tabs={tabs} active={activeTab} onChange={setTab} />
 
-      {activeTab === 'timeline' && <TimelineTab shipment={shipment} />}
+      {activeTab === 'timeline' && (loaded ? <TimelineTab shipment={shipment} />
+        : error ? null : <section className="mah-card"><SkeletonLoader type="list" count={4} /></section>)}
       {activeTab === 'documents' && (
         <DocumentsTab token={token} shipment={shipment} reqs={reqs} reqError={reqError} onChanged={refresh} />
       )}
@@ -169,8 +184,8 @@ export default function MahShipmentDetail({
         <div className="mah-stack">
           <section className="mah-card">
             <div className="mah-card-head"><h2>Pre-arrival intelligence</h2></div>
-            {intelError ? <div className="mah-alert mah-alert-red">{intelError}</div>
-              : intel ? <RiskPanel intel={intel} /> : <div className="mah-loading">Scoring shipment…</div>}
+            {intelError ? <ErrorBanner compact error={intelError} message="Could not score this shipment" onRetry={load} />
+              : intel ? <RiskPanel intel={intel} /> : <div className="mah-loading"><Spinner label="Scoring shipment…" /></div>}
           </section>
           {['SUBMITTED', 'SAMPLING'].includes(state) && (shipment.faseh_sync_active
             ? <FasehSyncBar compact lastSyncAt={shipment.faseh_last_synced_at || shipment.faseh_connection_last_sync_at} />
@@ -190,7 +205,7 @@ export default function MahShipmentDetail({
           onChanged={refresh} showToast={showToast} />
       )}
       {activeTab === 'certificate' && state === 'CLOSED_RELEASED' && (
-        <ClearanceCertificate shipment={shipment} token={token} apiUrl={API_URL} />
+        <ClearanceCertificate shipment={shipment} token={token} apiUrl={API_URL} showToast={showToast} />
       )}
 
       {(canDelete || canCancel) && (
@@ -320,8 +335,8 @@ function DocumentsTab({ token, shipment, reqs, reqError, onChanged }) {
   if (!reqs) {
     return (
       <section className="mah-card">
-        {reqError ? <div className="mah-alert mah-alert-red">Could not load the document checklist: {reqError}</div>
-          : <div className="mah-loading">Loading document checklist…</div>}
+        {reqError ? <ErrorBanner compact error={reqError} message="Could not load the document checklist" onRetry={onChanged} />
+          : <SkeletonLoader type="list" count={5} />}
       </section>
     );
   }
@@ -872,7 +887,8 @@ function ConsistencySection({ integrity, error, running, onRun }) {
   const ran = !!integrity?.checked_at;
 
   let body;
-  if (integrity === undefined && !error) body = <div className="mah-loading">Loading consistency checks…</div>;
+  if (running) body = <div className="mah-loading"><Spinner label="Running checks…" /></div>;
+  else if (integrity === undefined && !error) body = <SkeletonLoader type="list" count={3} />;
   else if (!ran) {
     body = (
       <div className="mah-l2-empty">
@@ -1504,8 +1520,8 @@ function ObjectionTab({ token, shipment, name, onChanged, showToast }) {
   if (!dossier) {
     return (
       <section className="mah-card">
-        {loadError ? <div className="mah-alert mah-alert-red">Could not load the objection dossier: {loadError}</div>
-          : <div className="mah-loading">Loading objection dossier…</div>}
+        {loadError ? <ErrorBanner compact error={loadError} message="Could not load the objection dossier" onRetry={load} />
+          : <SkeletonLoader type="card" count={2} />}
       </section>
     );
   }

@@ -9,7 +9,7 @@ import './admin-portal.css';
 import { apiFetch, Icon } from './mahShared';
 import NotificationBell from './PortalNotificationBell';
 import NotificationCentre from './NotificationCentre';
-import { productsFromShipments, Toast } from './clearanceShared';
+import { productsFromShipments } from './clearanceShared';
 import { ShipmentModal } from './sfdaShared';
 import { buildAlerts, pendingCancellations, isClosedState, TransitionModal, WithdrawModal } from './adminShared';
 import AdminDashboard from './AdminDashboard';
@@ -19,6 +19,16 @@ import AdminUsers from './AdminUsers';
 import AdminPlatformHealth from './AdminPlatformHealth';
 import AdminOverrideTools from './AdminOverrideTools';
 import AdminSettings from './AdminSettings';
+import { PortalContent, SkeletonLoader, loadErrorFrom, useToast, ToastStack } from './PortalComponents';
+
+// Content-area skeleton while the portal's data loads
+const SKELETON = (
+  <div className="mah-page">
+    <div className="pc-skel-pipeline">{Array.from({ length: 6 }, (_, i) => <div key={i}><SkeletonLoader type="stat" /></div>)}</div>
+    <SkeletonLoader type="card" />
+    <SkeletonLoader type="table-row" count={5} />
+  </div>
+);
 
 const NAV = [
   { page: 'dashboard', label: 'Dashboard', icon: 'home' },
@@ -30,15 +40,12 @@ const NAV = [
   { page: 'settings', label: 'Settings', icon: 'gear' },
 ];
 const PAGE_TITLES = { ...Object.fromEntries(NAV.map(n => [n.page, n.label])), notifications: 'Notification Centre' };
-const TOAST_MS = 3500;
 
 export default function AdminPortal({ user, token: tokenProp, onLogout }) {
   const token = tokenProp || localStorage.getItem('demara_token');
   const [currentPage, setCurrentPage] = useState('dashboard');
   const [shipmentFilter, setShipmentFilter] = useState(null); // preset when opening All Shipments from elsewhere
   const [modal, setModal] = useState(null); // { type: 'detail' | 'transition' | 'withdraw', shipment }
-  const [toast, setToast] = useState(null);
-  const toastTimer = useRef(null);
   // sidebarCollapsed = locked closed (logo click); hovering a collapsed sidebar expands it temporarily
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [sidebarHovered, setSidebarHovered] = useState(false);
@@ -55,6 +62,7 @@ export default function AdminPortal({ user, token: tokenProp, onLogout }) {
   const [suspendedOrgs, setSuspendedOrgs] = useState(() => new Set()); // demo only, not saved
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
+  const [reloadKey, setReloadKey] = useState(0); // bump to re-run the initial load ("Try again")
 
   const loadShipments = useCallback(async () => {
     const data = await apiFetch(token, '/shipments?limit=500');
@@ -88,18 +96,16 @@ export default function AdminPortal({ user, token: tokenProp, onLogout }) {
         logoutRef.current();
         return;
       }
-      setLoadError(failed.length ? `Some data could not be loaded: ${failed[0].reason.message}` : null);
+      // The first request (shipments) failing is fatal: full-page error; the others show a banner
+      setLoadError(loadErrorFrom(results));
       setLoading(false);
     })();
     return () => { cancelled = true; };
-  }, [token, loadShipments, loadUsers, loadAlertAudit]);
-  useEffect(() => () => clearTimeout(toastTimer.current), []);
+  }, [token, loadShipments, loadUsers, loadAlertAudit, reloadKey]);
+  const retryLoad = useCallback(() => setReloadKey(k => k + 1), []);
 
-  const showToast = useCallback((message) => {
-    setToast(message);
-    clearTimeout(toastTimer.current);
-    toastTimer.current = setTimeout(() => setToast(null), TOAST_MS);
-  }, []);
+  // showToast(message, type = 'success' | 'error' | 'warning' | 'info')
+  const { toasts, addToast: showToast, removeToast } = useToast();
 
   const productsById = useMemo(() => productsFromShipments(shipments), [shipments]);
   const orgsById = useMemo(() => Object.fromEntries(organisations.map(o => [o.id, o])), [organisations]);
@@ -202,8 +208,7 @@ export default function AdminPortal({ user, token: tokenProp, onLogout }) {
         </aside>
 
         <main className="mah-content">
-          {loadError && <div className="mah-alert mah-alert-amber">{loadError}</div>}
-          {loading ? <div className="mah-loading">Loading platform data…</div> : renderPage()}
+          <PortalContent loading={loading} error={loadError} onRetry={retryLoad} skeleton={SKELETON}>{renderPage()}</PortalContent>
         </main>
       </div>
 
@@ -221,7 +226,7 @@ export default function AdminPortal({ user, token: tokenProp, onLogout }) {
       {modal?.type === 'withdraw' && (
         <WithdrawModal token={token} shipment={modalShipment} productsById={productsById} onClose={closeModal} onDone={afterChange} />
       )}
-      <Toast message={toast} />
+      <ToastStack toasts={toasts} onClose={removeToast} />
     </div>
   );
 }

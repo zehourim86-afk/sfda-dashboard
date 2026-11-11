@@ -6,6 +6,7 @@ import {
   Ring, Empty, Icon, SECTOR_LABELS,
 } from './mahShared';
 import { usePerformance } from './MahIntelligence';
+import { SkeletonLoader, ErrorBanner } from './PortalComponents';
 
 const REG_ACTION_DAYS = 30; // expiring registrations become action items at 30 days or less
 const truncate = (text, n) => (text && text.length > n ? `${text.slice(0, n - 1)}…` : text);
@@ -101,19 +102,27 @@ function DemoSpotlight({ shipments, productsById, openShipment }) {
   );
 }
 
-export default function MahOverview({ token, shipments, productsById, openShipment, navigate, onNewShipment }) {
+// loading: the portal is still fetching shipments — pipeline and action items show skeletons
+export default function MahOverview({ token, shipments, productsById, openShipment, navigate, onNewShipment, loading = false }) {
   const [actionSearch, setActionSearch] = useState('');
-  const { data: perf } = usePerformance(token);
+  const { data: perf, error: perfError, loading: perfLoading, reload: reloadPerf } = usePerformance(token);
   // Registrations expiring within 90 days (or expired), soonest first
   const [expiring, setExpiring] = useState(null);
   const [expiringError, setExpiringError] = useState(null);
+  const [expiringKey, setExpiringKey] = useState(0); // bump to retry
   useEffect(() => {
     let cancelled = false;
+    setExpiringError(null);
     apiFetch(token, '/products/expiring')
-      .then(d => { if (!cancelled) { setExpiring(d.products || []); setExpiringError(null); } })
+      .then(d => { if (!cancelled) setExpiring(d.products || []); })
       .catch(e => { if (!cancelled) setExpiringError(e.message); });
     return () => { cancelled = true; };
-  }, [token]);
+  }, [token, expiringKey]);
+  const overviewError = perfError || expiringError;
+  const retryOverview = () => {
+    if (perfError) reloadPerf();
+    if (expiringError) { setExpiring(null); setExpiringKey(k => k + 1); }
+  };
   const expiringSoon = (expiring || []).filter(p => p.days_until_expiry <= REG_ACTION_DAYS);
   const [actionFilter, setActionFilter] = useState('all');
   const [actionPage, setActionPage] = useState(1);
@@ -152,13 +161,23 @@ export default function MahOverview({ token, shipments, productsById, openShipme
       <div className="mah-page-head">
         <div>
           <h1>Good to see you</h1>
-          <p className="mah-muted">{actions.length} shipment{actions.length === 1 ? '' : 's'} need your attention · {inProgress.length} in progress</p>
+          <p className="mah-muted">{loading ? 'Loading your shipments…'
+            : `${actions.length} shipment${actions.length === 1 ? '' : 's'} need your attention · ${inProgress.length} in progress`}</p>
         </div>
         <button className="mah-btn mah-btn-primary" onClick={onNewShipment}><Icon name="plus" size={16} /> New Shipment</button>
       </div>
 
+      {overviewError && !loading && (
+        <ErrorBanner compact error={overviewError} onRetry={retryOverview} message="Could not load overview data" />
+      )}
+
       <DemoSpotlight shipments={shipments} productsById={productsById} openShipment={openShipment} />
 
+      {loading ? (
+        <div className="pc-skel-pipeline" aria-label="Loading pipeline">
+          {PIPELINE.map(col => <div key={col.key}><SkeletonLoader type="stat" /></div>)}
+        </div>
+      ) : (
       <section className="mah-pipeline" aria-label="Shipment pipeline">
         {counts.map(col => (
           <button key={col.key} className={`mah-pipe-col mah-pipe-${col.key}`} onClick={() => navigate('shipments')}>
@@ -167,14 +186,16 @@ export default function MahOverview({ token, shipments, productsById, openShipme
           </button>
         ))}
       </section>
+      )}
 
       <div className="mah-overview-grid">
         <div className="mah-stack">
           <section className="mah-card">
             <div className="mah-card-head">
               <h2>Action items</h2>
-              <span className="mah-count-pill mah-tone-red">{actions.length + expiringSoon.length}</span>
+              {!loading && <span className="mah-count-pill mah-tone-red">{actions.length + expiringSoon.length}</span>}
             </div>
+            {loading ? <SkeletonLoader type="list" count={3} /> : (<>
             {actions.length > 0 && (
               <div className="mah-action-tools">
                 <input className="mah-action-search" placeholder="Search by shipment name or ID..." value={actionSearch}
@@ -245,14 +266,15 @@ export default function MahOverview({ token, shipments, productsById, openShipme
                 </span>
               </div>
             )}
+            </>)}
           </section>
 
           <section className="mah-card">
             <div className="mah-card-head">
               <h2>In progress</h2>
-              <span className="mah-count-pill mah-tone-blue">{inProgress.length}</span>
+              {!loading && <span className="mah-count-pill mah-tone-blue">{inProgress.length}</span>}
             </div>
-            {inProgress.length === 0
+            {loading ? <SkeletonLoader type="list" count={3} /> : inProgress.length === 0
               ? <Empty title="No shipments in progress" />
               : inProgress.slice(0, 8).map(s => (
                 <button key={s.id} className="mah-list-row" onClick={() => openShipment(s)}>
@@ -273,6 +295,7 @@ export default function MahOverview({ token, shipments, productsById, openShipme
         <aside className="mah-stack">
           <section className="mah-card">
             <div className="mah-card-head"><h2>Live metrics</h2></div>
+            {perfLoading ? <SkeletonLoader type="stat" count={2} /> : (<>
             <div className="mah-metric-gauge">
               <Ring value={perf?.first_time_right_rate ?? 0} size={96} stroke={9}
                 label={perf?.first_time_right_rate == null ? '—' : `${Math.round(perf.first_time_right_rate)}%`} />
@@ -285,6 +308,7 @@ export default function MahOverview({ token, shipments, productsById, openShipme
               <span>Avg cycle time</span>
               <strong>{perf?.avg_cycle_time_days == null ? '—' : `${perf.avg_cycle_time_days}d`}</strong>
             </div>
+            </>)}
           </section>
 
           <section className="mah-card">
@@ -307,8 +331,8 @@ export default function MahOverview({ token, shipments, productsById, openShipme
                 <span className={`mah-count-pill mah-tone-${expiring.length ? 'amber' : 'green'}`}>{expiring.length}</span>
               )}
             </div>
-            {expiringError ? <div className="mah-alert mah-alert-red">{expiringError}</div>
-              : !expiring ? <div className="mah-loading">Checking registrations…</div>
+            {expiringError ? <Empty title="Registrations could not be checked" />
+              : !expiring ? <SkeletonLoader type="list" count={3} />
                 : expiring.length === 0
                   ? <Empty title="No registrations expiring in the next 90 days ✓" />
                   : expiring.slice(0, 6).map(p => {

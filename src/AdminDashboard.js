@@ -5,6 +5,7 @@ import { getStateLabel } from './constants';
 import { daysSince } from './clearanceShared';
 import { mahCompany } from './sfdaShared';
 import { SHIPMENT_STATES, orgShipments, rejectionRate, lastActivity, isClosedState, orgTypeLabel } from './adminShared';
+import { SkeletonLoader, ErrorBanner } from './PortalComponents';
 
 const ALERT_LABELS = {
   objections: 'Objection limit', disposition: 'Disposition overdue', cancellation: 'Cancellation request', withdrawn: 'Data quality',
@@ -25,13 +26,15 @@ const checkLabel = (type) => CHECK_LABELS[type] || type.replace(/_/g, ' ').toLow
 function IntegrityAlerts({ token, shipmentsById, productsById, openShipment }) {
   const [alerts, setAlerts] = useState(null);
   const [error, setError] = useState(null);
+  const [reloadKey, setReloadKey] = useState(0); // bump to retry
   useEffect(() => {
     let cancelled = false;
+    setError(null);
     apiFetch(token, '/admin/integrity-alerts')
       .then(d => { if (!cancelled) setAlerts(d.alerts || []); })
       .catch(e => { if (!cancelled) setError(e.message); });
     return () => { cancelled = true; };
-  }, [token]);
+  }, [token, reloadKey]);
 
   return (
     <section className="mah-card">
@@ -39,8 +42,8 @@ function IntegrityAlerts({ token, shipmentsById, productsById, openShipment }) {
         <h2>Integrity Alerts</h2>
         {alerts && <span className={`mah-count-pill mah-tone-${alerts.length ? 'red' : 'green'}`}>{alerts.length}</span>}
       </div>
-      {error ? <div className="mah-alert mah-alert-red">Could not load integrity alerts: {error}</div>
-        : !alerts ? <div className="mah-loading">Loading integrity alerts…</div>
+      {error ? <ErrorBanner compact error={error} message="Could not load integrity alerts" onRetry={() => setReloadKey(k => k + 1)} />
+        : !alerts ? <SkeletonLoader type="list" count={3} />
           : alerts.length === 0 ? (
             <Empty title="No integrity alerts">Failed high and critical integrity checks — misclassification, expired registrations, high-risk suppliers — appear here.</Empty>
           ) : (

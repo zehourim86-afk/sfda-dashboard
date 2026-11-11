@@ -86,7 +86,7 @@ export default function AdminOrganisations({ organisations, shipments, users, pr
               if (next.has(selected.id)) next.delete(selected.id); else next.add(selected.id);
               return next;
             });
-            showToast(`${selected.name_en} ${isSuspended(selected) ? 'reactivated' : 'suspended'} (demo — not saved)`);
+            showToast(`${selected.name_en} ${isSuspended(selected) ? 'reactivated' : 'suspended'} (demo — not saved)`, 'info');
           }}
           onOpenShipment={(s) => { setSelected(null); openShipment(s); }}
           onClose={() => setSelected(null)} />

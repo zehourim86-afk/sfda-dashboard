@@ -1,7 +1,8 @@
 // Clearance Portal — Shipments list (assigned shipments only; brokers don't create shipments).
 import { useState } from 'react';
-import { stateOf, shipmentSector, StateBadge, SectorBadge, shipmentName, shipmentRef, fmtDate, timeAgo, Empty } from './mahShared';
+import { stateOf, shipmentSector, StateBadge, SectorBadge, shipmentName, shipmentRef, fmtDate, timeAgo } from './mahShared';
 import { ChipRow, COMPLETED_STATES } from './clearanceShared';
+import { EmptyState } from './PortalComponents';
 
 // Row 1 — status. Shipments before hand-over (DRAFT…READY_TO_SUBMIT), OBJECTION_FILED and
 // SFDA_REJECTED fall in no group, so they show under "All" only.
@@ -55,8 +56,10 @@ export default function ClearanceShipments({ shipments, productsById, openShipme
       </div>
 
       <section className="mah-card mah-card-flush">
-        {rows.length === 0 ? (
-          <Empty title="No shipments match">Try another filter or search.</Empty>
+        {shipments.length === 0 ? (
+          <EmptyState icon="📋" title="No shipments assigned" description="Shipments handed over by MAHs will appear here" />
+        ) : rows.length === 0 ? (
+          <EmptyState icon="🔍" title="No shipments match" description="Try another filter or search" />
         ) : (
           <div className="mah-table-wrap">
             <table className="mah-table">

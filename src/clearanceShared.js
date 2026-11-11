@@ -116,7 +116,3 @@ export function SummaryCards({ cards }) {
   );
 }
 
-// Small toast that hides itself
-export function Toast({ message }) {
-  return message ? <div className="mah-toast" role="status">{message}</div> : null;
-}

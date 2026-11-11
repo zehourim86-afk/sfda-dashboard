@@ -1,7 +1,7 @@
 // Shipping Portal — Tracking: full-page map placeholder with a table of active shipments.
-import { Empty } from './mahShared';
 import { isActiveShipment } from './shippingShared';
 import ShippingMapPlaceholder from './ShippingMapPlaceholder';
+import { EmptyState } from './PortalComponents';
 
 export default function ShippingTracking({ shipments, productsById }) {
   const active = shipments.filter(isActiveShipment);
@@ -17,7 +17,7 @@ export default function ShippingTracking({ shipments, productsById }) {
       <div className="mah-alert mah-alert-blue">Map view coming soon. Until then, the table below shows each active shipment's last known location (its port of entry).</div>
 
       {active.length === 0
-        ? <section className="mah-card"><Empty title="No active shipments to track" /></section>
+        ? <section className="mah-card"><EmptyState icon="🚢" title="No shipments tracked" description="Active shipments and their last known location will appear here" /></section>
         : <ShippingMapPlaceholder variant="full" shipments={active} productsById={productsById} />}
     </div>
   );

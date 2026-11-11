@@ -1,8 +1,9 @@
 // SFDA Observer — Submissions: shipments with SFDA awaiting a decision (SUBMITTED + SFDA_INFO_REQUESTED).
 import { useState } from 'react';
-import { stateOf, StateBadge, SectorBadge, shipmentName, shipmentRef, shipmentSector, fmtDate, Empty } from './mahShared';
+import { stateOf, StateBadge, SectorBadge, shipmentName, shipmentRef, shipmentSector, fmtDate } from './mahShared';
 import { ChipRow, daysSince } from './clearanceShared';
 import { mahCompany, submittedAt, fmtDays, matchesSearch, WAITING_STATES } from './sfdaShared';
+import { EmptyState } from './PortalComponents';
 
 const FILTERS = [
   { key: 'all', label: 'All', states: WAITING_STATES },
@@ -39,7 +40,9 @@ export default function SfdaSubmissions({ shipments, productsById, orgsById, ope
       </div>
 
       <section className="mah-card mah-card-flush">
-        {rows.length === 0 ? <Empty title="No submissions match" /> : (
+        {rows.length === 0 ? (filter === 'all' && !q
+          ? <EmptyState icon="📥" title="No submissions waiting" description="Shipments filed with SFDA and awaiting a decision will appear here" />
+          : <EmptyState icon="🔍" title="No submissions match" description="Try another filter or search" />) : (
           <div className="mah-table-wrap">
             <table className="mah-table">
               <thead><tr><th>Shipment</th><th>MAH company</th><th>Sector</th><th>Faseh ref</th><th>Submitted</th><th>Days waiting</th><th>State</th></tr></thead>

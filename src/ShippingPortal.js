@@ -16,6 +16,15 @@ import ShippingTracking from './ShippingTracking';
 import ShippingDocuments from './ShippingDocuments';
 import ShippingSettings from './ShippingSettings';
 import ShippingShipmentDetail from './ShippingShipmentDetail';
+import { PortalContent, SkeletonLoader } from './PortalComponents';
+
+// Content-area skeleton while the portal's data loads
+const SKELETON = (
+  <div className="mah-page">
+    <SkeletonLoader type="card" lines={2} />
+    <SkeletonLoader type="table-row" count={6} />
+  </div>
+);
 
 const NAV = [
   { page: 'overview', label: 'Overview', icon: 'home' },
@@ -40,6 +49,7 @@ export default function ShippingPortal({ user, token: tokenProp, onLogout }) {
   const [shipments, setShipments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
+  const [reloadKey, setReloadKey] = useState(0); // bump to re-run the initial load ("Try again")
 
   const loadShipments = useCallback(async () => {
     const data = await apiFetch(token, '/shipping/shipments');
@@ -56,13 +66,14 @@ export default function ShippingPortal({ user, token: tokenProp, onLogout }) {
       } catch (e) {
         if (cancelled) return;
         if (e.status === 401) { logoutRef.current(); return; }
-        setLoadError(e.message);
+        setLoadError({ message: e.message, fatal: true });
       } finally {
         if (!cancelled) setLoading(false);
       }
     })();
     return () => { cancelled = true; };
-  }, [token, loadShipments]);
+  }, [token, loadShipments, reloadKey]);
+  const retryLoad = useCallback(() => setReloadKey(k => k + 1), []);
 
   const productsById = useMemo(() => productsFromShipments(shipments), [shipments]);
   const activeCount = shipments.filter(isActiveShipment).length;
@@ -136,8 +147,7 @@ export default function ShippingPortal({ user, token: tokenProp, onLogout }) {
         </aside>
 
         <main className="mah-content">
-          {loadError && <div className="mah-alert mah-alert-amber">{loadError}</div>}
-          {loading ? <div className="mah-loading">Loading shipments…</div> : renderPage()}
+          <PortalContent loading={loading} error={loadError} onRetry={retryLoad} skeleton={SKELETON}>{renderPage()}</PortalContent>
         </main>
       </div>
 

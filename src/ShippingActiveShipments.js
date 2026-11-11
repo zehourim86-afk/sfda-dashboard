@@ -1,9 +1,10 @@
 // Shipping Portal — Active Shipments table across everything visible to this shipping company.
 import { useState } from 'react';
-import { StateBadge, shipmentName, shipmentRef, fmtDate, Empty } from './mahShared';
+import { StateBadge, shipmentName, shipmentRef, fmtDate } from './mahShared';
 import { ChipRow, daysSince } from './clearanceShared';
 import { mahCompany, matchesSearch } from './sfdaShared';
 import { SHIP_STAGES, shipStage, TransportTag } from './shippingShared';
+import { EmptyState } from './PortalComponents';
 
 const FILTERS = [{ key: 'all', label: 'All' }, ...SHIP_STAGES.map(s => ({ key: s.key, label: s.label }))];
 
@@ -34,7 +35,8 @@ export default function ShippingActiveShipments({ shipments, productsById, openS
       </div>
 
       <section className="mah-card mah-card-flush">
-        {rows.length === 0 ? <Empty title="No shipments match" /> : (
+        {shipments.length === 0 ? <EmptyState icon="🚢" title="No shipments tracked" description="Shipments with transport details will appear here" />
+          : rows.length === 0 ? <EmptyState icon="🔍" title="No shipments match" description="Try another filter or search" /> : (
           <div className="mah-table-wrap">
             <table className="mah-table">
               <thead><tr><th>Shipment</th><th>MAH</th><th>Transport</th><th>Port of entry</th><th>B/L · AWB</th><th>ETA</th><th>State</th><th>Dwell</th></tr></thead>

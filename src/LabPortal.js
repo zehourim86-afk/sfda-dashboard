@@ -8,7 +8,7 @@ import './lab-portal.css';
 import { apiFetch, Icon } from './mahShared';
 import NotificationBell from './PortalNotificationBell';
 import NotificationCentre from './NotificationCentre';
-import { productsFromShipments, Toast } from './clearanceShared';
+import { productsFromShipments } from './clearanceShared';
 import { labStage } from './labShared';
 import LabOverview from './LabOverview';
 import LabSamples from './LabSamples';
@@ -16,6 +16,15 @@ import LabResults from './LabResults';
 import LabRejectedSamples from './LabRejectedSamples';
 import LabSettings from './LabSettings';
 import LabSampleDetail from './LabSampleDetail';
+import { PortalContent, SkeletonLoader, useToast, ToastStack } from './PortalComponents';
+
+// Content-area skeleton while the portal's data loads
+const SKELETON = (
+  <div className="mah-page">
+    <SkeletonLoader type="card" lines={2} />
+    <SkeletonLoader type="table-row" count={6} />
+  </div>
+);
 
 const NAV = [
   { page: 'overview', label: 'Overview', icon: 'home' },
@@ -25,14 +34,11 @@ const NAV = [
   { page: 'settings', label: 'Settings', icon: 'gear' },
 ];
 const PAGE_TITLES = { ...Object.fromEntries(NAV.map(n => [n.page, n.label])), notifications: 'Notification Centre' };
-const TOAST_MS = 3500;
 
 export default function LabPortal({ user, token: tokenProp, onLogout }) {
   const token = tokenProp || localStorage.getItem('demara_token');
   const [currentPage, setCurrentPage] = useState('overview');
   const [detailId, setDetailId] = useState(null);
-  const [toast, setToast] = useState(null);
-  const toastTimer = useRef(null);
   // sidebarCollapsed = locked closed (logo click); hovering a collapsed sidebar expands it temporarily
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [sidebarHovered, setSidebarHovered] = useState(false);
@@ -43,6 +49,7 @@ export default function LabPortal({ user, token: tokenProp, onLogout }) {
   const [samples, setSamples] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
+  const [reloadKey, setReloadKey] = useState(0); // bump to re-run the initial load ("Try again")
 
   const loadSamples = useCallback(async () => {
     const data = await apiFetch(token, '/lab/samples');
@@ -59,20 +66,17 @@ export default function LabPortal({ user, token: tokenProp, onLogout }) {
       } catch (e) {
         if (cancelled) return;
         if (e.status === 401) { logoutRef.current(); return; }
-        setLoadError(e.message);
+        setLoadError({ message: e.message, fatal: true });
       } finally {
         if (!cancelled) setLoading(false);
       }
     })();
     return () => { cancelled = true; };
-  }, [token, loadSamples]);
-  useEffect(() => () => clearTimeout(toastTimer.current), []);
+  }, [token, loadSamples, reloadKey]);
+  const retryLoad = useCallback(() => setReloadKey(k => k + 1), []);
 
-  const showToast = useCallback((message) => {
-    setToast(message);
-    clearTimeout(toastTimer.current);
-    toastTimer.current = setTimeout(() => setToast(null), TOAST_MS);
-  }, []);
+  // showToast(message, type = 'success' | 'error' | 'warning' | 'info')
+  const { toasts, addToast: showToast, removeToast } = useToast();
 
   const productsById = useMemo(() => productsFromShipments(samples), [samples]);
   const pendingCount = samples.filter(s => labStage(s) === 'pending').length;
@@ -158,8 +162,7 @@ export default function LabPortal({ user, token: tokenProp, onLogout }) {
         </aside>
 
         <main className="mah-content">
-          {loadError && <div className="mah-alert mah-alert-amber">{loadError}</div>}
-          {loading ? <div className="mah-loading">Loading samples…</div> : renderPage()}
+          <PortalContent loading={loading} error={loadError} onRetry={retryLoad} skeleton={SKELETON}>{renderPage()}</PortalContent>
         </main>
       </div>
 
@@ -167,7 +170,7 @@ export default function LabPortal({ user, token: tokenProp, onLogout }) {
         <LabSampleDetail token={token} sample={detailSample} productsById={productsById} user={user}
           onClose={() => setDetailId(null)} afterChange={afterChange} />
       )}
-      <Toast message={toast} />
+      <ToastStack toasts={toasts} onClose={removeToast} />
     </div>
   );
 }

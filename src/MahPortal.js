@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import './mah-portal.css';
 import { apiFetch, Icon, needsAction, isClosed } from './mahShared';
-import { Toast } from './clearanceShared';
+import { useToast, ToastStack, PortalContent, loadErrorFrom } from './PortalComponents';
 import NotificationBell from './PortalNotificationBell';
 import NotificationCentre from './NotificationCentre';
 import MahOverview from './MahOverview';
@@ -60,14 +60,9 @@ export default function MahPortal({ user, token: tokenProp, onLogout }) {
   const [organisations, setOrganisations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
-  const [toast, setToast] = useState(null);
-  const toastTimer = useRef(null);
-  useEffect(() => () => clearTimeout(toastTimer.current), []);
-  const showToast = useCallback((message) => {
-    setToast(message);
-    clearTimeout(toastTimer.current);
-    toastTimer.current = setTimeout(() => setToast(null), 3500);
-  }, []);
+  const [reloadKey, setReloadKey] = useState(0); // bump to re-run the initial load ("Try again")
+  // showToast(message, type = 'success' | 'error' | 'warning' | 'info')
+  const { toasts, addToast: showToast, removeToast } = useToast();
 
   const loadShipments = useCallback(async () => {
     const data = await apiFetch(token, '/shipments?limit=500');
@@ -96,11 +91,13 @@ export default function MahPortal({ user, token: tokenProp, onLogout }) {
         logoutRef.current();
         return;
       }
-      setLoadError(failed.length ? `Some data could not be loaded: ${failed[0].reason.message}` : null);
+      // Shipments failing is fatal (full-page error); products / suppliers / organisations show a banner
+      setLoadError(loadErrorFrom(results));
       setLoading(false);
     })();
     return () => { cancelled = true; };
-  }, [token, loadShipments, loadProducts, loadSuppliers]);
+  }, [token, loadShipments, loadProducts, loadSuppliers, reloadKey]);
+  const retryLoad = useCallback(() => setReloadKey(k => k + 1), []);
 
   const productsById = useMemo(() => Object.fromEntries(products.map(p => [p.id, p])), [products]);
   const suppliersById = useMemo(() => Object.fromEntries(suppliers.map(s => [s.id, s])), [suppliers]);
@@ -129,7 +126,7 @@ export default function MahPortal({ user, token: tokenProp, onLogout }) {
   const shared = {
     token, user, shipments, products, suppliers, organisations, productsById, suppliersById,
     navigate, openShipment, onNewShipment: () => setShowNewShipment(true), showToast,
-    reloadShipments: loadShipments, reloadProducts: loadProducts, reloadSuppliers: loadSuppliers,
+    reloadShipments: loadShipments, reloadProducts: loadProducts, reloadSuppliers: loadSuppliers, loading,
   };
 
   const handleOpenNotificationCentre = () => {
@@ -206,8 +203,10 @@ export default function MahPortal({ user, token: tokenProp, onLogout }) {
         </aside>
 
         <main className="mah-content">
-          {loadError && <div className="mah-alert mah-alert-amber">{loadError}</div>}
-          {loading ? <div className="mah-loading">Loading your shipments…</div> : renderPage()}
+          {/* Overview and Shipments draw their own skeletons while loading; other pages get the generic one */}
+          {loading && (currentPage === 'overview' || currentPage === 'shipments')
+            ? renderPage()
+            : <PortalContent loading={loading} error={loadError} onRetry={retryLoad}>{renderPage()}</PortalContent>}
         </main>
       </div>
 
@@ -225,7 +224,7 @@ export default function MahPortal({ user, token: tokenProp, onLogout }) {
         />
       )}
 
-      <Toast message={toast} />
+      <ToastStack toasts={toasts} onClose={removeToast} />
     </div>
   );
 }

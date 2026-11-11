@@ -5,6 +5,8 @@
 // Also exports the score verdicts and the donut, used by ClearanceCertificate.js.
 import { useCallback, useEffect, useState } from 'react';
 import { API_URL } from './constants';
+import { getUserFriendlyError } from './mahShared';
+import { SkeletonLoader, ErrorBanner, Spinner } from './PortalComponents';
 
 export const INTEGRITY_VERDICTS = [
   { min: 90, label: 'EXCELLENT', color: '#046C4E' },
@@ -25,14 +27,20 @@ const LAYERS = [
 const STATUS_ICONS = { PASSED: '✓', WARNING: '⚠', FAILED: '✗', NOT_APPLICABLE: '—', PENDING: '⏳' };
 const STATUS_LABELS = { PASSED: 'Passed', WARNING: 'Warning', FAILED: 'Failed', NOT_APPLICABLE: 'Not applicable', PENDING: 'Pending' };
 
-// Fetch against the API; throws with the server's message
+// Fetch against the API; throws with a user-friendly message (same wording as apiFetch)
 export async function integrityFetch(apiUrl, token, path, method = 'GET') {
-  const res = await fetch(`${apiUrl || API_URL}${path}`, { method, headers: { Authorization: `Bearer ${token}` } });
+  let res;
+  try {
+    res = await fetch(`${apiUrl || API_URL}${path}`, { method, headers: { Authorization: `Bearer ${token}` } });
+  } catch {
+    throw new Error('Cannot connect to MASAAR server. Please check your connection.');
+  }
   let data = null;
   try { data = await res.json(); } catch { /* empty body */ }
   if (!res.ok) {
-    const err = new Error(data?.message || data?.error || `Request failed (${res.status})`);
+    const err = new Error(getUserFriendlyError(res.status, data || {}));
     err.status = res.status;
+    err.data = data;
     throw err;
   }
   return data;
@@ -95,13 +103,14 @@ export default function IntegrityDashboard({ shipmentId, token, apiUrl, sector, 
   }
 
   const runButton = (label) => (
-    <button className="int-btn" onClick={run} disabled={running}>{running ? 'Running checks…' : label}</button>
+    <button className="int-btn" onClick={run} disabled={running}>{running ? <Spinner label="Running checks…" /> : label}</button>
   );
 
   if (!data) {
     return (
       <div className="int-card" aria-busy={!error}>
-        {error ? <div className="int-error">Could not load integrity checks: {error}</div> : <div className="mah-loading">Loading integrity checks…</div>}
+        {error ? <ErrorBanner compact error={error} message="Could not load integrity checks" onRetry={load} />
+          : <><SkeletonLoader type="donut" height={96} /><SkeletonLoader type="list" count={3} /></>}
       </div>
     );
   }

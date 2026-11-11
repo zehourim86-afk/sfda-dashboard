@@ -8,7 +8,7 @@ import { apiFetch, Icon, stateOf } from './mahShared';
 import NotificationBell from './PortalNotificationBell';
 import NotificationCentre from './NotificationCentre';
 import { MahAssistant } from './MahPortal';
-import { brokerAction, COMPLETED_STATES, productsFromShipments, Toast } from './clearanceShared';
+import { brokerAction, COMPLETED_STATES, productsFromShipments } from './clearanceShared';
 import ClearanceOverview from './ClearanceOverview';
 import ClearanceShipments from './ClearanceShipments';
 import ClearanceShipmentDetail from './ClearanceShipmentDetail';
@@ -16,6 +16,15 @@ import ClearanceFaseh from './ClearanceFaseh';
 import ClearanceSFDATrack from './ClearanceSFDATrack';
 import ClearanceCustoms from './ClearanceCustoms';
 import ClearanceSettings from './ClearanceSettings';
+import { PortalContent, SkeletonLoader, loadErrorFrom, useToast, ToastStack } from './PortalComponents';
+
+// Content-area skeleton while the portal's data loads
+const SKELETON = (
+  <div className="mah-page">
+    <SkeletonLoader type="card" lines={2} />
+    <SkeletonLoader type="table-row" count={6} />
+  </div>
+);
 
 const NAV = [
   { page: 'overview', label: 'Overview', icon: 'home' },
@@ -63,14 +72,9 @@ export default function ClearancePortal({ user, token: tokenProp, onLogout }) {
   const [organisations, setOrganisations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
-  const [toast, setToast] = useState(null);
-  const toastTimer = useRef(null);
-  useEffect(() => () => clearTimeout(toastTimer.current), []);
-  const showToast = useCallback((message) => {
-    setToast(message);
-    clearTimeout(toastTimer.current);
-    toastTimer.current = setTimeout(() => setToast(null), 3500);
-  }, []);
+  const [reloadKey, setReloadKey] = useState(0); // bump to re-run the initial load ("Try again")
+  // showToast(message, type = 'success' | 'error' | 'warning' | 'info')
+  const { toasts, addToast: showToast, removeToast } = useToast();
 
   // The API returns only shipments assigned to this clearance company
   const loadShipments = useCallback(async () => {
@@ -92,11 +96,13 @@ export default function ClearancePortal({ user, token: tokenProp, onLogout }) {
         logoutRef.current();
         return;
       }
-      setLoadError(failed.length ? `Some data could not be loaded: ${failed[0].reason.message}` : null);
+      // The first request (shipments) failing is fatal: full-page error; the others show a banner
+      setLoadError(loadErrorFrom(results));
       setLoading(false);
     })();
     return () => { cancelled = true; };
-  }, [token, loadShipments]);
+  }, [token, loadShipments, reloadKey]);
+  const retryLoad = useCallback(() => setReloadKey(k => k + 1), []);
 
   const productsById = useMemo(() => productsFromShipments(shipments), [shipments]);
   const actionCount = shipments.filter(brokerAction).length;
@@ -199,15 +205,14 @@ export default function ClearancePortal({ user, token: tokenProp, onLogout }) {
         </aside>
 
         <main className="mah-content">
-          {loadError && <div className="mah-alert mah-alert-amber">{loadError}</div>}
-          {loading ? <div className="mah-loading">Loading assigned shipments…</div> : renderPage()}
+          <PortalContent loading={loading} error={loadError} onRetry={retryLoad} skeleton={SKELETON}>{renderPage()}</PortalContent>
         </main>
       </div>
 
       <MahAssistant token={token} actionCount={actionCount} activeCount={activeCount}
         prompts={BROKER_PROMPTS} greeting={BROKER_GREETING} placeholder="Ask about your assigned shipments…" />
 
-      <Toast message={toast} />
+      <ToastStack toasts={toasts} onClose={removeToast} />
     </div>
   );
 }

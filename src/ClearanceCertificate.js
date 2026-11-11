@@ -1,7 +1,8 @@
 // MASAAR Clearance Intelligence Certificate for a CLOSED_RELEASED shipment
 // (GET / POST /shipments/:id/certificate). "Download PDF" prints just the certificate.
 // Props: { shipment, token, apiUrl? }
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { useToast, ToastStack } from './PortalComponents';
 import { SectorBadge } from './mahShared';
 import { integrityFetch, integrityVerdict, ScoreDonut } from './IntegrityDashboard';
 
@@ -52,13 +53,14 @@ function Ref({ label, value }) {
   );
 }
 
-export default function ClearanceCertificate({ shipment, token, apiUrl }) {
+// showToast: the portal's toast (optional) — without it the certificate shows its own toast stack
+export default function ClearanceCertificate({ shipment, token, apiUrl, showToast: portalToast }) {
   const [cert, setCert] = useState(null);
   const [missing, setMissing] = useState(false);
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
-  const [toast, setToast] = useState(null);
-  const toastTimer = useRef(null);
+  const local = useToast();
+  const showToast = portalToast || local.addToast;
 
   const load = useCallback(async () => {
     try {
@@ -74,15 +76,8 @@ export default function ClearanceCertificate({ shipment, token, apiUrl }) {
 
   useEffect(() => { load(); }, [load]);
   useEffect(() => () => {
-    clearTimeout(toastTimer.current);
     document.body.classList.remove(PRINT_CLASS);
   }, []);
-
-  const showToast = (text) => {
-    setToast(text);
-    clearTimeout(toastTimer.current);
-    toastTimer.current = setTimeout(() => setToast(null), 2500);
-  };
 
   async function generate() {
     setBusy(true);
@@ -112,7 +107,7 @@ export default function ClearanceCertificate({ shipment, token, apiUrl }) {
       await navigator.clipboard.writeText(url);
       showToast('Link copied');
     } catch {
-      showToast('Could not copy the link');
+      showToast('Could not copy the link', 'error');
     }
   }
 
@@ -279,7 +274,7 @@ export default function ClearanceCertificate({ shipment, token, apiUrl }) {
         <button className="int-btn int-btn-grey" onClick={generate} disabled={busy}>{busy ? 'Re-generating…' : 'Re-generate'}</button>
       </div>
       {error && <div className="mah-alert mah-alert-red">{error}</div>}
-      {toast && <div className="cert-toast" role="status">{toast}</div>}
+      {!portalToast && <ToastStack toasts={local.toasts} onClose={local.removeToast} />}
     </div>
   );
 }

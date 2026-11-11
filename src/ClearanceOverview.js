@@ -4,6 +4,7 @@ import {
   stateOf, StateBadge, SectorBadge, shipmentName, shipmentRef, shipmentSector, timeAgo, fmtDate, Empty, Icon, SECTOR_LABELS,
 } from './mahShared';
 import { CLR_PIPELINE, AT_SFDA_STATES, brokerAction, ACTION_ORDER, daysSince } from './clearanceShared';
+import { EmptyState } from './PortalComponents';
 
 // Hardcoded until the metrics backend exists
 const AVG_FASEH_FILING_DAYS = 2.3;
@@ -92,7 +93,9 @@ export default function ClearanceOverview({ shipments, productsById, openShipmen
               <input className="mah-action-search" placeholder="Search by shipment name or MSR ID..." value={search}
                 onChange={e => setSearch(e.target.value)} aria-label="Search action queue" />
             )}
-            {actions.length === 0
+            {shipments.length === 0
+              ? <EmptyState icon="📋" title="No shipments assigned" description="Shipments handed over by MAHs will appear here" />
+              : actions.length === 0
               ? <Empty title="Nothing needs your action">New hand-overs and SFDA requests will appear here.</Empty>
               : matching.length === 0
                 ? <Empty title="No action items match">Try a different search.</Empty>

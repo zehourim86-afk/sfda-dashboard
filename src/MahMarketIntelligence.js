@@ -50,7 +50,7 @@ function withFlag(entry) {
   return `${(m && COUNTRY_FLAGS[m[1]]) || '🌐'} ${entry}`;
 }
 
-export default function MahMarketIntelligence({ token, products = [], shipments = [], navigate }) {
+export default function MahMarketIntelligence({ token, products = [], shipments = [], navigate, showToast }) {
   const [tab, setTab] = useState('scout');
   return (
     <div className="mah-page">
@@ -67,7 +67,7 @@ export default function MahMarketIntelligence({ token, products = [], shipments 
         { key: 'bench', label: 'Benchmarking' },
       ]} />
       {tab === 'scout' && <OpportunityScout navigate={navigate} />}
-      {tab === 'supplier' && <SupplierIntel />}
+      {tab === 'supplier' && <SupplierIntel showToast={showToast} />}
       {tab === 'radar' && <RegulatoryRadar products={products} />}
       {tab === 'bench' && <Benchmarking token={token} />}
     </div>
@@ -157,20 +157,12 @@ function OpportunityScout({ navigate }) {
 }
 
 // ── Supplier Intelligence ────────────────────────────
-function SupplierIntel() {
+function SupplierIntel({ showToast = () => {} }) {
   const [name, setName] = useState('');
   const [country, setCountry] = useState('');
   const [lookup, run] = useDelayedLookup(({ name: n, country: c }) => findSupplierProfile(n, c));
-  const [toast, setToast] = useState(null);
-  const toastTimer = useRef(null);
-  useEffect(() => () => clearTimeout(toastTimer.current), []);
 
   const check = (n, c) => { if (n.trim() || c) run({ name: n, country: c }); };
-  const showToast = (msg) => {
-    setToast(msg);
-    clearTimeout(toastTimer.current);
-    toastTimer.current = setTimeout(() => setToast(null), 3000);
-  };
   const p = lookup.result;
   const searched = lookup.query || {};
 
@@ -249,7 +241,6 @@ function SupplierIntel() {
           </div>
         </article>
       )}
-      {toast && <div className="mah-toast" role="status">{toast}</div>}
     </div>
   );
 }

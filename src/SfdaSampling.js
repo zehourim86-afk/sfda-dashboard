@@ -1,8 +1,9 @@
 // SFDA Observer — Sampling: shipments in SAMPLING with their sub-track status.
 import { useState } from 'react';
-import { stateOf, SectorBadge, shipmentName, shipmentRef, shipmentSector, Empty } from './mahShared';
+import { stateOf, SectorBadge, shipmentName, shipmentRef, shipmentSector } from './mahShared';
 import { ChipRow, daysSince } from './clearanceShared';
 import { mahCompany, fmtDays, SamplingBadge } from './sfdaShared';
+import { EmptyState } from './PortalComponents';
 
 const FILTERS = [
   { key: 'all', label: 'All' },
@@ -32,7 +33,8 @@ export default function SfdaSampling({ shipments, productsById, orgsById, openSh
         options={FILTERS.map(f => ({ ...f, count: sampling.filter(s => matches(s, f.key)).length }))} />
 
       <section className="mah-card mah-card-flush">
-        {rows.length === 0 ? <Empty title="No shipments at this sampling step" /> : (
+        {sampling.length === 0 ? <EmptyState icon="🧪" title="No shipments in sampling" description="Shipments SFDA orders for sampling will appear here" />
+          : rows.length === 0 ? <EmptyState icon="🔍" title="No shipments at this sampling step" description="Try another sampling step" /> : (
           <div className="mah-table-wrap">
             <table className="mah-table">
               <thead><tr><th>Shipment</th><th>MAH company</th><th>Sector</th><th>Sampling state</th><th>Location</th><th>Lab</th><th>Days in sampling</th></tr></thead>

@@ -1,11 +1,12 @@
 // SFDA Observer — Decisions: released, partially released, rejected and closed shipments.
 import { useState } from 'react';
-import { stateOf, SectorBadge, shipmentName, shipmentRef, shipmentSector, fmtDate, Empty } from './mahShared';
+import { stateOf, SectorBadge, shipmentName, shipmentRef, shipmentSector, fmtDate } from './mahShared';
 import { ChipRow, SummaryCards, isThisMonth } from './clearanceShared';
 import {
   mahCompany, decisionAt, decisionKind, daysBetween, fmtDays, objectionFiled, matchesSearch,
   DECIDED_STATES, RELEASED_DECISIONS, PARTIAL_DECISIONS, REJECTED_DECISIONS,
 } from './sfdaShared';
+import { EmptyState } from './PortalComponents';
 
 // Hardcoded until objection outcomes are tracked
 const OBJECTION_SUCCESS_RATE = 43;
@@ -53,7 +54,8 @@ export default function SfdaDecisions({ shipments, productsById, orgsById, openS
       </div>
 
       <section className="mah-card mah-card-flush">
-        {rows.length === 0 ? <Empty title="No decisions match" /> : (
+        {decided.length === 0 ? <EmptyState icon="⚖️" title="No decisions recorded yet" description="SFDA releases and rejections will appear here" />
+          : rows.length === 0 ? <EmptyState icon="🔍" title="No decisions match" description="Try another filter or search" /> : (
           <div className="mah-table-wrap">
             <table className="mah-table">
               <thead><tr><th>Shipment</th><th>MAH company</th><th>Sector</th><th>Decision</th><th>Decision date</th><th>From submission</th><th>Objection</th></tr></thead>

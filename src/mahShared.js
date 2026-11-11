@@ -2,29 +2,61 @@
 import { API_URL, normalizeState, getStateLabel } from './constants';
 
 // ── API ──────────────────────────────────────────────
-// Throws an Error with the server's message; err.status and err.data are set.
+// Throws an Error with a user-friendly message; err.status and err.data (alias err.body) are set.
+// A network failure throws with no status. `body` is sent as JSON.
 export async function apiFetch(token, path, { method = 'GET', body } = {}) {
-  const res = await fetch(`${API_URL}${path}`, {
-    method,
-    headers: {
-      Authorization: `Bearer ${token}`,
-      ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
-    },
-    body: body !== undefined ? JSON.stringify(body) : undefined,
-  });
+  let res;
+  try {
+    res = await fetch(`${API_URL}${path}`, {
+      method,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
+      },
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    });
+  } catch {
+    const err = new Error('Cannot connect to MASAAR server. Please check your connection.');
+    err.network = true;
+    throw err;
+  }
   let data = null;
   try { data = await res.json(); } catch { /* empty or non-JSON body */ }
   if (!res.ok) {
-    const message = res.status === 413
-      ? 'File is too large to upload'
-      : data?.message || data?.error || `Request failed (${res.status})`;
-    const err = new Error(message);
+    const err = new Error(getUserFriendlyError(res.status, data || {}));
     err.status = res.status;
     err.data = data;
+    err.body = data;
     throw err;
   }
   return data;
 }
+
+// Server text that is safe to show: short, human (not an ERROR_CODE), no internals
+const TECHNICAL = /\b(SQL|syntax|undefined|null value|relation "|column "|violates|ECONN|stack|TypeError)\b/i;
+const isShowable = (text) => typeof text === 'string' && text.trim().length > 0 && text.length < 200
+  && !/^[A-Z0-9_]+$/.test(text.trim()) && !TECHNICAL.test(text);
+
+// The API answers { error: 'CODE', message: 'Human text' }; prefer the message, then a generic one by status
+export function getUserFriendlyError(status, body = {}) {
+  if (status === 413) return 'File is too large to upload';
+  if (status === 401) return 'Session expired — please log in again.';
+  if (isShowable(body.message)) return body.message;
+  if (isShowable(body.error)) return body.error;
+  switch (status) {
+    case 400: return 'Invalid request — please check the information entered.';
+    case 403: return 'You do not have permission to perform this action.';
+    case 404: return 'The requested record could not be found.';
+    case 409: return 'This action conflicts with existing data.';
+    case 422: return 'The submitted information is incomplete or invalid.';
+    case 500: return 'A server error occurred. Please try again or contact support.';
+    case 502: case 503: case 504: return 'The MASAAR server is temporarily unavailable. Please try again shortly.';
+    default: return `An unexpected error occurred (HTTP ${status}).`;
+  }
+}
+
+// Toasts and shared states live in PortalComponents.js; re-exported for Mah* files
+export { useToast, ToastStack } from './PortalComponents';
 
 // ── Sectors ──────────────────────────────────────────
 export const SECTOR_LABELS = {

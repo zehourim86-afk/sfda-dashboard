@@ -3,9 +3,19 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   apiFetch, Ring, Tabs, StateBadge, Empty, Icon, stateOf, shipmentName, shipmentRef, fmtDate, timeAgo, supplierScoreTone,
 } from './mahShared';
+import { EmptyState } from './PortalComponents';
 
 const REJECTED_STATES = ['SFDA_REJECTED', 'OBJECTION_FILED', 'DISPOSITION_PENDING', 'CLOSED_REEXPORTED', 'CLOSED_DESTROYED'];
 const blank = { name: '', country: '', contact_name: '', contact_email: '', is_first_time: true };
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+// Inline validation: field → error message or null
+function supplierErrors(form) {
+  return {
+    name: form.name.trim() ? null : 'This field is required',
+    country: form.country.trim() ? null : 'This field is required',
+    contact_email: !form.contact_email.trim() || EMAIL_RE.test(form.contact_email.trim()) ? null : 'Enter a valid email address',
+  };
+}
 
 // Shipments from a supplier: linked by id, or by name on older shipments
 const supplierShipments = (supplier, shipments) => shipments.filter(s =>
@@ -18,16 +28,27 @@ export default function MahSuppliers({ token, suppliers, shipments, productsById
   const [form, setForm] = useState(blank);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
+  const [touched, setTouched] = useState({}); // field → blurred or submit attempted
+  const errors = supplierErrors(form);
+  const showErr = (k) => touched[k] && errors[k];
+  const touch = (k) => () => setTouched(t => ({ ...t, [k]: true }));
+  const cls = (k) => `mah-input${showErr(k) ? ' is-invalid' : ''}`;
+  const errMsg = (k) => (showErr(k) ? <small className="mah-field-error" role="alert">{errors[k]}</small> : null);
+  const startAdding = () => { setForm(blank); setTouched({}); setError(null); setAdding(true); };
 
   const active = suppliers.filter(s => s.is_active !== false).sort((a, b) => a.name.localeCompare(b.name));
 
   async function add(e) {
     e.preventDefault();
+    if (Object.values(errors).some(Boolean)) {
+      setTouched({ name: true, country: true, contact_email: true });
+      return;
+    }
     setBusy(true);
     setError(null);
     const body = {
       name: form.name.trim(),
-      country: form.country.trim() || null,
+      country: form.country.trim(),
       contact_name: form.contact_name.trim() || null,
       contact_email: form.contact_email.trim() || null,
       is_first_time: form.is_first_time,
@@ -51,24 +72,30 @@ export default function MahSuppliers({ token, suppliers, shipments, productsById
           <h1>Suppliers</h1>
           <p className="mah-muted">{active.length} active suppliers</p>
         </div>
-        {!adding && <button className="mah-btn mah-btn-primary" onClick={() => setAdding(true)}><Icon name="plus" size={16} /> Add Supplier</button>}
+        {!adding && <button className="mah-btn mah-btn-primary" onClick={startAdding}><Icon name="plus" size={16} /> Add Supplier</button>}
       </div>
 
       {adding && (
-        <form className="mah-card mah-inline-card" onSubmit={add}>
+        <form className="mah-card mah-inline-card" onSubmit={add} noValidate>
           <div className="mah-card-head"><h2>Add supplier</h2></div>
           <div className="mah-form-grid">
             <label className="mah-field"><span>Name *</span>
-              <input className="mah-input" required maxLength={255} value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
+              <input className={cls('name')} required maxLength={255} value={form.name} onBlur={touch('name')} aria-invalid={!!showErr('name')}
+                onChange={e => setForm({ ...form, name: e.target.value })} />
+              {errMsg('name')}
             </label>
-            <label className="mah-field"><span>Country</span>
-              <input className="mah-input" maxLength={100} value={form.country} onChange={e => setForm({ ...form, country: e.target.value })} />
+            <label className="mah-field"><span>Country *</span>
+              <input className={cls('country')} required maxLength={100} value={form.country} onBlur={touch('country')} aria-invalid={!!showErr('country')}
+                onChange={e => setForm({ ...form, country: e.target.value })} />
+              {errMsg('country')}
             </label>
             <label className="mah-field"><span>Contact name</span>
               <input className="mah-input" maxLength={255} value={form.contact_name} onChange={e => setForm({ ...form, contact_name: e.target.value })} />
             </label>
             <label className="mah-field"><span>Contact email</span>
-              <input className="mah-input" type="email" maxLength={255} value={form.contact_email} onChange={e => setForm({ ...form, contact_email: e.target.value })} />
+              <input className={cls('contact_email')} type="email" maxLength={255} value={form.contact_email} onBlur={touch('contact_email')}
+                aria-invalid={!!showErr('contact_email')} onChange={e => setForm({ ...form, contact_email: e.target.value })} />
+              {errMsg('contact_email')}
             </label>
             <label className="mah-check mah-span-2">
               <input type="checkbox" checked={form.is_first_time} onChange={e => setForm({ ...form, is_first_time: e.target.checked })} />
@@ -84,7 +111,10 @@ export default function MahSuppliers({ token, suppliers, shipments, productsById
       )}
 
       {active.length === 0 ? (
-        <section className="mah-card"><Empty title="No suppliers yet">Add suppliers to get risk scoring on every shipment.</Empty></section>
+        <section className="mah-card">
+          <EmptyState icon="🏭" title="No suppliers yet" description="Add your first supplier to get started"
+            action={adding ? undefined : startAdding} actionLabel="Add Supplier" />
+        </section>
       ) : (
         <div className="mah-supplier-grid">
           {active.map(sup => {

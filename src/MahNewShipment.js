@@ -5,6 +5,7 @@
 // (POST /shipments/:id/broker-request) — it must accept before filing can begin.
 import { useEffect, useState } from 'react';
 import { apiFetch, SECTOR_LABELS, SectorBadge, Icon, fmtDate } from './mahShared';
+import { Spinner } from './PortalComponents';
 
 export const PORTS = [
   'Jeddah Islamic Port',
@@ -15,6 +16,7 @@ export const PORTS = [
 const TRANSPORT = [{ value: 'sea', label: 'Sea' }, { value: 'air', label: 'Air' }, { value: 'land', label: 'Land' }];
 const STEPS = ['Basic info', 'Products', 'Pre-arrival intelligence', 'Confirm'];
 const emptyLine = () => ({ product_id: '', quantity: '', batch_number: '' });
+const ALL_STEP0_TOUCHED = { supplier_id: true, port_of_entry: true, eta: true, bl_awb_number: true, preferred_clearance_company_id: true };
 
 // Transport document field per mode: required for sea (B/L) and air (AWB), optional for land
 const TRANSPORT_DOC = {
@@ -75,8 +77,11 @@ export default function MahNewShipment({ token, products, suppliers, organisatio
     supplier_id: '', port_of_entry: PORTS[0], transport_mode: 'sea', eta: daysFromToday(ETA_DEFAULT_DAYS),
     bl_awb_number: '', preferred_clearance_company_id: '',
   });
-  const [etaTouched, setEtaTouched] = useState(false);
-  const [blTouched, setBlTouched] = useState(false);
+  // Inline validation: a field shows its error once touched (blurred, or "Next" pressed); errors are computed live,
+  // so they clear as soon as the value becomes valid
+  const [touched, setTouched] = useState({});
+  const touch = (k) => () => setTouched(t => (t[k] ? t : { ...t, [k]: true }));
+  const [productsTouched, setProductsTouched] = useState(false);
   const [lines, setLines] = useState([emptyLine()]);
   const [created, setCreated] = useState(null);
   const [intel, setIntel] = useState(null);
@@ -108,10 +113,9 @@ export default function MahNewShipment({ token, products, suppliers, organisatio
   })();
 
   async function createDraft(confirmDuplicate = false) {
-    // The date input's value is already YYYY-MM-DD; check it before the API does
-    if (etaError(info.eta) || blAwbError(info.transport_mode, info.bl_awb_number)) {
-      setEtaTouched(true);
-      setBlTouched(true);
+    // The date input's value is already YYYY-MM-DD; check step 1 again before the API does
+    if (step0Invalid) {
+      setTouched(ALL_STEP0_TOUCHED);
       setStep(0);
       return;
     }
@@ -156,6 +160,20 @@ export default function MahNewShipment({ token, products, suppliers, organisatio
   const clearanceChosen = !!info.preferred_clearance_company_id;
   const transportDoc = TRANSPORT_DOC[info.transport_mode] || TRANSPORT_DOC.sea;
   const blError = blAwbError(info.transport_mode, info.bl_awb_number);
+  const step0Errors = {
+    supplier_id: info.supplier_id ? null : 'Please select a supplier',
+    port_of_entry: info.port_of_entry ? null : 'This field is required',
+    eta: etaError(info.eta),
+    bl_awb_number: blError,
+    preferred_clearance_company_id: clearanceChosen ? null : 'Please select a clearance company',
+  };
+  const step0Invalid = Object.values(step0Errors).some(Boolean);
+  const showErr = (k) => !locked && touched[k] && step0Errors[k];
+  const inputClass = (k) => `mah-input${showErr(k) ? ' is-invalid' : ''}`;
+  const fieldError = (k) => (showErr(k) ? <small className="mah-field-error" role="alert">{step0Errors[k]}</small> : null);
+  // Step 2: the first line carries the "choose a product" error; quantities are checked per line
+  const noProduct = filledLines.length === 0;
+  const qtyInvalid = (l) => l.quantity !== '' && !(Number(l.quantity) > 0);
 
   // Leaving the wizard after the draft exists: send the engagement request once, then open the shipment.
   // A failed request is not fatal — the shipment page offers to send it again.
@@ -167,7 +185,7 @@ export default function MahNewShipment({ token, products, suppliers, organisatio
         await apiFetch(token, `/shipments/${created.id}/broker-request`, { method: 'POST' });
         showToast?.(`Engagement request sent to ${broker?.name || 'your clearance company'}`);
       } catch (e) {
-        showToast?.(`Shipment created, but the engagement request was not sent: ${e.message}`);
+        showToast?.(`Shipment created, but the engagement request was not sent: ${e.message}`, 'warning');
       } finally {
         setBusy(false);
       }
@@ -198,20 +216,24 @@ export default function MahNewShipment({ token, products, suppliers, organisatio
           {step === 0 && (
             <div className="mah-form-grid">
               <label className="mah-field">
-                <span>Supplier</span>
-                <select className="mah-input" value={info.supplier_id} onChange={setField('supplier_id')} disabled={locked}>
+                <span>Supplier *</span>
+                <select className={inputClass('supplier_id')} value={info.supplier_id} onChange={setField('supplier_id')}
+                  onBlur={touch('supplier_id')} disabled={locked} aria-invalid={!!showErr('supplier_id')}>
                   <option value="">— Select supplier —</option>
                   {activeSuppliers.map(s => <option key={s.id} value={s.id}>{s.name}{s.country ? ` (${s.country})` : ''}</option>)}
                 </select>
+                {fieldError('supplier_id')}
                 {activeSuppliers.length === 0 && (
                   <small>No suppliers yet — <button type="button" className="mah-link-btn" onClick={() => { onClose(); navigate('suppliers'); }}>add one</button></small>
                 )}
               </label>
               <label className="mah-field">
-                <span>Port of entry</span>
-                <select className="mah-input" value={info.port_of_entry} onChange={setField('port_of_entry')} disabled={locked}>
+                <span>Port of entry *</span>
+                <select className={inputClass('port_of_entry')} value={info.port_of_entry} onChange={setField('port_of_entry')}
+                  onBlur={touch('port_of_entry')} disabled={locked} aria-invalid={!!showErr('port_of_entry')}>
                   {PORTS.map(p => <option key={p}>{p}</option>)}
                 </select>
+                {fieldError('port_of_entry')}
               </label>
               <div className="mah-field">
                 <span>Transport mode</span>
@@ -224,29 +246,29 @@ export default function MahNewShipment({ token, products, suppliers, organisatio
                 </div>
               </div>
               <label className="mah-field">
-                <span>Expected Arrival Date (ETA)</span>
-                <input type="date" className="mah-input" value={info.eta} onChange={setField('eta')} disabled={locked}
+                <span>Expected Arrival Date (ETA) *</span>
+                <input type="date" className={inputClass('eta')} value={info.eta} onChange={setField('eta')} disabled={locked}
                   min={localISODate(new Date())} max="9999-12-31" required
-                  onBlur={() => setEtaTouched(true)} aria-invalid={!!(etaTouched && etaError(info.eta))} />
-                {etaTouched && !locked && etaError(info.eta) && <small className="mah-text-red">{etaError(info.eta)}</small>}
+                  onBlur={touch('eta')} aria-invalid={!!showErr('eta')} />
+                {fieldError('eta')}
               </label>
               <label className="mah-field">
                 <span>{transportDoc.label}</span>
-                <input className="mah-input" value={info.bl_awb_number} onChange={setField('bl_awb_number')} maxLength={100}
+                <input className={inputClass('bl_awb_number')} value={info.bl_awb_number} onChange={setField('bl_awb_number')} maxLength={100}
                   placeholder={transportDoc.placeholder} disabled={locked} required={transportDoc.required}
-                  onBlur={() => setBlTouched(true)} aria-invalid={!!(blTouched && blError)} />
-                {blTouched && !locked && blError
-                  ? <small className="mah-text-red">{blError}</small>
-                  : <small>{transportDoc.helper}</small>}
+                  onBlur={touch('bl_awb_number')} aria-invalid={!!showErr('bl_awb_number')} />
+                {fieldError('bl_awb_number') || <small>{transportDoc.helper}</small>}
               </label>
               <label className="mah-field">
                 <span>Clearance company *</span>
-                <select className="mah-input" value={info.preferred_clearance_company_id}
-                  onChange={setField('preferred_clearance_company_id')} disabled={locked} required>
+                <select className={inputClass('preferred_clearance_company_id')} value={info.preferred_clearance_company_id}
+                  onChange={setField('preferred_clearance_company_id')} onBlur={touch('preferred_clearance_company_id')}
+                  disabled={locked} required aria-invalid={!!showErr('preferred_clearance_company_id')}>
                   <option value="" disabled>Select a clearance company…</option>
                   {clearanceCompanies.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
                 </select>
-                <small>The selected company will receive your shipment documents once you confirm handover.</small>
+                {fieldError('preferred_clearance_company_id')
+                  || <small>The selected company will receive your shipment documents once you confirm handover.</small>}
               </label>
               {broker && (
                 <div className="mah-alert mah-alert-blue mah-wide">
@@ -268,17 +290,23 @@ export default function MahNewShipment({ token, products, suppliers, organisatio
                 <div className="mah-line" key={i}>
                   <label className="mah-field mah-grow">
                     <span>Product {i === 0 && <em className="mah-muted">(main product)</em>}</span>
-                    <select className="mah-input" value={line.product_id} onChange={e => setLine(i, 'product_id', e.target.value)} disabled={locked}>
+                    <select className={`mah-input${i === 0 && productsTouched && noProduct ? ' is-invalid' : ''}`} value={line.product_id}
+                      onChange={e => setLine(i, 'product_id', e.target.value)} disabled={locked}
+                      aria-invalid={i === 0 && productsTouched && noProduct}>
                       <option value="">— Select product —</option>
                       {activeProducts.map(p => (
                         <option key={p.id} value={p.id}>{p.name_en} · {SECTOR_LABELS[p.sector]}</option>
                       ))}
                     </select>
+                    {i === 0 && productsTouched && noProduct && !locked && (
+                      <small className="mah-field-error" role="alert">Select at least one product</small>
+                    )}
                   </label>
                   <label className="mah-field mah-w-120">
                     <span>Quantity</span>
-                    <input type="number" min="0" step="any" className="mah-input" value={line.quantity}
-                      onChange={e => setLine(i, 'quantity', e.target.value)} disabled={locked} />
+                    <input type="number" min="0" step="any" className={`mah-input${qtyInvalid(line) ? ' is-invalid' : ''}`} value={line.quantity}
+                      onChange={e => setLine(i, 'quantity', e.target.value)} disabled={locked} aria-invalid={qtyInvalid(line)} />
+                    {qtyInvalid(line) && !locked && <small className="mah-field-error">Must be a positive number</small>}
                   </label>
                   <label className="mah-field mah-w-160">
                     <span>Batch number</span>
@@ -326,7 +354,7 @@ export default function MahNewShipment({ token, products, suppliers, organisatio
                     </ul>
                   </div>
                 </>
-              ) : !error && <div className="mah-loading">Scoring shipment…</div>}
+              ) : !error && <div className="mah-loading"><Spinner label="Scoring shipment…" /></div>}
             </div>
           )}
 
@@ -361,18 +389,21 @@ export default function MahNewShipment({ token, products, suppliers, organisatio
           )}
           <span className="mah-grow" />
           {step === 0 && (
-            <button className="mah-btn mah-btn-primary" disabled={!clearanceChosen}
-              title={clearanceChosen ? '' : 'Select a clearance company to continue'}
+            <button className="mah-btn mah-btn-primary"
               onClick={() => {
-                if (!locked && (etaError(info.eta) || blError)) { setEtaTouched(true); setBlTouched(true); return; }
+                if (!locked && step0Invalid) { setTouched(ALL_STEP0_TOUCHED); return; }
                 setStep(1);
               }}>
               Next: products →
             </button>
           )}
           {step === 1 && (
-            <button className="mah-btn mah-btn-primary" disabled={busy || !!lineError || activeProducts.length === 0}
-              title={lineError || ''} onClick={() => (locked ? setStep(2) : createDraft())}>
+            <button className="mah-btn mah-btn-primary" disabled={busy || activeProducts.length === 0}
+              onClick={() => {
+                if (locked) { setStep(2); return; }
+                if (lineError) { setProductsTouched(true); return; }
+                createDraft();
+              }}>
               {busy ? 'Creating…' : locked ? 'Next →' : 'Create draft & check →'}
             </button>
           )}

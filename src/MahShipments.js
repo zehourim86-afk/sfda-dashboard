@@ -2,8 +2,9 @@
 import { useEffect, useState } from 'react';
 import {
   apiFetch, stateOf, shipmentSector, StateBadge, SectorBadge,
-  shipmentName, shipmentRef, fmtDate, timeAgo, Empty, Icon, ConfirmDialog,
+  shipmentName, shipmentRef, fmtDate, timeAgo, Icon, ConfirmDialog,
 } from './mahShared';
+import { SkeletonLoader, EmptyState } from './PortalComponents';
 
 // Row 1 — status groups. CONDITIONALLY_RELEASED and CUSTOMS_RELEASED are in no group, so they show under "All" only.
 const inStates = (states) => (s) => states.includes(stateOf(s));
@@ -26,7 +27,8 @@ const SECTOR_FILTERS = [
 ];
 const byKey = (list, key) => list.find(f => f.key === key);
 
-export default function MahShipments({ token, shipments, productsById, suppliersById, openShipment, onNewShipment, reloadShipments, showToast }) {
+// loading: the portal is still fetching shipments — the table shows skeleton rows
+export default function MahShipments({ token, shipments, productsById, suppliersById, openShipment, onNewShipment, reloadShipments, showToast, loading = false }) {
   const [status, setStatus] = useState('all');
   const [sector, setSector] = useState('all');
   const [search, setSearch] = useState('');
@@ -55,7 +57,7 @@ export default function MahShipments({ token, shipments, productsById, suppliers
     } catch (e) {
       if (e.status === 403) {
         setConfirm(null);
-        showToast?.('Only draft shipments can be deleted. Contact your DEMARA advisor to cancel a submitted shipment.');
+        showToast?.('Only draft shipments can be deleted. Contact your DEMARA advisor to cancel a submitted shipment.', 'warning');
       } else {
         setError(e.message);
       }
@@ -80,7 +82,7 @@ export default function MahShipments({ token, shipments, productsById, suppliers
       <div className="mah-page-head">
         <div>
           <h1>Shipments & Tracking</h1>
-          <p className="mah-muted">{shipments.length} shipments in total</p>
+          <p className="mah-muted">{loading ? 'Loading shipments…' : `${shipments.length} shipments in total`}</p>
         </div>
         <button className="mah-btn mah-btn-primary" onClick={onNewShipment}><Icon name="plus" size={16} /> New Shipment</button>
       </div>
@@ -108,8 +110,13 @@ export default function MahShipments({ token, shipments, productsById, suppliers
       </div>
 
       <section className="mah-card mah-card-flush">
-        {rows.length === 0 ? (
-          <Empty title="No shipments match">Try another filter, or create a new shipment.</Empty>
+        {loading ? (
+          <SkeletonLoader type="table-row" count={8} />
+        ) : shipments.length === 0 ? (
+          <EmptyState icon="📦" title="No shipments yet" description="Create your first shipment to begin the import process"
+            action={onNewShipment} actionLabel="New Shipment" />
+        ) : rows.length === 0 ? (
+          <EmptyState icon="🔍" title="No shipments match" description="Try a different search or filter" />
         ) : (
           <div className="mah-table-wrap">
             <table className="mah-table">
