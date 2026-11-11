@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Tabs, DemoBanner } from './mahShared';
 import { FasehConnectionCard } from './FasehSync';
+import EmailPreferences from './EmailPreferences';
 
 const PROFILE = {
   name: 'Al Faris Customs Clearance',
@@ -26,7 +27,7 @@ const ACCOUNTS = [
   { name: 'MASAAR platform', desc: 'Shipments handed over by MAHs, with their documents', status: 'Connected' },
 ];
 
-export default function ClearanceSettings({ token, initialTab }) {
+export default function ClearanceSettings({ token, user, initialTab }) {
   const [tab, setTab] = useState(initialTab || 'profile');
   return (
     <div className="mah-page">
@@ -40,9 +41,12 @@ export default function ClearanceSettings({ token, initialTab }) {
         { key: 'profile', label: 'Company Profile' },
         { key: 'users', label: 'Users' },
         { key: 'accounts', label: 'Connected Accounts' },
+        { key: 'notifications', label: 'Notifications' },
       ]} />
 
-      {tab !== 'accounts' && <DemoBanner>company profile and users are illustrative</DemoBanner>}
+      {(tab === 'profile' || tab === 'users') && <DemoBanner>company profile and users are illustrative</DemoBanner>}
+
+      {tab === 'notifications' && <EmailPreferences email={user?.email} />}
 
       {tab === 'profile' && (
         <section className="mah-card">

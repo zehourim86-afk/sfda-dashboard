@@ -1021,3 +1021,10 @@ textarea.mah-input { resize: vertical; min-height: 60px; }
 .mah-demo-score.is-red { color: #F87171; }
 .mah-demo-score.is-none { color: rgba(255,255,255,0.45); }
 @media (max-width: 640px) { .mah-demo-grid { grid-template-columns: 1fr; } }
+
+/* Email notification preferences (EmailPreferences.js) */
+.mah-email-prefs { margin: 12px 0 16px; border-top: 1px solid var(--border, #E2E8F0); }
+.mah-email-pref { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--border, #E2E8F0); cursor: pointer; }
+.mah-email-pref-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.mah-email-pref .mah-switch { position: relative; }
+.mah-email-pref-note { margin: 0 0 4px; font-size: 13px; }

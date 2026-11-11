@@ -1,6 +1,7 @@
 // MAH portal — Settings. Read-only for now; values not yet stored come from demo data.
 import { useState } from 'react';
 import { Tabs, fmtDate } from './mahShared';
+import EmailPreferences from './EmailPreferences';
 
 const DEMO_COMPANY = {
   name_en: 'Al Noor Health Trading Co.',
@@ -15,13 +16,6 @@ const DEMO_USERS = [
   { name: 'Regulatory Affairs Lead', role: 'RA Lead · Org admin', email: 'ra.lead@example.sa' },
   { name: 'Import Coordinator', role: 'Shipment editor', email: 'imports@example.sa' },
   { name: 'Finance Officer', role: 'Read-only · Duties', email: 'finance@example.sa' },
-];
-const NOTIFICATIONS = [
-  { event: 'SFDA rejection', channels: ['Email', 'SMS', 'In-app'] },
-  { event: 'Ready to submit', channels: ['Email', 'In-app'] },
-  { event: 'Customs released', channels: ['Email', 'In-app'] },
-  { event: 'Registration expiring (90 days)', channels: ['Email'] },
-  { event: 'Weekly summary', channels: ['Email'] },
 ];
 const CHANNELS = [
   { name: 'Email', detail: 'Account email address', on: true },
@@ -77,23 +71,7 @@ export default function MahSettings({ user, org }) {
         </section>
       )}
 
-      {tab === 'notifications' && (
-        <section className="mah-card mah-card-flush">
-          <div className="mah-table-wrap">
-            <table className="mah-table">
-              <thead><tr><th>Event</th><th>Channels</th></tr></thead>
-              <tbody>
-                {NOTIFICATIONS.map(n => (
-                  <tr key={n.event}>
-                    <td className="mah-row-title">{n.event}</td>
-                    <td>{n.channels.map(c => <span key={c} className="mah-badge mah-tone-blue mah-mr">{c}</span>)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      )}
+      {tab === 'notifications' && <EmailPreferences email={user?.email} />}
 
       {tab === 'channels' && (
         <div className="mah-card-grid">
